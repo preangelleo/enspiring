@@ -2551,7 +2551,8 @@ def proof_read_ghost(user_prompt: str, chat_id: str, admin_api_key = BLOG_POST_A
 
     # model = "claude-3-5-sonnet-20241022"
     # proof_read_result = cloude_basic(user_prompt, SYSTEM_PROMPT_PROOF_READING_GHOST, model = model, api_key = CLOUDE_API_KEY)
-    proof_read_result = openai_gpt_chat(SYSTEM_PROMPT_PROOF_READING_GHOST, user_prompt, chat_id, model, user_parameters)
+    system_prompt = read_prompt_by_name('SYSTEM_PROMPT_PROOF_READING_GHOST', engine)
+    proof_read_result = openai_gpt_chat(system_prompt, user_prompt, chat_id, model, user_parameters)
     if not proof_read_result: return send_message(chat_id, "Failed to generate the proof read result.", token, message_id)
 
     key_id, secret = admin_api_key.split(':')

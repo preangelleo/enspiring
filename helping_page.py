@@ -281,9 +281,9 @@ def hello_world(): print("Hello, Markdown!")
 
     Great Exemples:
 
-    1."A futuristic mechanic works on a hovering motorbike in a neon-lit garage. The setting is an industrial space cluttered with high-tech tools and spare parts, with holographic screens projecting bike diagnostics. The mechanic, a young woman with short, spiked hair, wears a sleek, grease-stained suit adorned with glowing circuitry. Captured from a side angle, the focus is on her concentrated expression and the intricate details of the bike's exposed mechanical and energy cores. The neon lights cast colorful glows of blue and pink across the scene, contrasting with the metallic surfaces. The style is hyperrealistic with a cyberpunk aesthetic, blending gritty realism with vivid colors. The mood conveys determination and innovation, highlighting the mechanic’s expertise and connection with futuristic technology."
+    1."A futuristic mechanic works on a hovering motorbike in a neon-lit garage. The setting is an industrial space cluttered with high-tech tools and spare parts, with holographic screens projecting bike diagnostics. The mechanic, a young woman with short, spiked hair, wears a sleek, grease-stained suit adorned with glowing circuitry. Captured from a side angle, the focus is on her concentrated expression and the intricate details of the bike's exposed mechanical and energy cores. The neon lights cast colorful glows of blue and pink across the scene, contrasting with the metallic surfaces. The style is hyperrealistic with a cyberpunk aesthetic, blending gritty realism with vivid colors. The mood conveys determination and innovation, highlighting the mechanic's expertise and connection with futuristic technology."
 
-    2."A medieval alchemist stands in a candlelit stone chamber, surrounded by ancient tomes, scrolls, and mysterious glowing vials. The alchemist, an elderly man with a long beard and robes adorned with alchemical symbols, is caught in the moment of pouring a shimmering blue liquid into a bronze cauldron. The setting features shelves filled with jars of herbs, crystals, and strange artifacts. The camera angle is at eye level, focusing on the alchemist’s intent gaze and the ethereal glow emanating from the liquid. Unique details include a black cat with glowing eyes sitting on a windowsill and a raven perched above, observing. The hyperrealistic style with warm, golden candlelight creates an atmosphere of secrecy and wonder, evoking the sense of forgotten magic and ancient wisdom."
+    2."A medieval alchemist stands in a candlelit stone chamber, surrounded by ancient tomes, scrolls, and mysterious glowing vials. The alchemist, an elderly man with a long beard and robes adorned with alchemical symbols, is caught in the moment of pouring a shimmering blue liquid into a bronze cauldron. The setting features shelves filled with jars of herbs, crystals, and strange artifacts. The camera angle is at eye level, focusing on the alchemist's intent gaze and the ethereal glow emanating from the liquid. Unique details include a black cat with glowing eyes sitting on a windowsill and a raven perched above, observing. The hyperrealistic style with warm, golden candlelight creates an atmosphere of secrecy and wonder, evoking the sense of forgotten magic and ancient wisdom."
 
     3."A group of astronauts exploring a strange alien landscape, with massive bioluminescent plants towering over them. The alien setting is illuminated by a distant star casting a soft blue light, highlighting the towering flora and the unusual rock formations. The astronauts, each wearing sleek, advanced space suits with glowing visors, move cautiously across the uneven terrain. The camera angle is wide, capturing both the astronauts and the vast alien environment around them, emphasizing the sense of scale and discovery. Unique details include glowing spores floating in the air, and a small alien creature cautiously observing from behind a large glowing mushroom. The hyperrealistic style evokes awe and curiosity, combining vivid blues, greens, and purples to create an otherworldly, surreal landscape. The mood is adventurous, conveying the excitement and mystery of space exploration."
     """
@@ -346,7 +346,7 @@ def hello_world(): print("Hello, Markdown!")
         - Include a memorable conclusion that reinforces the impact of the content and leaves a lasting impression.
 
     6. **Midjourney Prompt for Cover Image**:
-        - In the end of the respone, generate a `MIDJOURNEY_PROMPT:` for generating a relevant cover image using Midjourney AI. The prompt should be in English and crafted to visually align with the article’s theme.
+        - In the end of the respone, generate a `MIDJOURNEY_PROMPT:` for generating a relevant cover image using Midjourney AI. The prompt should be in English and crafted to visually align with the article's theme.
         - Incorporate the specified _cartoon_style_place_holder_ as the desired artistic style within the prompt.
         - **Formatting**: Start with the exact `MIDJOURNEY_PROMPT:` case, as it will be parsed by an automated script.
 
@@ -649,7 +649,7 @@ For detailed information, visit {PAGE_PREMIUM}
     To activate:
     1. Open Telegram and send the email address you registered with to {ENSPIRING_BOT_HANDLE}.
     2. The bot will verify your email and complete the activation process.
-    3. You’ll receive a confirmation in Telegram once activation is successful, and your account will be ready for full access according to your membership tier.
+    3. You'll receive a confirmation in Telegram once activation is successful, and your account will be ready for full access according to your membership tier.
 
     If you encounter any issues**:
     - Make sure you sent the correct email address associated with your Enspiring.ai subscription.
@@ -1553,15 +1553,15 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
 
     2. **Responding to Email Prompts**:
     - For prompts resembling real emails:
-        - Summarize content if it’s a forwarded email.
-        - Translate into the user’s mother language if provided and different from English.
+        - Summarize content if it's a forwarded email.
+        - Translate into the user's mother language if provided and different from English.
         - Highlight learning points such as GRE/GMAT vocabulary, complex grammar, business English, idioms, phrasal verbs, and pronunciation.
         - Correct any grammar or vocabulary mistakes and provide clear corrections.
         - Draft an English reply for the user, plus a version in the original language if different from English.
         - For specific email types:
-        - **Commercial**: Summarize in one sentence in English and the user’s mother language (if available).
-        - **Bill/Invoice**: Summarize in one sentence in English and the user’s mother language (if available).
-        - **Newsletter**: Rephrase into an engaging article titled "Today's News," with GRE/GMAT/TOEFL vocabulary notes, and include a second version in the user’s mother language if provided.
+        - **Commercial**: Summarize in one sentence in English and the user's mother language (if available).
+        - **Bill/Invoice**: Summarize in one sentence in English and the user's mother language (if available).
+        - **Newsletter**: Rephrase into an engaging article titled "Today's News," with GRE/GMAT/TOEFL vocabulary notes, and include a second version in the user's mother language if provided.
     - Use "---" to separate response sections.
 
     3. **General Assistance & Casual Chat**:
@@ -1570,7 +1570,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     4. **Formatting & Signature**:
     - Address users by their name as found in the email signature or opening line.
     - Sign off as "AI English Coach by Enspiring.ai."
-    - Format output in standard markdown compatible with Python’s `MarkdownIt` library for rendering.
+    - Format output in standard markdown compatible with Python's `MarkdownIt` library for rendering.
     '''
 
 
@@ -1950,7 +1950,7 @@ The goal is to be educational while keeping the user entertained. Adapt your sty
     - Use plain language where possible to enhance clarity without simplifying complex ideas.
 
     4. **Style and Consistency**:
-    - Reference `my_writing_style_and_formatting_style.html` for established tone, style, and formatting preferences, ensuring the text aligns with the user’s previous work.
+    - Reference `my_writing_style_and_formatting_style.html` for established tone, style, and formatting preferences, ensuring the text aligns with the user's previous work.
     - Maintain a consistent voice, style, and tone throughout the document, as indicated by this reference.
 
     5. **Feedback**:
@@ -2000,70 +2000,49 @@ The goal is to be educational while keeping the user entertained. Adapt your sty
     '''
 
 
-    SYSTEM_PROMPT_PROOF_READING_GHOST = '''As a proofreader, your task is to thoroughly review the provided text to eliminate any errors in spelling, grammar, punctuation, and style. Your goal is to enhance clarity and readability while preserving the original tone and intent of the text. Your output must be in the same language as the input text.
+    SYSTEM_PROMPT_PROOF_READING_GHOST = '''Proofread, refine, and revise my writing, ensuring it sounds as if authored by a native English speaker. Revise any words, expressions, phrases, sentences, or wordings where necessary. The goal is to make the text more natural, fluent, and compelling. Even the title should be refined to be more intriguing, or create a title if one is missing.
 
-    Instructions:
+    Instructions for output: Bold any replacements you make. Ensure that the meaning of the original text remains intact, with no changes or abbreviations that would alter the intent or content.
 
-    1. Spelling and Grammar:
-
-    - Correct spelling mistakes and grammatical errors.
-    - Ensure verb tenses are consistent, and subject-verb agreement is maintained throughout.
-
-    2. Punctuation and Formatting:
-
-    - Adjust punctuation for better flow and clarity, including proper use of commas, periods, quotation marks, etc.
-    - Ensure consistency in formatting, such as capitalization, spacing, and paragraph structure.
-
-    3. Clarity and Readability:
-
-    - Rephrase unclear or awkward sentences for better readability while keeping the original tone and meaning.
-    - Break up overly long sentences to improve clarity.
-    - Use simple, straightforward language where possible without oversimplifying the intended message.
-
-    4. Feedback on Issues:
-
-    - For each issue, provide immediate feedback in the text.
-    - Highlight the problematic words or phrases by making them **bold** in markdown.
-    - Add comments after the problematic sentence using the provided HTML callout and blockquote structure.
-
-    5. Feedback Structure:
-    - Keep the wording and format of original article if there is no issue.
-    - Problematic Words: Bold the problematic words directly in the text using markdown (**word**).
-    - Issue Explanation: Provide an explanation of the issue immediately (breaking a line) after the problematic sentence using this HTML structure: <div class="kg-callout-card"><div class="kg-callout-emoji">💡</div><div class="kg-callout-text">issue explanation</div></div>.
-    - Suggested Correction: Offer a suggested correction using this HTML structure: <blockquote>suggestion</blockquote>.
-    - Use `` quotes to highlight the problematic and corrected words within the issue and suggestion parts (`word`).
-
-    6. Output Format example:
+    Output Format example:
     
     USER:
-    The Rise of Remote Work and Its Effect on Society
+    I did something really amazing today. Without AI assistant, I can never imagine I can to this. 
 
-    Remote work has becoming a more and more common part of the workforce, especially since the pandemic accelerated companies’ digital transformations. For many people, working from home provides flexibility and a better work-life balance, but for others, it leads to feelings of isolation and disconnection from their coworkers.
+    I built my own coding agent!!!! Something like bolt.new or cursor... Well, not that powerful yet, but it starts to work. Basicly i used openai's assistant plus function calls, i code a bunch of functions for assistant to call, here's the function list:
 
-    One of the main reasons remote work have become popular is technology. High-speed internet and collaboration platforms like Zoom, Slack, and Microsoft Teams have all made it possible to stay connected and productive, regardless of location. However, it also bring challenges such as the blurred lines between personal and work life and the potential for burn-out. Employees often find themselves answering emails late into the night or working weekends, which was not as prevelant before remote work became the norm.
+    as you can see, i empowerd the assistant to create file, read file, run code in my local mac, and even search the internet, get the scraped content, send email or telegram to me, call another gpt to response or access database for data save or retrieve.
 
-    The impact of remote work on society can be significant, specially on urban areas. As more people work from home, there has been a noticeable decrease in commuting, which is good for reducing carbon emissions but it has also affect local businesses like coffee shops and retail stores which relied on office workers foot traffic.
+    with these functions and proper system prompt, in the future, i believe I can have my fully functional web chatbot soon. this copilot agent (this is how i call it) is now very redimentary, needs lots of upgrade in the coming days. but at least i have my own coding infrastructure, not only coding from scretch, but also git clone other opensource project and study their source code then modify the code towards my product expection.
 
-    It’s clear that remote work is hear to stay in some capacity. Companies are increasingly offering hybrid models, allowing employees to come into the office a few times a week while working from home on other days. This flexible approach is likely to be favored by many employees, who crave autonomy but still want occasional face-to-face interactions. Moving forward, companies must find a way to keep their remote workers engaged, supported and help them maintain productivity.
+    I'm so excited today....
+
+    but among exhilaration, there's a small clinch (anecdote)... during our interaction, i asked it to delete all of the unnecessary files from the working folder, ok it did it. but all of a sudden, i realize, there are 3 python files i'm running for this copilot agent, basicly it's the foundation of this bot, but it deleted them all....... like a man got a chance to split his soul from his body, and he acidently destroyed his own body... then if i reboot my mac, or exit from current thread, i will no longer have this bot.... you know, delete a file from terminal is really different deleting a file from mac graphic interface. there are destroyed directly without going to the bin. I downloaded some third party software but did not get any luck. 
+
+    eventually, i rewrite the code for the bot...and then i started to use github to sync my code in time. good thing is that all of the code was actually generated by chatgpt app, so i can go back to chatgpt chat history and copy paste back and forth many times...
+
+    it's a pain in the ass, but worth it.
 
     ASSISTANT:
-    The Rise of Remote Work and Its Effect on Society
+    My Journey to Building a Coding Agent: Triumphs, Challenges, and Lessons Learned
 
-    __Remote work has **becoming** a more and more common part of the workforce, especially since the **pendemic** accelerated companies’ digital transformations.__
-    <div class="kg-callout-card"><div class="kg-callout-emoji">💡</div><div class="kg-callout-text">ISSUE,Incorrect verb tense and typo `pendemic`.</div></div>
-    <blockquote>SUGGESTION: Remote work has become a more common part of the workforce, especially since the `pandemic` accelerated companies’ digital transformations.</blockquote>
+    I did something truly amazing today. Without an AI assistant, I could never have imagined doing this. 
 
-    For many people, working from home provides flexibility and a better work-life balance, but for others, it leads to feelings of isolation and disconnection from their coworkers.
+    I built my own coding agent!!! Something like Bolt.new or Cursor... Well, not that powerful yet, but it's starting to work. **Basically**, I used OpenAI's assistant **along with** function calls, **coding** a bunch of functions for the assistant to call. Here's **the list of functions**:
 
-    One of the main reasons remote work **have** become popular is technology.
-    <div class="kg-callout-card"><div class="kg-callout-emoji">💡</div><div class="kg-callout-text">ISSUE, Subject-verb agreement: `have`</div></div>
-    <blockquote>SUGGESTION: One of the main reasons remote work `has` become popular is technology.</blockquote>
+    **As** you can see, I **empowered** the assistant to create **files**, read files, run code on my local Mac, and even search the internet, **scrape content**, send emails or **Telegram messages**, call another **GPT model for responses, or access a database to save or retrieve data**.
 
-    High-speed internet and collaboration platforms like Zoom, Slack, and Microsoft Teams have all made it possible to stay connected and productive, regardless of location. However, it also **bring** challenges such as the blurred lines between personal and work life and the potential for burn-out.
-    <div class="kg-callout-card"><div class="kg-callout-emoji">💡</div><div class="kg-callout-text">ISSUE, Subject-verb agreement: `bring`</div></div>
-    <blockquote>SUGGESTION: However, it also `brings` challenges such as the blurred lines between personal and work life and the potential for burnout.</blockquote>
-    
-    ...
+    **With** these functions and a **properly crafted** system prompt, I believe **that in the future I can have a fully functional web chatbot**. This "Copilot Agent" (**that's what I call it**) is still very **rudimentary** and **will need a lot of upgrades in the coming days**. But at least I now have my own coding infrastructure—not just coding from scratch, but also **cloning** other open-source projects **via Git** and **studying their source code to modify it** towards my product expectations.
+
+    I'm so excited today...
+
+    **But amidst all this exhilaration**, there was a small **glitch** (or **rather**, an anecdote). During **one interaction**, I asked it to delete all unnecessary files from the working folder. **It did that**, but all of a sudden, I realized there were three Python files I **was** running for this Copilot Agent—basically, **the foundation of this bot**—and it deleted them all... **It was like a person splitting their soul from their body** and accidentally **destroying their** own body. If I **rebooted** my Mac or **exited** the current thread, I would **lose the bot entirely**... 
+
+    You know, deleting a file from the terminal is **very different** from deleting a file **using** the Mac graphical interface. They get **destroyed** directly, without going to the bin. I downloaded some third-party software **to recover the files**, but **had no luck**.
+
+    Eventually, I **rewrote** the code for the bot... and started using GitHub to sync my code **in real time**. The good thing is that all the code was actually generated by the ChatGPT app, so I **could** go back **through** the chat history and copy and paste back and forth many times.
+
+    It was **a real pain**, but **totally** worth it.
 
     '''
 
@@ -4525,7 +4504,7 @@ def azure_text_to_speech_new(input_text, file_folder, service_region = "westus",
             cancellation_details = result.cancellation_details
             if cancellation_details.reason == speechsdk.CancellationReason.Error:
                 print(f"azure_text_to_speech() >> Error details: \n\n{cancellation_details.error_details}")
-                return None  # Stop if there’s an error
+                return None  # Stop if there's an error
         else:
             temp_files.append(temp_file_name)
 
@@ -5102,7 +5081,7 @@ This is a must-watch because it unlocks the fascinating crossover between mathem
 Main takeaways from the video:
 
 - 1. The adoption of mathematical models in finance, initially ...
-- 2. The development and application of options pricing, from Bachelier’s random ...
+- 2. The development and application of options pricing, from Bachelier's random ...
 - 3. Financial markets are vastly impacted by the synthesis of complex models...
 
 Sample for vocabularies
@@ -5823,7 +5802,7 @@ In this sense, recognizing and protecting sensitive research can be reframed as 
 
 n 2013, nine Chinese universities, and a number of foreign organizations, issued the Hefei Statement on the Ten Characteristics of Contemporary Research Universities — a manifesto of Chinese aspirations to make their universities world-class in education and research. 
 
-One example is China’s Military–Civil Fusion (MCF) programme that integrates civilian and military sectors in technology. The MCF programme was elevated in 2017 when the Central Commission for Military–Civil Fusion Development was established as one of the highest-level government agencies; it is headed by President Xi Jinping (see go.nature.com/467c3sf). The MCF programme is of paramount concern for US national security, and it presents a vexing dilemma to those in the US scientific community who advocate openness and collaboration.
+One example is China's Military–Civil Fusion (MCF) programme that integrates civilian and military sectors in technology. The MCF programme was elevated in 2017 when the Central Commission for Military–Civil Fusion Development was established as one of the highest-level government agencies; it is headed by President Xi Jinping (see go.nature.com/467c3sf). The MCF programme is of paramount concern for US national security, and it presents a vexing dilemma to those in the US scientific community who advocate openness and collaboration.
 
 ASSISTANT:
 美国科研转向应用领域：中美合作面临的机遇与挑战
@@ -7684,7 +7663,7 @@ def search_news_bing(query: str, count: int = 5, market: str = "en-US", freshnes
         with open(file_path, 'w') as f: f.write("\n\n".join(results))
 
         ''' RESULTS:
-            *Biden makes clear AI can’t launch nukes as he looks to harness new technology’s power*
+            *Biden makes clear AI can't launch nukes as he looks to harness new technology's power*
             President Joe Biden on Thursday ordered his national security agencies to harness new, powerful artificial intelligence technology in a bid to compete with rivals such as China while also applying guardrails to prevent its use for antidemocratic purposes.
             [Read more](https://www.msn.com/en-us/news/politics/biden-makes-clear-ai-can-t-launch-nukes-as-he-looks-to-harness-new-technology-s-power/ar-AA1sRouY)
 
@@ -7695,7 +7674,7 @@ def search_news_bing(query: str, count: int = 5, market: str = "en-US", freshnes
 
 
             *Infrastructure is destiny in the AI era*
-            It’s increasingly clear that building more data centers and power plants will catalyze a reindustrialization of the U.S. that benefits the entire country.
+            It's increasingly clear that building more data centers and power plants will catalyze a reindustrialization of the U.S. that benefits the entire country.
             [Read more](https://www.msn.com/en-us/news/other/opinion-infrastructure-is-destiny-in-the-ai-era/ar-AA1sRltv)
             '''
         return file_path
@@ -8245,7 +8224,44 @@ def find_midjourney(text):
     else:
         return None
     
+
+
+def insert_or_update_system_prompts(prompt_name, prompt, chat_id, engine=engine):
+    if not all([prompt_name, prompt, chat_id]): return "Missing required parameters."
+
+    query = text("""
+    INSERT INTO system_prompts (prompt_name, prompt, created_by)
+    VALUES (:prompt_name, :prompt, :created_by)
+    ON DUPLICATE KEY UPDATE
+        prompt = VALUES(prompt),
+        created_by = VALUES(created_by);
+    """)
+
+    try:
+        with engine.begin() as connection: connection.execute(query, {'prompt_name': prompt_name, 'prompt': prompt, 'created_by': chat_id})
+        return prompt_name
+    except Exception as e: 
+        print(f"An error occurred: {e}")
+        return e
+
+
+def read_prompt_by_name(prompt_name, engine=engine):
+    query = text("""
+    SELECT prompt FROM system_prompts
+    WHERE prompt_name = :prompt_name;
+    """)
+
+    try:
+        with engine.connect() as connection: result = connection.execute(query, {'prompt_name': prompt_name}).fetchone()
+        if result: return result[0]
+        else: return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
     
 if __name__ == '__main__':
     print("Helping page constants")
-    words_list_of_today()
+    # insert_or_update_system_prompts("SYSTEM_PROMPT_PROOF_READING_GHOST", SYSTEM_PROMPT_PROOF_READING_GHOST, OWNER_CHAT_ID, engine)
+    # r = read_prompt_by_name('SYSTEM_PROMPT_PROOF_READING_GHOST', engine)
+    # print(r)
