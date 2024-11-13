@@ -839,7 +839,8 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             '''/create_author_id user_chat_id'''
             user_chat_id = msg.replace('create_author_id', '').strip()
             if not user_chat_id: return send_message(chat_id, "Please provide the user's chat_id after the command.", token)
-            return create_or_get_author_in_ghost_for_chat_id(user_chat_id, engine)
+            author_id = create_or_get_author_in_ghost_for_chat_id(user_chat_id, engine)
+            return send_message(chat_id, author_id, token)
         
         elif msg_lower.startswith('renew_vocabulary_chinese'):
             word = msg.replace('renew_vocabulary_chinese', '').strip()
@@ -870,7 +871,8 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         elif msg_lower.startswith('add_channel ') or msg_lower.startswith('adc '):
             channel_handle = msg.split('add_channel ')[-1].strip() if msg_lower.startswith('add_channel ') else msg.split('adc ')[-1].strip()
             if channel_handle.startswith('@'): channel_handle = channel_handle[1:]
-            return add_youtube_channel_handle(channel_handle, engine)
+            response = add_youtube_channel_handle(channel_handle, engine)
+            return send_message(chat_id, response, token)
         
         elif msg_lower.startswith('alter_channel_ ') or msg_lower.startswith('atc_'):
             split_list = msg.split(' ', 1)
@@ -878,15 +880,19 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             real_handle = split_list[0].replace('alter_channel_', '').strip() if msg_lower.startswith('alter_channel_') else split_list[0].replace('atc_', '').strip()
             new_title = split_list[1].strip()
             if real_handle.startswith('@'): real_handle = real_handle[1:]
-            return change_channel_title_by_channel_handle(real_handle, new_title, engine)
+            response =  change_channel_title_by_channel_handle(real_handle, new_title, engine)
+            return send_message(chat_id, response, token)
         
         elif msg_lower.startswith('drop_channel_') or msg_lower.startswith('dpc_'):
             channel_handle = msg.split('drop_channel_')[-1].strip() if msg_lower.startswith('drop_channel_') else msg.split('dpc_')[-1].strip()
             if not channel_handle: return "Please provide the channel handle after the command."
             if channel_handle.startswith('@'): channel_handle = channel_handle[1:]
-            return drop_channel_by_channel_handle(channel_handle, engine)
+            response =  drop_channel_by_channel_handle(channel_handle, engine)
+            return send_message(chat_id, response, token)
         
-        elif msg_lower.startswith('get_channel_list'): return get_handle_and_tile(engine)
+        elif msg_lower.startswith('get_channel_list'): 
+            result_string = get_handle_and_tile(engine)
+            return send_message(chat_id, result_string, token)
 
         elif msg_lower.startswith('clone_leo'): 
             input_text = msg.split('clone_leo')[1].strip()
@@ -922,13 +928,15 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
                 df = get_row_from_table_by_video_id(video_id, engine=engine)
                 if df.empty: return "Failed to find the video ID in the database."
                 post_id = df['Post_ID'].values[0]
-                return delete_given_post_id(post_id)
+                response = delete_given_post_id(post_id)
+                return send_message(chat_id, response, token)
             else:
                 post_id = post_id_or_video_id
                 if not post_id: return send_message(chat_id, "Please provide the post ID after /delete_ command, example: /delete_66f9004d68bdd900018404d2", token)
                 df = get_row_from_table_by_post_id(post_id, engine)
                 if df.empty: return send_message(chat_id, "Failed to find the post ID in the database.", token)
-                return delete_given_post_id(post_id)
+                response =  delete_given_post_id(post_id)
+                return send_message(chat_id, response, token)
         
         elif msg_lower in ['commands', 'commands_list', 'owner_commands', 'owner_commands_list']:
             # make a list of supported owner only commands list

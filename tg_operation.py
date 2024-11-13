@@ -655,7 +655,7 @@ def handle_message(update, token, engine = engine):
                 print(f"Proof of reading file path: {file_path}")
                 if not user_ranking >= 4 and not openai_api_key: reply = f"Sorry, this function is only for /Diamond or above users but your current /tier is /{tier}\n\n{commands_dict.get('get_premium')}"
                 else:
-                    send_message(chat_id, "Proof reading file received, the AI assistant is proofreading the content, please wait 1 ~ 2 minutes...", token)
+                    send_message(chat_id, "Proof reading file received, the AI assistant is proofreading the content, please wait 1~2 minutes...", token)
                     with open(file_path, "r", encoding="utf-8") as file: text_content = file.read()
                     return proof_read_ghost(text_content, chat_id, BLOG_POST_ADMIN_API_KEY, BLOG_POST_API_URL, engine, token, ASSISTANT_MAIN_MODEL, message_id + 1, user_parameters)
 

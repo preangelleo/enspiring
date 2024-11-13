@@ -2639,6 +2639,13 @@ If you can't open the link above, please copy and paste below url into your brow
 """
         send_notifition_to_email(email_subject, markdown_text, user_parameters)
 
+        proof_read_result = proof_read_result.replace('*', '')
+        saving_folder = os.path.join(working_dir, chat_id)
+        current_time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = os.path.join(saving_folder, f'Refined_article_{current_time_stamp}.txt')
+        with open(file_path, 'w', encoding='utf-8') as f: f.write(proof_read_result)
+        send_document_from_file(chat_id, file_path, '', token)
+
     else: return send_message(chat_id, f"Failed to create proof reading review page: {response.status_code} {response.text}", token, message_id)
     return
 
