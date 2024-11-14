@@ -1939,7 +1939,6 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
     system_prompt_creator = SYSTEM_PROMPT_CONTENT_CREATOR_STRUCTURED_OUTPUT.replace('_Language_Placeholder_', post_language).replace('_cartoon_style_place_holder_', cartoon_style).replace('_my_writing_style_placeholder_', my_writing_style)
 
     system_prompt_creator = system_prompt_creator.replace('_words_length_placeholder_', '3000 ~ 6000')
-    # generated_journal = openai_gpt_chat(system_prompt_creator, paragraphed_transcript, chat_id, model, user_parameters)
 
     event_dict = openai_gpt_structured_output(paragraphed_transcript, system_prompt_creator, chat_id, model, engine, user_parameters)
     if not event_dict: return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the youtube link you provided.")

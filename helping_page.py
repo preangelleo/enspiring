@@ -224,26 +224,35 @@ def hello_world(): print("Hello, Markdown!")
 ### Other Markdown Features
 
 1. **Links**: You can add external links, such as [OpenAI](https://openai.com).
-2. **Images**: Easily insert images with `![Alt text](image-url)`.
+
+2. `Backticks` quoting are especially useful for highlighting keywords in ghost blog post.
+
+3. ```Code blocks``` are perfect for displaying code snippets or any other preformatted text; it's easy for viewers to copy and paste.
+
+4. Callout box is very unique in ghost, use html language directly and it's eye catching, example:
+<div class="kg-callout-card"><div class="kg-callout-emoji">💡</div><div class="kg-callout-text">Contents in callout card.</div></div>
+
+5. Blockquote is also special in ghost, use html format directly, it's eye catching, example:
+<blockquote>Contents in quotation format.</blockquote>
+
+6. **Images**: Easily insert images with `![Alt text](image-url)`.
 ![This is an example of image displaying](https://enspiring.ai/content/images/size/w1200/2024/10/86B95AD2-3C42-4E42-8A47-5BBA4F3C1A14_1_105_c.jpeg)
-3. **Task Lists**: Use for to-do lists:
+
+7. **Lists**: (any bullet points or numbered lists)
 * [x] Finished task;
 - [ ] Non-finished task;
 
-4. **Horizontal Lines**: Use `---` to add horizontal lines to separate content, see below:
----
-5. **Nested Blockquotes**: Markdown supports multi-level nested blockquotes using `>`.
+8. **Nested Blockquotes**: Markdown supports multi-level nested blockquotes using `>`.
 > This line starts with a  `>`
 
-6. **Embedded YouTube Video**: You can embed a YouTube video using HTML:
+9. **Horizontal Lines**: Use `---` to add horizontal lines to separate content, for better readablity. see below:
+---
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/SEnZ5xOywb0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+8. **Embedded YouTube Video**: You can embed a YouTube video using HTML (if you have the video ID).:
 
-7. **HTML Embedding**: You can embed HTML tags directly to achieve specific effects.
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Video_ID_Here_if_You_Have_One" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-8. <div class="kg-callout-card"><div class="kg-callout-emoji">💡</div><div class="kg-callout-text">Contents in callout card.</div></div>
-
-9. <blockquote>Contents in quotation format.</blockquote>
+10. **HTML Embedding**: You can embed HTML tags directly to achieve specific effects.
 '''
 
 
@@ -1426,7 +1435,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
 
     4. **Content Assignment**:
        - title: A compelling title reflecting the article's essence in _Language_Placeholder_. 
-       - article: Develop the article with clear sections, ensuring readability and logical flow. 
+       - article: Develop the article with clear sections, ensuring readability and logical flow; no embeded youtube url needed, purely article in markdown format. 
        - excerpt: Create a succinct, one-sentence excerpt of less than 30 words, capturing the core of the article. No markdown format is required for the excerpt. Just plain text.
        - midjourney_prompt: Create a Midjourney prompt for cover image generation. The image should be an abstract illustration, not a realistic photo. The prompt should specify _cartoon_style_place_holder_ and adhere to Midjourney's guidelines.
        - Midjourney Guidelines:

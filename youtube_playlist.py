@@ -321,7 +321,7 @@ def complete_pending_tasks(chat_id, engine = engine, token = os.getenv("TELEGRAM
         video_url = f"https://www.youtube.com/watch?v={task_dict['Video_ID']}"
         official_title = task_dict['Official_Title']
 
-        if chat_id != OWNER_CHAT_ID and all([admin_api_key, ghost_url]): status = post_youtube_to_ghost_creator(video_url, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, '', user_parameters, '', official_title)
+        if chat_id != OWNER_CHAT_ID and all([admin_api_key, ghost_url]): status = post_youtube_to_ghost_creator(video_url, chat_id, engine, token, ASSISTANT_MAIN_MODEL, '', user_parameters, '', official_title)
         else: status = generating_new_post_from_url(video_url, video_dir, chat_id, token, engine)
 
         if status and status == 'Completed': update_task_status_in_youtube_task_table_df(task_dict['Video_ID'], 'Completed', engine)
@@ -369,7 +369,7 @@ def check_youtube_transcript_jobs(chat_id, engine = engine, token = os.getenv("T
             
             send_debug_to_laogege(f"Processing creator_post_youtube job for chat_id: /chat_{chat_id} and youtube_url: {youtube_url}")
 
-            try: post_youtube_to_ghost_creator(youtube_url, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST)
+            try: post_youtube_to_ghost_creator(youtube_url, chat_id, engine, token, ASSISTANT_MAIN_MODEL)
             except Exception as e: send_debug_to_laogege(f"Error in check_youtube_transcript_jobs() >> chat_id: /chat_{chat_id} >> youtube_url: {youtube_url}\n\n{e}")
 
         else: continue
