@@ -16,6 +16,30 @@ load_words_set()
 # 定义一个线程池来处理不同用户的任务
 executor = ThreadPoolExecutor(max_workers=100)
 
+''' Telegram's sendChatAction API provides several possible actions that you can use to indicate different statuses. Here are the available actions:
+
+typing - Shows that the bot is "typing…" (ideal for text responses).
+upload_photo - Indicates that the bot is uploading a photo.
+record_video - Shows that the bot is recording a video.
+upload_video - Indicates that the bot is uploading a video.
+record_audio - Shows that the bot is recording audio (voice message).
+upload_audio - Indicates that the bot is uploading an audio file.
+upload_document - Shows that the bot is uploading a document (useful for sending files).
+find_location - Indicates that the bot is finding a location.
+record_video_note - Shows that the bot is recording a video note.
+upload_video_note - Indicates that the bot is uploading a video note.
+'''
+
+def send_typing_action(chat_id: str, action = "typing", token = TELEGRAM_BOT_TOKEN):
+    url = f"https://api.telegram.org/bot{token}/sendChatAction"
+    params = {
+        "chat_id": chat_id,
+        "action": action
+    }
+    try: requests.post(url, params=params)
+    except: pass
+
+
 # Function to handle the callback query and navigate between menus
 def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engine):
     answer_callback_query(callback_query["id"], token)
@@ -26,6 +50,9 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
 
     chat_id = str(chat_id)
     message_id = str(message_id)
+
+    # Send typing status
+    send_typing_action(chat_id, action = "typing", token = token)
 
     user_parameters = user_parameters_realtime(chat_id, engine)
     if user_parameters.get('is_blacklist'): return 
@@ -484,6 +511,8 @@ def handle_message(update, token, engine = engine):
     update_message = update.get('message', {})
     chat_id = update_message['chat']['id']
     chat_id = str(chat_id)
+    
+    send_typing_action(chat_id, action = "typing", token = token)
 
     user_parameters = user_parameters_realtime(chat_id, engine)
     if user_parameters.get('is_blacklist', 0): return send_message(chat_id, f"You are in the blacklist, please contact {OWNER_HANDLE} for more information.", token)
