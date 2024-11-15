@@ -85,6 +85,30 @@ def webhook():
     return jsonify({"status": "success"}), 200
 
 
+
+@app.route('/ollama', methods=['POST'])
+def ollama():
+    # Handle the POST request and process the data
+    data = request.get_json()
+    prompt = data.get("prompt")
+    if not prompt:
+        return jsonify({"error": "Invalid request. 'prompt' is required."}), 400
+
+    # Optional parameters with defaults
+    system_prompt = data.get("system_prompt", "")
+    model = data.get("model", "llama3.2")
+
+    # Call the Ollama function and get the response
+    try:
+        response = ollama_gpt_chat_basic(prompt, system_prompt, model)
+
+        if response: return jsonify({"status": "success", "response": response}), 200
+        else: return jsonify({"status": "error", "response": "No response received from ollama"}), 500
+
+    except Exception as e: return jsonify({"status": "error", "response": str(e)}), 500
+
+
+
 @app.route('/assemblyai', methods=['POST'])
 def webhook_assemblyai():
     data = request.get_json()

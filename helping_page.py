@@ -458,6 +458,7 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "words_checked": "Get a list of words that you have checked today (By UTC: Coordinated Universal Time).",
         "clone_audio": "Send me /clone_audio Your text here. For example: \n\n/clone_audio Hello everyone! This is my cloned voice, and I must admit, it feels surreal...",
         "clone_audio_trick": "The tricks of cloning voice.",
+        "ollama": "Send me /ollama Your text here to chat with Ollama. For example: /ollama Tell me a dirty joke.",
         "revise_text": "Send me /revise_text Your text here. I will revise the text you provide after the command. Or just use natural language to tell me what you want to revise",
         "video_id": "Send me a Youtube video ID, I will generate a blog post about this youtube video just for you.",
         "query_doc": f"Send me a document, and ask anything you want to know about the content of the file (PDF or Docx).",
@@ -2255,6 +2256,44 @@ def ollama_gpt_chat_basic(prompt, system_prompt = '', model = "llama3.2"):
     data = response.json()
     response = data.get("response", "No response received from ollama")
     return response
+
+
+
+def ollama_gpt_chat_remote(prompt, system_prompt='', model="llama3.2", webhook_url=f"{NGROK_WEBHOOK_BASE_URL}/ollama"):
+    """
+    Makes a POST request to the remote webhook for processing the prompt.
+
+    Parameters:
+        prompt (str): The input prompt for the LLM.
+        system_prompt (str): Optional system prompt for setting context.
+        model (str): The name of the model to use.
+        webhook_url (str): The URL of the remote webhook to send the request.
+
+    Returns:
+        str: The response string from the remote webhook on success.
+        None: If an error occurs.
+    """
+    payload = {
+        "prompt": prompt,
+        "system_prompt": system_prompt,
+        "model": model
+    }
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        # Send POST request to the webhook
+        response = requests.post(webhook_url, json=payload, headers=headers)
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+
+        # Extract the response string and return it
+        response_data = response.json()
+        return response_data.get("response", 'No response received from ollama.')
+
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
+        return e
+
+
 
 
 def find_url(text):

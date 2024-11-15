@@ -415,6 +415,14 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         # remove the last / if there's any
         if user_ghost_blog_url.endswith('/'): user_ghost_blog_url = user_ghost_blog_url[:-1]
         return set_ghost_blog_url(chat_id, user_ghost_blog_url, token, engine, message_id)
+    
+
+    elif msg_lower.startswith('ollama'):
+        prompt = msg.replace('ollama', '').strip()
+        if not prompt: return send_message(chat_id, commands_dict.get('ollama'), token)
+        response_text = ollama_gpt_chat_remote(prompt)
+        response_text = f"Response from OpenSource Model Ollama: \n\n{response_text}"
+        return callback_text_audio(chat_id, response_text, token, engine, user_parameters)
 
     
     elif msg_lower in ['tier', 'gold', 'silver', 'starter', 'free', 'owner', 'platinum', 'diamond']:
