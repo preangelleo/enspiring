@@ -355,7 +355,9 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
     elif msg_lower in ['openai_api_consumption']: return check_monthly_consumption(chat_id, engine)
     elif msg_lower in ['set_elevenlabs_api_key', 'setelevenlabsapikey', 'elevenlabs_api_key']: return set_elevenlabs_api_key_information(user_parameters, chat_id, token)
     elif msg_lower in ['delete_elevenlabs_api_key', 'deleteelevenlabsapikey']: return remove_elevenlabs_api_key_for_chat_id(chat_id, engine)
-    elif msg_lower == 'set_creator_configurations': return creator_menu_setting(chat_id, token, message_id)
+    elif msg_lower in ['set_creator_configurations']: 
+        print("set_creator_configurations by {}".format(chat_id))
+        return creator_menu_setting(chat_id, token)
     elif msg_lower == 'set_daily_words_list_on': return set_daily_words_list_for_chat_id(chat_id, 1, engine, msg = f"Successfully turned `on` the daily words list.", token = token)
     elif msg_lower == 'set_daily_words_list_off': return set_daily_words_list_for_chat_id(chat_id, 0, engine, msg = f"Successfully turned `off` the daily words list.", token = token)
 
