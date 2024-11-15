@@ -388,6 +388,22 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         return send_message(chat_id, "Failed to set Twitter Handle. Please try again later.", token)
     
 
+    elif msg_lower in ['today_news', 'get_news', 'news_today']:
+        news_keywords = user_parameters.get('default_news_keywords', '') or 'Artificial Intelligence'
+        send_message(chat_id, f"Now I'm searching and summarizing the news for your keywords: \n\n`{news_keywords}`\n\nClick /set_news_keywords to set new default keywords anytime.", token)
+        date_today = str(datetime.now().date())
+        df = pd.DataFrame({'user_prompt': [news_keywords], 'chat_id': [chat_id], 'job_status': ['pending'], 'job_type': ['today_news'], 'date': [date_today]})
+        df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
+        webhook_push_table_name('user_news_jobs', chat_id)
+        return 
+    
+
+    elif msg_lower.startswith('set_news_keywords'):
+        news_keywords = msg.replace('set_news_keywords', '').replace('>', '').strip()
+        if not news_keywords: return send_message(chat_id, "Please provide the keywords you want to search for the news.", token)
+        return set_default_news_keywords_for_chat_id(chat_id, news_keywords, message_id, engine, token, user_parameters)
+
+
     elif msg_lower.startswith('elevenlabs_api_key '):
         user_elevenlabs_api_key = msg.replace('elevenlabs_api_key', '').replace('>', '').strip()
         if len(user_elevenlabs_api_key) != 51: return send_message(chat_id, "Invalid Eleven Labs API Key. Please provide a valid Eleven Labs API Key.", token)
@@ -818,16 +834,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
         webhook_push_table_name('user_news_jobs', chat_id)
         return send_message(chat_id, f"Your request to post the news has been received. It will be processed soon. You will be notified once it's done.")
-
-
-    elif msg_lower in ['today_news', 'get_news', 'news_today']:
-        date_today = str(datetime.now().date())
-        user_prompt = "Today's breaking news"
-        df = pd.DataFrame({'user_prompt': [user_prompt], 'chat_id': [chat_id], 'job_status': ['pending'], 'job_type': ['today_news'], 'date': [date_today]})
-        df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
-        webhook_push_table_name('user_news_jobs', chat_id)
-        return send_message(chat_id, f"I will search and summarize the latest news for you. Please wait for a moment...", token)
-
+    
 
     elif user_ranking >= 66 or chat_id in [OWNER_CHAT_ID, LAOGEGE_CHAT_ID]:
         print(f"This is the owner only function area...")

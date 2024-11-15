@@ -3717,7 +3717,7 @@ def callback_renew_vocabulary(chat_id, explanation, vocabulary, token = TELEGRAM
 
 
 def callback_markdown_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_TOKEN, engine = engine, is_session = False, user_parameters = {}):
-    prompt = prompt.replace('#', '').strip()
+    prompt = prompt.replace('# ', '').replace('#', '').strip()
 
     hash_md5 = convert_text_to_md5(prompt)
     with engine.connect() as conn:
@@ -3846,6 +3846,29 @@ def set_creator_writing_style_information(user_parameters, chat_id, token, engin
         notification_msg += f"\n\nCurrently, you have a writing style sample uploaded already. But you can upload a new one and overwrite the current one anytime."
         return callback_delete_writing_style_sample(chat_id, notification_msg, token, message_id)
     else: return callback_text_audio(chat_id, notification_msg, token, engine, user_parameters, message_id)
+
+
+def set_news_keywords_information(user_parameters, chat_id, token, engine, message_id = ''):
+    news_keywords = user_parameters.get('default_news_keywords', '')
+    if news_keywords != 'Artificial Intelligence': notification_msg = f"Your current /today_news keywords are:\n`{news_keywords}`\n\nIf you want to update the keywords, please send the new keywords in below format:\n\n/set_news_keywords >> your_keywords_here"
+    else: notification_msg = f"""Every time you click /today_news, the bot will search the Internet with the keywords you set here. The default value is `Artificial Intelligence`. And here's some examples for your reference:
+
+1. The latest updates of OpenAI
+2. The latest trends of e-commerce
+3. The breaking news of Apple Inc.
+4. The current advancements in quantum computing
+5. The impact of blockchain on financial markets
+6. The developments in renewable energy technologies
+7. The future trends of autonomous vehicles and AI integration
+8. The most recent updates in fintech innovations
+9. The effects of climate change on global agriculture
+10. The cutting-edge breakthroughs in biomedical engineering
+
+The maxium length of the keywords is 255 characters. Now, please send me /set_news_keywords >> your_keywords_here to update your personlized keywords. You can update the keywords at any time by submitting a new one."""
+        
+    return callback_text_audio(chat_id, notification_msg, token, engine, user_parameters, message_id)
+        
+
 
 
 def set_openai_api_key_information(user_parameters, chat_id, token, message_id = ''):
@@ -6374,23 +6397,30 @@ def prompt_user_send_voice_clone_sample(chat_id, token=TELEGRAM_BOT_TOKEN, engin
 
 
 def set_elevenlabs_api_key_for_chat_id(chat_id, elevenlabs_api_key, message_id, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
-    with engine.begin() as conn:
-        query = f"""SELECT elevenlabs_api_key FROM chat_id_parameters WHERE chat_id = :chat_id;"""
-        df = pd.read_sql(text(query), conn, params={"chat_id": chat_id})
-        if df.empty: 
-            delete_message(chat_id, message_id, token)
-            return send_message(chat_id, "You have to be at least a free subscriber of Enspiring.ai to use Your Own /elevenlabs_api_key with this bot.", token)
-        else:
-            elevenlabs_api_key_current = df['elevenlabs_api_key'].values[0]
-            if elevenlabs_api_key_current and elevenlabs_api_key_current == elevenlabs_api_key: 
-                delete_message(chat_id, message_id, token)
-                return send_message(chat_id, "The ElevenLabs_API_Key you just provided is the same as the current one. No need to update.", token)
+    elevenlabs_api_key_current = user_parameters.get('elevenlabs_api_key', '') or 'none'
+    if elevenlabs_api_key_current == elevenlabs_api_key: 
+        delete_message(chat_id, message_id, token)
+        return send_message(chat_id, "The ElevenLabs_API_Key you just provided is the same as the current one. No need to update.", token)
 
-        query = f"""UPDATE chat_id_parameters SET elevenlabs_api_key = :elevenlabs_api_key WHERE chat_id = :chat_id;"""
-        conn.execute(text(query), {"elevenlabs_api_key": elevenlabs_api_key, "chat_id": chat_id})
+    query = f"""UPDATE chat_id_parameters SET elevenlabs_api_key = :elevenlabs_api_key WHERE chat_id = :chat_id;"""
+    with engine.begin() as conn: conn.execute(text(query), {"elevenlabs_api_key": elevenlabs_api_key, "chat_id": chat_id})
 
     delete_message(chat_id, message_id, token)
     return prompt_user_send_voice_clone_sample(chat_id, token, engine, is_redo=False, user_parameters=user_parameters)
+
+
+def set_default_news_keywords_for_chat_id(chat_id, default_news_keywords, message_id, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+    default_news_keywords = default_news_keywords[:254]
+    default_news_keywords_current = user_parameters.get('default_news_keywords', '') or 'none'
+
+    if default_news_keywords_current == default_news_keywords:
+        delete_message(chat_id, message_id, token)
+        return send_message(chat_id, "The default news keywords you just provided are the same as the current ones. No need to update.", token)
+     
+    with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET default_news_keywords = :default_news_keywords WHERE chat_id = :chat_id;"""), {"default_news_keywords": default_news_keywords, "chat_id": chat_id})
+
+    delete_message(chat_id, message_id, token)
+    return send_message(chat_id, f"Great, your default /today_news keywords have been updated to `{default_news_keywords}` successfully. Click /today_news now to try it out.", token)
 
 
 def validate_openai_api_key(openai_api_key, chat_id=LAOGEGE_CHAT_ID):
@@ -7949,6 +7979,7 @@ def main_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
         'Daily Story Voice': 'set_daily_story_voice',
         'Voice Clone Sample': 'set_voice_clone_sample',
         'Twitter Handle': 'set_twitter_handle',
+        'Today News Keywords': 'set_news_keywords',
         'Creator Preferences': 'set_creator_configurations',
         'Daily Words List ON/OFF': 'set_daily_words_list_on_off',
         'Cancel Settings': 'cancel_settings'

@@ -182,6 +182,8 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
 
     elif callback_data.startswith('creator_writing_style'): return set_creator_writing_style_information(user_parameters, chat_id, token, engine, message_id)
 
+    elif callback_data.startswith('set_news_keywords'): return set_news_keywords_information(user_parameters, chat_id, token, engine, message_id)
+
     elif callback_data.startswith('creator_default_clone_voice_'):
         elevenlabs_api_key = user_parameters.get('elevenlabs_api_key', '')
         if not elevenlabs_api_key: return set_elevenlabs_api_key_information(user_parameters, chat_id, token, message_id)
