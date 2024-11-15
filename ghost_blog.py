@@ -1428,7 +1428,7 @@ def post_news_to_ghost(prompt: str, chat_id: str, admin_api_key = BLOG_POST_ADMI
     post_type, visibility = 'page', 'public'
 
     # Generate news content using the provided function
-    generated_news = search_keywords_and_summarize_by_gpt(prompt, chat_id, model, user_parameters)
+    generated_news = search_keywords_and_summarize_by_gpt(prompt, chat_id, model, user_parameters, token)
     if not generated_news: 
         response_dict['message'] = "Failed to generate news based on the prompt provided."
         return response_dict
@@ -1741,7 +1741,7 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
     date_today = str(datetime.now().date())
 
     # Generate news content using the provided function
-    generated_news = search_keywords_and_summarize_by_gpt(prompt, chat_id, model, user_parameters)
+    generated_news = search_keywords_and_summarize_by_gpt(prompt, chat_id, model, user_parameters, token)
     if not generated_news: return send_message(chat_id, f"Failed to generate news based on the prompt provided. Prompt:\n\n{prompt}", token, message_id)
 
     # split by 'MIDJOURNEY PROMPT:'

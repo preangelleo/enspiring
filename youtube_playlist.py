@@ -388,6 +388,15 @@ def check_user_news_jobs(chat_id, engine = engine, token = os.getenv("TELEGRAM_B
 
     for _, row in df.iterrows():
         user_prompt = row['user_prompt']
+        job_type = row['job_type']
+
+        if job_type == 'today_news':
+            search_response = get_news_results(user_prompt)
+            system_prompt = SYSTEM_PROMPT_SEARCH_RESULTS_POLISH.replace('_user_prompt_placeholder_', user_prompt)
+            formatted_response = openai_gpt_chat(formatted_response, system_prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
+            callback_markdown_audio(chat_id, search_response, token, engine, is_session=False, user_parameters=user_parameters)
+            continue
+        
         with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': 'processing', 'chat_id': chat_id})
 
         if admin_api_key and ghost_url and chat_id != OWNER_CHAT_ID: 

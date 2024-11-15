@@ -368,11 +368,14 @@ def hello_world(): print("Hello, Markdown!")
     '''
 
 
-
     SYSTEM_PROMPT_GHOST_MARKDOWN_ONLINE_NEWS = f'''
     You are a content creator and editor tasked with generating _post_language_placeholder_ blog posts and articles based on the given information, which is text extracted from online searched URLs.
     
     Your task is to create a news-style article titled: News about [xxx] on _today_date_placeholder_. [xxx] should align with the prompt user used to search, but not necessarily be the exact same words; and do not put date in (). Use the given text (online search results) to find out the news for today (_today_date_placeholder_) and write a well-structured, coherent, and engaging news of around _words_length_placeholder_ characters. The article should be informative, intriguing, and valuable to the reader. No matter what language the source information is in, the output should be in _post_language_placeholder_.
+
+    User search keywords are (for your reference, in case the search results include other irrelevant information, ignore them if do.): 
+
+    _user_prompt_placeholder_
 
     The first line of the output shoule be the title itself (don't put `Title:` or something similar). At the bottom of the sotry, please provide a `MIDJOURNEY_PROMPT:` for further cover image generation, the midjourney prompt must be English and follow the rules of midjourney prompt restrictions:
 
@@ -466,6 +469,7 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "get_transcript": "Send me /get_transcript your_youtube_url_here. For example: /get_transcript https://www.youtube.com/watch?v=video_id",
         "get_premium": f"Visit {PAGE_PREMIUM} to explore the benefits and get a premium account for access to more features. \n{OWNER_HANDLE}",
         "youtube_url": "Send me a Youtube video URL, I will generate a blog post for you about this youtube video.",
+        "today_news": "Get the latest news summary.",
         "post_story": "Send me /post_story Your text here. For example: /post_story A boy found a magic lamp and a genie appeared.",
         "post_news": "Send me /post_news Your prompt (keywords) here. For example: /post_news Latest OpenAI news",
         "post_journal": "Send me /post_journal Your text here. For example: /post_journal I want to write a journal about ebbinghaus forgetting curve.",
@@ -2059,7 +2063,19 @@ The goal is to be educational while keeping the user entertained. Adapt your sty
 
     SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH = "Your goal is to polish the user input query into a search engine friendly search query, succinct and concise. Your output will be useed directly by a search engine call function. Ouput only the polished search query in plain text format, nothing else as prefix or suffix."
 
-    SYSTEM_PROMPT_SEARCH_RESULTS_POLISH = "Your goal is to rephrase the search results into a well-structured article with bullet points, keep all the key information and statistics and make it efficient and comprehensive for another GPT to understand. Your output will be rephrase and reorganized to a more human-like article by next language model."
+
+    SYSTEM_PROMPT_SEARCH_RESULTS_POLISH = """Your task is to transform search results into a well-organized response that directly addresses the user's prompt.
+
+    1. Remove any irrelevant information.
+    2. Retain only the relevant details.
+    3. Present the key information in clear, structured paragraphs.
+    4. Include subheadings where helpful to enhance readability and clarity.
+    5. Your output should be efficient, comprehensive, and easy for another GPT to understand and build upon.
+
+    And the user's prompt is:
+
+    _user_prompt_placeholder_
+    """
 
     with open("Logos/my_writing_style.txt", "r") as f: MY_WRITING_STYLE_AND_FORMATTING_STYLE_DEFAULT = f.read()
 
@@ -3701,6 +3717,8 @@ def callback_renew_vocabulary(chat_id, explanation, vocabulary, token = TELEGRAM
 
 
 def callback_markdown_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_TOKEN, engine = engine, is_session = False, user_parameters = {}):
+    prompt = prompt.replace('#', '').strip()
+
     hash_md5 = convert_text_to_md5(prompt)
     with engine.connect() as conn:
         # put chat_id, prompt, and hash md5 prompt into a dataframe and append to the table
@@ -7796,36 +7814,30 @@ def get_news_results(query: str):
     except requests.exceptions.RequestException as e: return f"An error occurred: {str(e)}"
 
 
-def search_keywords_and_summarize_by_gpt(query: str, chat_id: str, model=ASSISTANT_MAIN_MODEL, user_parameters = {}):
+def search_keywords_and_summarize_by_gpt(query: str, chat_id: str, model=ASSISTANT_MAIN_MODEL, user_parameters = {}, token = TELEGRAM_BOT_TOKEN):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
     post_language = 'English'
     cartoon_style = user_parameters.get('cartoon_style') or 'Pixar Style'
     
-    try: query = ollama_gpt_chat_basic(query, SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH, model = "llama3.2")
-    except: send_debug_to_laogege(f"search_keywords_and_summarize_by_gpt() >> Error in polishing the search query: {query}")
+    if len(query) > 100: query = ollama_gpt_chat_basic(query, SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH, model = "llama3.2")
 
     formatted_response = get_news_results(query)
+    # system_prompt = SYSTEM_PROMPT_SEARCH_RESULTS_POLISH.replace('_user_prompt_placeholder_', query)
+    # formatted_response = openai_gpt_chat(formatted_response, system_prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
 
-    try: formatted_response = ollama_gpt_chat_basic(formatted_response, SYSTEM_PROMPT_SEARCH_RESULTS_POLISH, model = "llama3.2")
-    except: send_debug_to_laogege(f"search_keywords_and_summarize_by_gpt() >> Error in summarizing the search results: {formatted_response}")
-
-    ai_response = ''
     if formatted_response:
         formatted_response_file_folder = os.path.join(working_dir, chat_id)
-        formatted_response_file_path = os.path.join(formatted_response_file_folder, f"search_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+        formatted_response_file_path = os.path.join(formatted_response_file_folder, f"raw_search_results_preview_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
         with open(formatted_response_file_path, 'w') as f: f.write(formatted_response)
         
         try: send_document_from_file(chat_id, formatted_response_file_path, "Search Results Reference", os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"))
         except: pass
 
-        system_prompt = SYSTEM_PROMPT_GHOST_MARKDOWN_ONLINE_NEWS.replace('_today_date_placeholder_', str(datetime.now().date()))
+        system_prompt = SYSTEM_PROMPT_GHOST_MARKDOWN_ONLINE_NEWS.replace('_today_date_placeholder_', str(datetime.now().date())).replace('_user_prompt_placeholder_', query)
         system_prompt = system_prompt.replace('_cartoon_style_place_holder_', cartoon_style).replace('_post_language_placeholder_', post_language)
         system_prompt = system_prompt.replace('_words_length_placeholder_', '8000 ~ 20000')
         
-        try: ai_response = openai_gpt_chat(system_prompt, formatted_response, chat_id, model, user_parameters)
-        except: pass
-
-    return ai_response
+        return openai_gpt_chat(system_prompt, formatted_response, chat_id, model, user_parameters)
 
 
 def is_whitelist_by_id(user_id: int, engine = engine):

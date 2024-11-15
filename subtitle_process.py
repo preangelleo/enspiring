@@ -820,6 +820,15 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         return send_message(chat_id, f"Your request to post the news has been received. It will be processed soon. You will be notified once it's done.")
 
 
+    elif msg_lower in ['today_news', 'get_news', 'news_today']:
+        date_today = str(datetime.now().date())
+        user_prompt = "Today's breaking news"
+        df = pd.DataFrame({'user_prompt': [user_prompt], 'chat_id': [chat_id], 'job_status': ['pending'], 'job_type': ['today_news'], 'date': [date_today]})
+        df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
+        webhook_push_table_name('user_news_jobs', chat_id)
+        return send_message(chat_id, f"I will search and summarize the latest news for you. Please wait for a moment...", token)
+
+
     elif user_ranking >= 66 or chat_id in [OWNER_CHAT_ID, LAOGEGE_CHAT_ID]:
         print(f"This is the owner only function area...")
         chat_id_consumption_list = []
