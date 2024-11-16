@@ -355,11 +355,50 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
     elif msg_lower in ['openai_api_consumption']: return check_monthly_consumption(chat_id, engine)
     elif msg_lower in ['set_elevenlabs_api_key', 'setelevenlabsapikey', 'elevenlabs_api_key']: return set_elevenlabs_api_key_information(user_parameters, chat_id, token)
     elif msg_lower in ['delete_elevenlabs_api_key', 'deleteelevenlabsapikey']: return remove_elevenlabs_api_key_for_chat_id(chat_id, engine)
-    elif msg_lower in ['set_creator_configurations']: 
-        print("set_creator_configurations by {}".format(chat_id))
-        return creator_menu_setting(chat_id, token)
+    elif msg_lower in ['set_creator_configurations']: return creator_menu_setting(chat_id, token)
     elif msg_lower == 'set_daily_words_list_on': return set_daily_words_list_for_chat_id(chat_id, 1, engine, msg = f"Successfully turned `on` the daily words list.", token = token)
     elif msg_lower == 'set_daily_words_list_off': return set_daily_words_list_for_chat_id(chat_id, 0, engine, msg = f"Successfully turned `off` the daily words list.", token = token)
+    elif msg_lower == 'set_default_audio_gender': 
+        default_voice_prompt = "Which audio voice gender do you prefer?"
+        default_voice_inline_keyboard_dict = {'Male': 'default_audio_gender_male', 'Female': 'default_audio_gender_female', '<< Back to Main Menu': 'back_to_main_menu'}
+        button_per_list = 2
+        return send_or_edit_inline_keyboard(default_voice_prompt, default_voice_inline_keyboard_dict, chat_id, button_per_list, token)
+    
+    elif msg_lower == 'set_youtube_playlist': 
+        if user_ranking < 3 and not openai_api_key: send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Gold or higher tier to use this function.\n\n/get_premium", token)
+        else:
+            current_youtube_playlist = user_parameters.get('youtube_playlist', '')
+            prefix_msg = f"Your current YouTube playlist is:\n`{current_youtube_playlist[:10]}......{current_youtube_playlist[-11:]}`\nYou can always overwrite the playlist by sending a new playlist URL (in full-length)."
+            notification_msg = f"Please provide the full-length YouTube playlist URL. I will check and process the videos, generate content, and post them online for you. Once posted, a private shared link will be sent to you. \n\nBased on your /tier : /{tier}, up to {int(ranking)} videos will be processed and posted. "
+            if current_youtube_playlist: notification_msg = prefix_msg + '\n\n' + notification_msg
+            suffix_msg = f"\n\nA full-length YouTube playlist URL should look like this:\n\n{FULL_LENGTH_PLAYLIST_URL}"
+            notification_msg = notification_msg + suffix_msg
+            send_message(chat_id, notification_msg, token)
+        return
+    
+    elif msg_lower == 'set_voice_clone_sample': 
+        current_clone_sample = user_parameters.get('voice_clone_sample', '')
+        if current_clone_sample: prompt = f"Your already have a voice clone sample, however, you can always overwrite it by sending a new voice message."
+        else: prompt = f"You don't have a voice clone sample yet, please click `Start Recording` to get started."
+        return callback_record_voice_clone_sample(chat_id, prompt, token)
+
+
+    elif msg_lower == 'set_daily_story_voice':
+        elevenlabs_api_key = user_parameters.get('elevenlabs_api_key', '')
+        if not elevenlabs_api_key: return send_message(chat_id, "You need to set your /elevenlabs_api_key first before using this function.", token)
+        current_clone_sample = user_parameters.get('voice_clone_sample', '')
+        if not current_clone_sample: return callback_record_voice_clone_sample(chat_id, "You have set up your /elevenlabs_api_key already, but you don't have a voice clone sample yet, please click `Start Recording` to get started.", token, message_id)
+        prompt = "Do you want to use your own voice to read your daily story or use the default AI voice?"
+        return callback_daily_story_voice_on_and_off(chat_id, prompt, token)
+
+
+    elif msg_lower == 'set_daily_story_voice':
+        elevenlabs_api_key = user_parameters.get('elevenlabs_api_key', '')
+        if not elevenlabs_api_key: return send_message(chat_id, "You need to set your /elevenlabs_api_key first before using this function.", token)
+        current_clone_sample = user_parameters.get('voice_clone_sample', '')
+        if not current_clone_sample: return callback_record_voice_clone_sample(chat_id, "You have set up your /elevenlabs_api_key already, but you don't have a voice clone sample yet, please click `Start Recording` to get started.", token, message_id)
+        prompt = "Do you want to use your own voice to read your daily story or use the default AI voice?"
+        return callback_daily_story_voice_on_and_off(chat_id, prompt, token)
 
     elif msg_lower == 'clone_audio_trick': return callback_text_audio(chat_id, commands_dict.get("clone_audio_trick"), token, engine, user_parameters)
 
@@ -410,11 +449,13 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         return set_elevenlabs_api_key_for_chat_id(chat_id, user_elevenlabs_api_key, message_id, engine, token, user_parameters)
 
     elif msg_lower in ['session_exit', 'session exit', 'exit session', 'exit_session', 'exitsession']: return exit_session_name(chat_id, engine)
+    
     elif msg_lower in ['default_voice', 'default voice', 'set default voice', 'set_default_voice']: return callback_default_voice_gender_setup(chat_id, token)
 
     elif msg_lower.startswith('premium_'): return send_message(chat_id, f"We changed the way to /activate your telegram account. Now please submit the email address you used to subscribe the paid service on {ENSPIRING_DOT_AI} to unlock the full features of the bot.", token)
     
     elif msg_lower in ['mother_language', 'set_mother_language', 'set mother language']: return callback_mother_language_setup(chat_id, token)
+    
     elif msg_lower in ['cartoon_style', 'set_cartoon_style', 'set cartoon style']: return callback_cartoon_style_setup(chat_id, token)
 
     elif msg_lower.startswith('ghost_admin_api_key '):

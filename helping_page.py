@@ -503,6 +503,20 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "session_generate_content": "In this session, I can generate various content for you based on your prompts. Images, audios, prompts, tweets, news, journals, stories, etc.",
         "session_help": "Click to get help on how to use the this bot.",
         "session_exit": "Click to exit the current session and return to normal chat.",
+        "set_creator_configurations": "Click to set the configurations for the creator mode.",
+        "set_daily_words_list_on": "Click to turn on the daily words list feature.",
+        "set_openai_api_key": "Click to set your OpenAI API Key.",
+        "set_elevenlabs_api_key": "Click to set your Elevenlabs API Key.",
+        "set_google_spreadsheet": "Click to set your Google Spreadsheet.",
+        "set_news_keywords": "Click to set the keywords for the news generation.",
+        "set_mother_language": "Click to set your mother language.",
+        "set_cartoon_style": "Click to set the cartoon style for the image generation.",
+        "set_twitter_handle": "Click to set your Twitter handle.",
+        "set_daily_story_voice": "Click to set the voice for the daily story.",
+        "set_voice_clone_sample": "Click to set the voice clone sample.",
+        "set_youtube_playlist": "Click to set your YouTube playlist.",
+        "set_default_audio_gender": "Click to set the default audio gender for your generated audio.",
+
     }
 
     commands_dict_string = '\n'.join([f"{key}: {value}" for key, value in commands_dict.items()])
@@ -3646,8 +3660,8 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
 
 def callback_translate_page_to_post(chat_id, prompt, post_id, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
     page_public_inline_keyboard_dict = {'Publish as Post in English': f'creator_page_to_post_{post_id}'}
-    mother_language = user_parameters.get('mother_language', '')
-    if mother_language: page_public_inline_keyboard_dict.update({f'Publish as Post in {mother_language}': f'creator_translate_to_post_{post_id}'})
+    mother_language = user_parameters.get('mother_language', 'English') or 'English'
+    if mother_language != 'English': page_public_inline_keyboard_dict.update({f'Publish as Post in {mother_language}': f'creator_translate_to_post_{post_id}'})
     button_per_list = 1
     if user_parameters.get('twitter_handle', ''):  page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, message_id = '', is_markdown = True)

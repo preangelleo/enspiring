@@ -641,12 +641,7 @@ def handle_message(update, token, engine = engine):
             file_path = download_file(doc_file_id, doc_folder, doc_name, token)
             if not file_path or not os.path.isfile(file_path): return send_message(chat_id, f"Failed to download the file. File name: \n\n{doc_name}", token)
 
-            caption = caption if caption else update_message.get('caption', '')
-            if not caption: caption = user_parameters.get('mother_language', '')
-            if not caption: 
-                callback_mother_language_setup(chat_id, token)
-                return send_message(chat_id, "If you send any documents without any specific caption for a targeting language, then you have to setup your `mother_language` first.", token)
-            caption = caption.lower()
+            caption = caption if caption else update_message.get('caption') or 'no_caption'
         
             _, file_extension = os.path.splitext(file_path)
             file_extension = file_extension.lower()
@@ -684,11 +679,31 @@ def handle_message(update, token, engine = engine):
 
             elif doc_name in ["proof_of_reading.txt", "proof_reading.txt", "proof_read.txt"] or caption in ['proof_of_reading', 'proof of reading', 'proof_read', 'proof_reading']:
                 print(f"Proof of reading file path: {file_path}")
-                if not user_ranking >= 4 and not openai_api_key: reply = f"Sorry, this function is only for /Diamond or above users but your current /tier is /{tier}\n\n{commands_dict.get('get_premium')}"
+                if not user_ranking >= 4 and not openai_api_key: reply = f"Sorry, this function is only for /Platinum or above users but your current /tier is /{tier}\n\n{commands_dict.get('get_premium')}"
                 else:
                     send_message(chat_id, "Proof reading file received, the AI assistant is proofreading the content, please wait 1~2 minutes...", token)
                     with open(file_path, "r", encoding="utf-8") as file: text_content = file.read()
                     return proof_read_ghost(text_content, chat_id, BLOG_POST_ADMIN_API_KEY, BLOG_POST_API_URL, engine, token, ASSISTANT_MAIN_MODEL, message_id + 1, user_parameters)
+
+
+            elif doc_name in ["generate_audio.txt", "generate_audio_male.txt", "generate_audio_female.txt"] or caption in ['generate_audio_female', 'generate_audio_male', 'generate_audio']:
+                if not user_ranking >= 3 and not openai_api_key: reply = f"Sorry, this function is only for /Gold or above users but your current /tier is /{tier}\n\n{commands_dict.get('get_premium')}"
+                else:
+                    send_message(chat_id, "Audio generation file received, the AI assistant is generating the audio, please wait 1~2 minutes...", token)
+                    with open(file_path, "r", encoding="utf-8") as file: text_content = file.read()
+
+                    language_code = identify_language(text_content)
+                    language_name = REVERSED_LANGUAGE_DICT.get(language_code, 'english') or 'english'
+                    send_message(chat_id, f"Detected language: {language_name.capitalize()}, generating...", token, message_id + 1)
+
+                    default_audio_gender = user_parameters.get('default_audio_gender') or 'male'
+                    voice_name = SUPPORTED_LANGUAGE_AZURE_VOICE_DICT.get(language_name, {}).get(default_audio_gender, [AZURE_VOICE_MALE]) or [AZURE_VOICE_MALE]
+                    voice_name = voice_name[0]
+                    audio_file = azure_text_to_speech(text_content, audio_file_path, service_region = "westus", speech_key = AZURE_VOICE_API_KEY_1, voice_name = voice_name, engine = engine, token = token, user_parameters = user_parameters)
+                    
+                    if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
+                    else: return send_message(chat_id, "Failed to generate the audio, please try again later.", token)
+
 
             elif file_extension in ASSISTANT_FILE_SEARCH_SUPPORTED_FILES: 
                 if user_ranking < 4: return send_message(chat_id, f"Sorry, this function is only for /Platinum or above users, and your /tier is /{tier}\n\n{commands_dict.get('get_premium')}", token)
