@@ -3776,11 +3776,15 @@ def callback_text_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_TOKEN, e
         }
         df = pd.DataFrame(data_dict)
         df.to_sql('markdown_text', con=conn, if_exists='append', index=False)
+
     button_per_list = 2
     text_audioinline_keyboard_dict = {'Play Audio': f'markdown_audio_{hash_md5}'}
-    mother_language = user_parameters.get('mother_language', '')
-    if mother_language != 'English': text_audioinline_keyboard_dict[f'Translate to {mother_language.capitalize()}'] = f'translate_to_{mother_language}_{hash_md5}'
-    else: text_audioinline_keyboard_dict['Set Mother Language'] = 'set_mother_language'
+
+    if user_parameters:
+        mother_language = user_parameters.get('mother_language', '')
+        if mother_language != 'English': text_audioinline_keyboard_dict[f'Translate to {mother_language.capitalize()}'] = f'translate_to_{mother_language}_{hash_md5}'
+        else: text_audioinline_keyboard_dict['Set Mother Language'] = 'set_mother_language'
+
     return send_or_edit_inline_keyboard(prompt, text_audioinline_keyboard_dict, chat_id, button_per_list, token, message_id)
 
 

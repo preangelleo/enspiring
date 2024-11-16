@@ -979,7 +979,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
                 if os.path.isfile(output_file): return send_audio_from_file(chat_id, output_file, token)
 
         elif msg_lower.startswith('group_message'):
-            group_message = msg.split('group_message', 1)[1].strip()
+            group_message = msg.replace('group_message', '').strip()
             return group_tg_message(group_message, token, engine)
 
         elif msg_lower in ['set_menu', 'set menu', 'setmenu']: return set_telegram_menu(token, chat_id)
