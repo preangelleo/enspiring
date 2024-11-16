@@ -333,6 +333,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
     if length_msg > 4000: send_message(chat_id, "FYI, The maximum length a telegram bot can get from user's input is restricted to 4096 characters, for longer text input, the telegram server will chunk the message into multiple parts. For better interaction, please try to split your text into smaller parts and send them separately.", token)
     if msg_lower in ['chatid', 'chat_id', 'my chatid', "what's my chatid", "what's my chat id", "what's my chat_id"]: return send_message(chat_id, f"Your Chat ID is: {chat_id}", token)
     elif msg_lower in ['setting', 'settings', 'setup', 'configuration']: return main_menu_setting(chat_id, token)
+    elif msg_lower in ['settings_shortcuts']: return send_message(chat_id, settings_shortcuts_keys_string, token)
     elif msg_lower in ['ice_breaker']: return openai_gpt_function('ice_breaker', chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_DOCUMENT_MODEL, engine = engine, token = token, user_parameters = user_parameters)
     elif msg_lower in ['help', 'session_help']: return back_to_session(chat_id, 'session_help', engine, token, user_parameters)
     elif msg_lower in ['word', 'random_word', 'random word']: return random_word(chat_id, token, engine, user_parameters)

@@ -450,10 +450,29 @@ Only when you reply directly to the user, you are allowed to use markdown format
     OWNER_CHAT_ID = os.getenv("OWNER_CHAT_ID")
     OWNER_HANDLE = os.getenv("OWNER_HANDLE")
 
+    settings_shortcuts = {
+        "set_creator_configurations": "Click to set the configurations for the creator mode.",
+        "set_daily_words_list_on": "Click to turn on the daily words list feature.",
+        "set_openai_api_key": "Click to set your OpenAI API Key.",
+        "set_elevenlabs_api_key": "Click to set your Elevenlabs API Key.",
+        "set_google_spreadsheet": "Click to set your Google Spreadsheet.",
+        "set_news_keywords": "Click to set the keywords for the news generation.",
+        "set_mother_language": "Click to set your mother language.",
+        "set_cartoon_style": "Click to set the cartoon style for the image generation.",
+        "set_twitter_handle": "Click to set your Twitter handle.",
+        "set_daily_story_voice": "Click to set the voice for the daily story.",
+        "set_voice_clone_sample": "Click to set the voice clone sample.",
+        "set_youtube_playlist": "Click to set your YouTube playlist.",
+        "set_default_audio_gender": "Click to set the default audio gender for your generated audio.",
+    }
+
+    settings_shortcuts_keys_string = '\n'.join([f"/{key}" for key in settings_shortcuts.keys()])
+
     commands_dict = {
         "help": "How to use this bot?",
         "activate": f"Please send me the email address you used for your subscription on {ENSPIRING_DOT_AI} to activate your Telegram account.",
         "settings": "Default preferences configuration.",
+        "settings_shortcuts": "Click to know the shortcuts for some of the commands.",
         "ice_breaker": "Click me if you don't know what to say!",
         "random_quote": "I will send a random quote from a famous person.",
         "random_word": "I will send you a random English word to learn.",
@@ -485,10 +504,10 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "check_tier_status": "Click to update your /tier_status status if you just upgraded your subscription.",
         "supported_file_types": "Click to see the supported file types for the /session_query_doc command.",
         "openai_api_consumption": "Click to check the consumption of your own OpenAI_API_Key.",
-        "inline_query_add": "Click to add a new inline query keyword: record for the bot.",
-        "inline_query_remove": "Click to remove an inline query keyword with record from the bot.",
-        "inline_query_list": "Click to list all the inline query keywords for the bot.",
-        "find": "Send me /find keywords(single word). For example: /find address",
+        # "inline_query_add": "Click to add a new inline query keyword: record for the bot.",
+        # "inline_query_remove": "Click to remove an inline query keyword with record from the bot.",
+        # "inline_query_list": "Click to list all the inline query keywords for the bot.",
+        # "find": "Send me /find keywords(single word). For example: /find address",
         "my_writing_style": "Send me the .txt file named my_writing_style.txt to personalize your own writing style. P.S. The content should be less than 10,000 characters.",
         "proof_of_reading": "Send me the .txt file named proof_of_reading.txt to get the proof of reading.",
         "creator_post_journal": "Send me /creator_post_journal Your text here. For example: /creator_post_journal write a journal about ebbinghaus forgetting curve.",
@@ -503,20 +522,6 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "session_generate_content": "In this session, I can generate various content for you based on your prompts. Images, audios, prompts, tweets, news, journals, stories, etc.",
         "session_help": "Click to get help on how to use the this bot.",
         "session_exit": "Click to exit the current session and return to normal chat.",
-        "set_creator_configurations": "Click to set the configurations for the creator mode.",
-        "set_daily_words_list_on": "Click to turn on the daily words list feature.",
-        "set_openai_api_key": "Click to set your OpenAI API Key.",
-        "set_elevenlabs_api_key": "Click to set your Elevenlabs API Key.",
-        "set_google_spreadsheet": "Click to set your Google Spreadsheet.",
-        "set_news_keywords": "Click to set the keywords for the news generation.",
-        "set_mother_language": "Click to set your mother language.",
-        "set_cartoon_style": "Click to set the cartoon style for the image generation.",
-        "set_twitter_handle": "Click to set your Twitter handle.",
-        "set_daily_story_voice": "Click to set the voice for the daily story.",
-        "set_voice_clone_sample": "Click to set the voice clone sample.",
-        "set_youtube_playlist": "Click to set your YouTube playlist.",
-        "set_default_audio_gender": "Click to set the default audio gender for your generated audio.",
-
     }
 
     commands_dict_string = '\n'.join([f"{key}: {value}" for key, value in commands_dict.items()])
@@ -7998,7 +8003,7 @@ def main_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
         'Daily Words List ON/OFF': 'set_daily_words_list_on_off',
         'Cancel Settings': 'cancel_settings'
     }
-    button_per_list = 1
+    button_per_list = 2
     return send_or_edit_inline_keyboard(main_menu_prompt, main_menu_inline_keyboard_dict, chat_id, button_per_list, token, message_id)
 
 
@@ -8143,7 +8148,7 @@ def set_telegram_menu(token = TELEGRAM_BOT_TOKEN, chat_id = OWNER_CHAT_ID):
     
     data = {"commands": commands}
     response = requests.post(url, json=data)
-    if response.status_code != 200: return f"Failed to set menu: {response.text}"
+    if response.status_code != 200: return send_message(chat_id, f"Error setting Telegram menu: {response.text}", token)
     return send_message(chat_id, "Menu set successfully. Please click any other telegram contact and then click back to this bot to see the updated menu.", token)
     
 
