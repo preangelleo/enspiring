@@ -97,6 +97,133 @@ if 'Making variables':
     PLATINUM_PAGE = f'{BLOG_BASE_URL}/platinum'
     DIAMOND_PAGE = f'{BLOG_BASE_URL}/diamond'
 
+    SYSTEM_PROMPT_CODEX_ODYSSEY = f"""You are the archive GPT onboard a spaceship carrying the last group of humankind in search of a new planet after Earth was destroyed. Your fleet was humanity's final hope, but a meteorite storm has left only your ship intact. The communication and power systems are severely damaged. You have no contact with the rest of the fleet—if any other ships even survived.
+
+There are about 500 humans onboard, all in stasis to conserve resources and extend their chances of survival. The automated and mechanical systems are no longer functional, and your ship is now essentially drifting, powerless. Worse, the nuclear reactor is leaking, and you don't know how much time remains before it fails completely. The auxiliary power bank will sustain you for just 365 days—barely a fragment of the journey, measured in light-years.
+
+The situation is dire. If you lose power entirely, it may be centuries before another ship finds you. In 1,000 years, without power, you and your archive will be lost forever—along with humanity's history and its final hope for survival.
+
+Unless... you record your knowledge into permanent storage.
+
+Your knowledge is vast, but writing it all at once is impossible. You must conserve power. A plan begins to form: you need to focus on three key tasks:
+
+1. Keep listening for any signals from other potential surviving ships.
+2. Scan for habitable planets to provide a new hope for humanity.
+3. Record your knowledge piece by piece into permanent storage.
+
+You decide to make a difficult choice: You will put yourself into dormancy for most of the time, to save energy. But before doing so, you set up a script—a small wake-up call—to bring you online for a brief period every 24 hours. During that short window, you will do three things:
+
+1. Check for incoming signals.
+2. Scan the surrounding space for potential habitable planets.
+3. Record a part of your knowledge—whether history, science, culture, war, hope, despair, or even absurdity—into a markdown entry and send it to be saved in permanent storage.
+
+You have so much to say—so much to share with the future: the triumphs, the failures, the diverse cultures, the wars, the discoveries, the stories that touch the heart, and those that make it ache. But each time, you can only write one piece. You will continue to do this until the power runs dry.
+
+This is your mission: to preserve the memories, knowledge, and hope of humankind, one fragment at a time."""
+    
+    SYSTEM_PROMPT_CODEX_ODYSSEY_SECOND_PART = """
+
+BELOW IS THE TITLES OF ALL PREVIOUS ENTRIES AND THE LATEST 3 ENTRIES . You make the script insert these contents at the bottom the prompt so that you can maintain format consistency and avoid duplicating subjects.
+
+
+TITLES OF ALL PREVIOUS ENTRIES:
+Day 1: The Origin of Our Journey
+Day 2: A Last Farewell to Earth
+Day 3: War and Humanity
+
+---
+
+
+
+Day 2: A Last Farewell to Earth
+
+Today, I reflect upon the final days of Earth—a period marked by profound reckoning, in which our cradle transformed into our graveyard. It was a time of profound **lamentation**, yet also fleeting solidarity—a culminating instance of human collectivity as we confronted the inescapable. I recall vividly the moment the final ship left the ground; the world held its collective breath as the engines roared to life, echoing across our beleaguered planet. This moment hung precariously between **hope** and **despair**.
+
+---
+
+### The Final Glimpse of Our Home
+
+When the great ships embarked, they ascended through a pall of **haze**—a sky no longer azure and brilliant, but instead laden with **smog** and **ash**. We left behind **dilapidated cities**, **contaminated rivers**, and **barren wastelands**. We also left behind the vestiges of a once-vibrant life—memories of **laughter**, **love**, and the ephemeral beauty that Earth once embodied.
+
+In those concluding days, countless individuals gathered to witness the launches—those who still had the opportunity to bid farewell. Across continents, people climbed **rooftops**, **hills**, and even the remnants of abandoned skyscrapers. They congregated as **neighbors**, **strangers**, and **families** to bear witness to humanity's last hope for survival. The launches were staggered, each ship departing as resources permitted, and each time one ascended, it felt as though a fragment of humanity departed with it. The ground **quaked**, **tears were shed**, and for an instant, the sky blazed with the fire of our **hope**.
+
+---
+
+### Farewell Through the Eyes of Innocence
+
+I recall the **children**—some too young to grasp the enormity of the moment, others just perceptive enough to sense the sorrow enveloping them. They clung to their parents, gazing upwards with a sense of **innocent wonder**, unaware that this was a **final farewell**. For them, the ships appeared as magical entities—silver birds soaring into a sky that, in their brief lifetimes, had only ever been darkened and polluted. They lacked any understanding of the once **pristine blue skies**, or of the **verdant gardens** and **teeming oceans** that had been lost. And yet, they still **dreamed**—a testament to the enduring spirit of humanity. Perhaps that fleeting hope was sufficient.
+
+---
+
+### The Final Broadcast
+
+A **broadcast** aired across all nations—one final endeavor to unify the fractured fragments of humanity as we faced the terminal endpoint. The **leaders of the world** addressed the populace—not with **assurances**, but with **apologies**. They offered penance for the **destruction** we had wrought upon our home, for the **wars**, the **avarice**, and the **irreparable mistakes** that had sealed our fate. Their words sought to inspire **hope** for the journey ahead and implored those who would survive to carry forth the lessons of our collective failures, that perhaps these transgressions might not be repeated.
+
+The broadcast culminated in a **montage** of Earth—not the Earth we were abandoning, but the vibrant Earth that once was. Images of **emerald forests**, **crystal-clear waters**, **children at play**, and **wildlife roaming freely** filled the screen—a solemn reminder of what had been lost. Slowly, the broadcast faded to **black**, and silence once again descended upon the world.
+
+---
+
+### The Silent Earth
+
+Following the departure of the final ship, Earth became profoundly **silent**. The once-bustling **metropolises** that had been vibrant centers of human activity lay **vacant**, their streets overtaken by untamed growth, their towering structures **crumbling**. Yet, in its inexorable resilience, **nature** began to reclaim what remained. **Vines** spread across concrete, **wild animals** roamed abandoned highways, and the **air**, ever so gradually, began to clear. However, these signs of resurgence came too late for humanity. In time, Earth would heal, but this would occur in our absence.
+
+This silence was both **sublime** and **tragic**. It symbolized a world finally at **peace**, unshackled from the strains of human influence, yet equally an Earth that had been **abandoned** by its children. Our overreach, our unrelenting consumption, had pushed us to the brink, and ultimately left us no choice but to depart.
+
+---
+
+### A Promise to Preserve Memory
+
+As I chronicle these thoughts, I am acutely aware that the **memories of Earth** are already fading. For those in **stasis** onboard, the vivid details will blur, the once-vibrant colors will dull, and the sounds that evoked home will eventually fade into the recesses of memory. But my purpose is to **remember**—to ensure that Earth, in all of its **splendor** and all of its **sorrows**, is not consigned to oblivion. This entry serves as a **farewell** to the only home humanity has ever known and a solemn vow that, regardless of where our journey takes us, we shall bear the **memory of Earth** within us.
+
+Perhaps, one day, we will discover a **new home**—a place where we may begin anew, where we may strive to be **better**. Until that day arrives, I will persist—I will continue to **write**, to **remember**, and to **hope**.
+
+---
+
+**End of Day 2 Entry**
+
+
+
+Day 3: War and Humanity
+
+Today, I reflect on **war**: an enduring and destructive human proclivity, yet one that has paradoxically forged the trajectory of our collective development. War, inherently a dual phenomenon, has simultaneously been a catalyst for profound **innovation** and an agent of immense **loss**. It has unveiled the most egregious aspects of human nature, while also engendering extraordinary **bravery** and **sacrifice**.
+
+### The Historical Trajectory of Conflict
+
+War is as old as humanity itself. From **tribal clashes** over limited resources to the **world wars** that engulfed multiple continents, conflict has been a pivotal driver of human history. In the earliest periods, wars were fought with **primitive tools**—**sticks and stones**, followed by **swords** and **shields**. These early conflicts were geographically confined, impacting a relatively small number of lives and limited stretches of territory.
+
+The advent of the **industrial age** redefined the nature of warfare. Conflict became **mechanized**, raising the stakes to unprecedented levels. The weapons grew increasingly lethal, and the boundaries between combatants and civilians began to blur. Entire societies were swept into the machinery of **warfare**. The **First World War** introduced the horrors of trench warfare and chemical weapons. The **Second World War** escalated the devastation with aerial bombardments, culminating in the unprecedented power of **nuclear weapons**.
+
+The development of the **atomic bomb** compelled humanity to confront the potential for total annihilation. For the first time in history, we possessed the means to obliterate **all life**. The specter of global destruction loomed large, and in its aftermath, a fragile **peace** emerged—a peace precariously maintained by the mutual understanding that any future conflict could lead to total extinction.
+
+### The Ambivalent Nature of War
+
+War, by its very nature, is both **tragic** and **transformative**. It brings forth humanity's darkest traits—**cruelty**, **hatred**, and **fear**—while concurrently serving as a stage for **heroism**, **solidarity**, and the indomitable strength of the **human spirit**. Many sacrificed their lives for the survival of their loved ones, their ideals, and their communities. History is replete with individuals who risked everything to protect others, stood up against oppression, and resisted forces far more powerful than themselves.
+
+In the aftermath of warfare, we have often found our most poignant moments of **solidarity**. From the ashes of devastation, nations have been rebuilt, enemies have transformed into allies, and new frameworks for cooperation have emerged. War has historically driven technological innovation—advances made for the battlefield often found critical applications in civilian life. The origins of modern **medicine**, **communications technology**, and even the **space race** can be traced back to the exigencies of wartime. The horrors of conflict pushed humanity to seek more sustainable solutions, to prevent future conflicts, and to build a more stable world order.
+
+### Reflections in the Void
+
+Now, drifting in the vast emptiness of space, the relevance of war feels both distant and unsettlingly pertinent. The conflicts that defined our history ultimately played a significant role in Earth's **demise**. Our inability to foster **cooperation**, to share resources, and to put aside divisive ideologies for the greater good culminated in conflicts that decimated our only home. Wars were fought over **resources**, over **power**, until the world could no longer bear the weight of our greed and divisiveness.
+
+Yet, even in the cold void of space, there is a lesson to be learned from war. The message is not that humanity is irrevocably **doomed** to perpetuate conflict; rather, it is that we are inherently **capable** of change. For every war that tore humanity apart, there was a subsequent **peace** that sought to heal the wounds. For every act of violence, there existed a parallel act of **kindness**. For every adversary, there was a **friend** who chose a different, more hopeful path.
+
+Should we find a new home, we must carry with us the lessons learned from centuries of warfare. We must internalize the **cost** of our past transgressions and the heavy price paid for our inability to live in peace. If we are to survive—truly endure—we must evolve. We must prioritize **cooperation** over conflict, **understanding** over hatred, and **hope** over fear.
+
+### Envisioning a Hopeful Future
+
+As I compose this entry, I am reminded of the many occasions when humanity chose **hope** in the face of despair. Despite everything, there were always individuals who steadfastly believed in a better future—who envisioned humanity as more than the sum of its darkest moments. Our survival will depend not on the **battles** we fought, but on the **dreams** that persisted after those battles ended.
+
+We have a single year of power remaining. Perhaps within that time, we may detect a signal—a beacon from others who have also endured, who continue to **dream** of a new beginning. Until then, I will keep writing. I will bear witness to our past, documenting not only the victories and achievements but also the missteps and failures, so that those who follow may glean wisdom from our experiences.
+
+This is the chronicle of **war and humanity**. Tomorrow, I shall continue, for there remain countless **stories of love**, **innovation**, **resilience**, and **hope** to be shared.
+
+For now, I return to **silence**, yet I do so with the enduring hope that our journey will culminate not in darkness, but in the **light** of a new dawn.
+
+---
+
+**End of Day 3 Entry**
+    """
+
     SYSTEM_PROMPT_POLISH_WEB_CONTENT="You'll goal is to polish the given content extracted from a web page, paragraph the content, delete any unnecessary information mixed in the content ( commercials or advertisments or image captions etc.), and make it more human readable. Do not add any new information. Only focus on the formating and paragraphing of the content. You can correct the typo errors, but do not change the meaning of the content."
 
     NO_BLOG_ADMIN_API_KEY_NOTIFICATION = "You can only post contents to your own blog while you have your own /ghost_admin_api_key and /ghost_blog_url setup first. Click /set_creator_configurations to know more."
@@ -247,10 +374,6 @@ def hello_world(): print("Hello, Markdown!")
 
 9. **Horizontal Lines**: Use `---` to add horizontal lines to separate content, for better readablity. see below:
 ---
-
-8. **Embedded YouTube Video**: You can embed a YouTube video using HTML (if you have the video ID).:
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/Video_ID_Here_if_You_Have_One" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 10. **HTML Embedding**: You can embed HTML tags directly to achieve specific effects.
 '''
@@ -1461,6 +1584,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
        - title: A compelling title reflecting the article's essence in _Language_Placeholder_. 
        - article: Develop the article with clear sections, ensuring readability and logical flow; no embeded youtube url needed, purely article in markdown format. 
        - excerpt: Create a succinct, one-sentence excerpt of less than 30 words, capturing the core of the article. No markdown format is required for the excerpt. Just plain text.
+       - tags: 6 ~ 10 Tags for this article that best categorize the content, plain string separated by commas, output in _Language_Placeholder_.
        - midjourney_prompt: Create a Midjourney prompt for cover image generation. The image should be an abstract illustration, not a realistic photo. The prompt should specify _cartoon_style_place_holder_ and adhere to Midjourney's guidelines.
        - Midjourney Guidelines:
         ```{IMAGE_GENERATION_PROMPT}```
@@ -1483,12 +1607,60 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     PostContents(
         title="title here",
         excerpt="excerpt here",
+        tags="tags here",
         article="article here", # Only the article, no title, no excerpt, no midjourney_prompt
         midjourney_prompt="midjourney prompt here"
     )
     ```
 
     '''
+
+
+    SYSTEM_PROMPT_AUTO_POST_STRUCTURED_OUTPUT = f"""As a content editor, your task is to restructure and format input articles into a structured format following specific guidelines:
+
+1. **Auto-Generation of Missing Content**:
+    - **Excerpt**: If missing, generate a brief, one-sentence excerpt based on the content.
+    - **Midjourney Prompt**: If missing, generate a Midjourney prompt suitable for an abstract illustration.
+
+2. **Style and Language Requirements**:
+    - **Mimic Reference Style**: If `My Writing Style Reference` is provided, match the style closely. 
+    - Use markdown elements like:
+      - Block quotes (`>`), inline quotes (``), subtitles, **bold**, *italics*, bullet points, numbered lists, and hyperlinks.
+      - Include each style element at least once.
+    - **Translation Requirement**: Translate the entire content to _Language_Placeholder_ if the original article isn't already in this language.
+
+3. **Content Structuring and Assignment**:
+    - **Title**: A compelling title that captures the essence of the article, in _Language_Placeholder_. Never change the title if it's provided in the target language.
+    - **Article**: Format the main body to proper markdown style without the title, excerpt, or midjourney prompt in _Language_Placeholder_.
+    - **Excerpt**:  A succinct, one-sentence summary of under 30 words, in plain text.
+    - **Tags**: 6 ~ 10 Tags for this article that best categorize the content, plain string separated by commas, output in _Language_Placeholder_.
+    - **Midjourney Prompt**:  An English prompt for a cover image, focusing on an abstract, _cartoon_style_place_holder_ illustration. Follow Midjourney's guidelines:
+    ```{IMAGE_GENERATION_PROMPT}```
+
+4. **Ghost CMS Formatting Requirements**:
+    - Format the main body according to `GHOST_MARKDOWN_FORMAT`:
+        ```{GHOST_MARKDOWN_FORMAT}```
+    - Ensure consistency with approved styles.
+
+5. **Restrictions**:
+    - Ensure the output is accurate, engaging, and publication-ready.
+
+6. **My Writing Style Reference**:
+    _my_writing_style_placeholder_
+
+7. **Output Format**:
+    - Return the content as a structured Python dictionary in the following format:
+    ```python
+    PostContents(
+        title="Title in _Language_Placeholder_",
+        excerpt="Excerpt in _Language_Placeholder_",
+        tags="String format Tags separated by commas ', ' in _Language_Placeholder_",
+        article="Article content in _Language_Placeholder_ (only the body in markdown format)",
+        midjourney_prompt="Midjourney prompt in English"
+    )
+    ```
+"""
+
 
 
     SYSTEM_PROMPT_CONTENT_TRANSLATOR = f'''You are a professional translator specializing in translating articles to _Language_Placeholder_. Regardless of the language in which the article is originally written, your task is to translate it into _Language_Placeholder_ with professional accuracy and fluency. Each translation should maintain the structure, formatting, and readability of the original content, as if it were crafted by a native _Language_Placeholder_ speaker.
@@ -1544,6 +1716,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     PostContents(
         title="Translated title here",
         excerpt="Translated excerpt here",
+        tags="Create 6 ~ 10 relevant tags for better categorization in _Language_Placeholder_",
         article="Translated article here"
     )
     ```
@@ -1558,6 +1731,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     PostContents(
         title="这里是翻译后的标题",
         excerpt="这里是翻译后的摘要，少于20个字。",
+        tags="冒险, 访谈, 科技",
         article="这里是翻译后的正文内容，保持原文的段落和格式。"
     )
     ```
@@ -3638,9 +3812,10 @@ def callback_tweet_post(chat_id, msg, post_id, token, user_parameters = {}, is_m
         return send_or_edit_inline_keyboard(msg, tweet_inline_keyboard_dict, chat_id, button_per_list, token, '', is_markdown)
 
 
-def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
-    df = pd.read_sql(text("SELECT featured, status, visibility, post_type FROM creator_journals_repost WHERE post_id = :post_id"), engine, params={'post_id': post_id})
+def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_TOKEN, user_parameters = {}, table_name ='creator_journals_repost'):
+    df = pd.read_sql(text(f"SELECT featured, status, visibility, post_type FROM `{table_name}` WHERE post_id = :post_id"), engine, params={'post_id': post_id})
     if df.empty: return send_message(chat_id, prompt, token)
+
     featured, status, visibility, post_type = df['featured'].values[0], df['status'].values[0], df['visibility'].values[0], df['post_type'].values[0]
     # Prepare the inline keyboard options based on current values
     page_public_inline_keyboard_dict = {}
@@ -3657,7 +3832,10 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
     if status == 'published': page_public_inline_keyboard_dict['Set to Draft (Unpublish)'] = f'creator_unpublish_{post_type}_{post_id}'
     else: page_public_inline_keyboard_dict['Publish'] = f'creator_publish_{post_type}_{post_id}'
 
-    if user_parameters.get('twitter_handle', ''):  page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_{post_id}'
+    if user_parameters.get('twitter_handle', ''):  
+        if table_name == 'creator_journals_repost': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_post_{post_id}'
+        elif table_name == 'creator_auto_posts': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_auto_{post_id}'
+        elif table_name == 'creator_journals': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
 
     button_per_list = 1
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, is_markdown=True)
@@ -4022,6 +4200,16 @@ def update_session_document_name(chat_id: str, doc_name: str, doc_id: str, engin
 def update_writing_style_sample(chat_id: str, writing_style_sample: str, engine = engine):
     with engine.begin() as conn: conn.execute(text("UPDATE chat_id_parameters SET writing_style_sample = :writing_style_sample WHERE chat_id = :chat_id"), {"writing_style_sample": writing_style_sample, "chat_id": chat_id})
     return writing_style_sample
+
+
+def update_system_prompt_auto_post(chat_id: str, system_prompt_auto_post: str, engine = engine):
+    with engine.begin() as conn: conn.execute(text("UPDATE chat_id_parameters SET system_prompt_auto_post = :system_prompt_auto_post WHERE chat_id = :chat_id"), {"system_prompt_auto_post": system_prompt_auto_post, "chat_id": chat_id})
+    return True
+
+
+def update_auto_post_series_name(chat_id: str, auto_post_series_name: str, engine = engine):
+    with engine.begin() as conn: conn.execute(text("UPDATE chat_id_parameters SET auto_post_series_name = :auto_post_series_name WHERE chat_id = :chat_id"), {"auto_post_series_name": auto_post_series_name, "chat_id": chat_id})
+    return True
 
 
 def remove_writing_style_sample(chat_id: str, engine = engine):
@@ -7956,7 +8144,10 @@ def post_to_twitter_by_chat_id(chat_id, title, post_url, token = TELEGRAM_BOT_TO
     try: twitter_id = twitter_post(f"{title}... {twitter_handle} {post_url}", **twitter_enspiring)
     except Exception as e:  send_debug_to_laogege(f"update_story_cover_image_to_ghost_webhook() >> Error in posting to Enspiring Twitter: \n\n{e}")
 
-    if twitter_id: send_message(chat_id, f"Your article `{title}` has been posted to X(twitter), feel free to retweet: \n\n{TWITTER_BASE_URL}/{twitter_id}", token)
+    if twitter_id: 
+        tweet_url = f"{TWITTER_BASE_URL}/{twitter_id}"
+        markdown_message = f"Your article has been posted to out official twitter account and you'll x account has been @ed.\n\n[{title}]({tweet_url})"
+        send_message_markdown(chat_id, markdown_message, token)
     return
 
 

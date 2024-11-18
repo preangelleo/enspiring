@@ -95,7 +95,8 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if not post_id: return send_message(chat_id, "Failed to get the post ID, please try again later.", token)
 
         if callback_data.startswith('tweet_creator_page_'): table_name = 'creator_journals'
-        elif callback_data.startswith('tweet_creator_'): table_name = 'creator_journals_repost'
+        elif callback_data.startswith('tweet_creator_auto_'): table_name = 'creator_auto_posts'
+        elif callback_data.startswith('tweet_creator_post_'): table_name = 'creator_journals_repost'
         else: table_name = 'image_midjourney'
             
         df = pd.read_sql(text(f"SELECT title, custom_excerpt, post_url FROM `{table_name}` WHERE post_id = :post_id;"), engine, params={"post_id": post_id})
@@ -202,11 +203,11 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
 
     elif callback_data.startswith('creator_translate_to_post_'): 
         post_id = callback_data.replace('creator_translate_to_post_', '').strip()
-        return repost_journal_to_ghost_creator(chat_id, post_id, engine, token, ASSISTANT_MAIN_MODEL, user_parameters, need_translate = True)
+        return repost_journal_to_ghost_creator(chat_id, post_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, user_parameters, need_translate = True)
 
     elif callback_data.startswith('creator_page_to_post_'):
         post_id = callback_data.replace('creator_page_to_post_', '').strip()
-        return repost_journal_to_ghost_creator(chat_id, post_id, engine, token, ASSISTANT_MAIN_MODEL, user_parameters, need_translate = False)
+        return repost_journal_to_ghost_creator(chat_id, post_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, user_parameters, need_translate = False)
     
     elif callback_data.startswith('creator_default_image_model_'):
         image_model = callback_data.replace('creator_default_image_model_', '').strip().capitalize()
@@ -260,7 +261,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         prompt = f"Here's my conversation history with AI assistant about my document `{session_document_name}`, now please generate a journal based on our conversation. Try to include all of the information we discussed, you can reorganize, rephrase, and add more details to make it more like a journal. But do not drop any important information from my conversation history.\n\n"
         prompt += conversation_history
         with engine.begin() as conn: conn.execute(text("UPDATE query_conversation_record SET creator_posted = 1 WHERE chat_id = :chat_id AND session_name = :session_name AND session_document_id = :session_document_id;"), {"chat_id": chat_id, "session_name": session_name, "session_document_id": session_document_id})
-        return post_journal_to_ghost_creator(prompt, chat_id, engine, token, model = ASSISTANT_MAIN_MODEL, message_id = '', user_parameters = user_parameters, is_journal=True)
+        return post_journal_to_ghost_creator(prompt, chat_id, engine, token, model = ASSISTANT_MAIN_MODEL_BEST, message_id = '', user_parameters = user_parameters, is_journal=True)
 
     # Main menu setting functions below
 
@@ -647,6 +648,7 @@ def handle_message(update, token, engine = engine):
             file_extension = file_extension.lower()
             print(f"File extension: {file_extension}")
 
+
             if file_extension in ['.json']:
                 if doc_name in ['google_sheet_credentials.json', 'google_sheet_credentials.json.json']:
                     new_folder = os.path.join(output_dir, 'google_sheet_credentials')
@@ -657,6 +659,7 @@ def handle_message(update, token, engine = engine):
                     set_credentials_json_for_chat_id(chat_id, new_file_path, engine)
                     return send_message(chat_id, "Google Sheet credentials file has been set successfully.", token)
                 return send_message(chat_id, ".json file is received, but the name is not correct, if you want to setup your google sreadsheet credentials, please name the file as `google_sheet_credentials.json`", token)
+
 
             elif doc_name in ["creator_post_journal.txt", "creator_post_news.txt", "creator_post_story.txt", "journal.txt", "story.txt", "news.txt"] or caption in ['creator_post_journal', 'creator_post_news', 'creator_post_story', 'news', 'journal', 'story']:
                 if user_ranking < 5: return send_message(chat_id, f"Sorry, this function is only for /Diamond or above users, and your /tier is /{tier}\n\n{commands_dict.get('get_premium')}", token)
@@ -675,6 +678,14 @@ def handle_message(update, token, engine = engine):
                     writing_style_sample = writing_style_sample[:10000]
                     user_parameters['writing_style_sample'] = update_writing_style_sample(chat_id, writing_style_sample, engine)
                     return send_message(chat_id, f"Your writing style file has been received. Now you can use \n/creator_post_journal \n/creator_post_news \n/creator_post_story\n/creator_post_youtube\ncommands to generate content based on your writing style.", token)
+
+
+            elif doc_name in ["system_prompt_auto_post.txt"] or caption in ['system_prompt_auto_post']:
+                if not user_ranking >= 5 and not openai_api_key: reply = f"Sorry, this function is only for /Diamond or above users but your current /tier is /{tier}\n\n{commands_dict.get('get_premium')}"
+                else:
+                    with open(file_path, "r", encoding="utf-8") as file: system_prompt_auto_post = file.read()
+                    user_parameters['system_prompt_auto_post'] = update_system_prompt_auto_post(chat_id, system_prompt_auto_post, engine)
+                    return send_message(chat_id, f"Your system prompt for you auto post has been updated. Now please send \n\n/creator_auto_post series_name \n\nto get it started.", token)
 
 
             elif doc_name in ["proof_of_reading.txt", "proof_reading.txt", "proof_read.txt"] or caption in ['proof_of_reading', 'proof of reading', 'proof_read', 'proof_reading']:
@@ -727,6 +738,7 @@ def handle_message(update, token, engine = engine):
                 with open(txt_file_path, 'w') as f: f.write(sub_content)
                 return send_document_from_file(chat_id, txt_file_path, "Here is the text file extracted from the subtitle file.", token)
 
+
             elif caption in COUNT_COMMANDS:
                 words_len, character_len = 0, 0
                 txt_file_path = ''
@@ -735,6 +747,7 @@ def handle_message(update, token, engine = engine):
                     words_len, character_len, text = count_words(file_path)
                     if words_len and character_len: reply = send_message(chat_id, f"Your file contains {words_len} words and {character_len} characters.", token)
                     if txt_file_path: reply = send_document_from_file(chat_id, txt_file_path, "Here is the text file extracted from the document.", token)
+            
             
             elif caption in REVISE_COMMANDS:
                 if file_extension in ['.txt']: 

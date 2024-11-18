@@ -19,4 +19,9 @@ if __name__ == "__main__":
 
     if datetime.now().hour == 18: words_list_of_today(engine = engine, token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"))
 
-    if datetime.now().hour == 0: get_latest_videos_from_channel(CHANNEL_ID_DICT, 5, engine)
+    if datetime.now().hour == 0: 
+        try: auto_blog_post(DOLLARPLUS_CHAT_ID, engine, os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), ASSISTANT_MAIN_MODEL_BEST, user_parameters_realtime(DOLLARPLUS_CHAT_ID, engine))
+        except Exception as e: send_debug_to_laogege(f"auto_blog_post() >> {e}")
+
+        try: get_latest_videos_from_channel(CHANNEL_ID_DICT, 5, engine)
+        except Exception as e: send_debug_to_laogege(f"get_latest_videos_from_channel() >> {e}")

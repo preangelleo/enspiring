@@ -824,6 +824,15 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         return post_journal_to_ghost(prompt, chat_id, img_url, admin_api_key = BLOG_POST_ADMIN_API_KEY, ghost_url = BLOG_POST_API_URL, engine = engine, token = token, model = ASSISTANT_MAIN_MODEL, message_id = message_id, user_parameters = user_parameters)
 
 
+    elif msg_lower.startswith('creator_auto_post'):
+        if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Diamond or higher tier to use this function.\n\n/get_premium", token)
+        series_name = msg.replace('creator_auto_post', '').strip()
+        if not series_name: return send_message(chat_id, f"You have to set a series name for you autonomous posting job. Example: /creator_auto_post The Eternal Drift", token)
+        else: 
+            if update_auto_post_series_name(chat_id, series_name, engine): return send_message(chat_id, f"Your autonomous posting series name has been set to: \n\n{series_name}", token)
+            else: return send_message(chat_id, f"Failed to set the series name for your autonomous posting job. Please try again later.", token)
+            
+
     elif msg_lower.startswith('creator_post_journal'):
         if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Diamond or higher tier to use this function.\n\n/get_premium", token)
         prompt = msg.replace('creator_post_journal', '').strip()
