@@ -528,11 +528,6 @@ def handle_message(update, token, engine = engine):
     this_month = str(datetime.now().month)
     user_spend_this_month = user_parameters.get(this_month) or 0
 
-    # if CURRENT_SYSTEM == 'mac': 
-    #     # print(f"user_parameters: {json.dumps(user_parameters, indent=4)}")
-    #     print(f"Received message: {json.dumps(update, indent=4)}")
-    #     print(f"User ranking: {user_ranking} | {tier} | {user_spend_this_month} usd spent (remaining: {round(consumption_limit - user_spend_this_month, 2)} usd)")
-
     if user_spend_this_month >= consumption_limit: return send_message(chat_id, f"Sorry, you have reached the monthly limit of conversation, your /tier is /{tier}, the total cost of calling OpenAI GPT model of your /{tier} should  be less than {int(consumption_limit)} usd per month. However, you've already cost {round(user_spend_this_month, 2)} usd this month. Please consider upgrading your /tier to get higher limit.\n/get_premium", token)
 
     msg_text = update_message.get('text', '')
@@ -572,7 +567,7 @@ def handle_message(update, token, engine = engine):
             return callback_whitelist_blacklist_setup(chat_id, alert_to_owner, token)
         
         elif msg_text in ['/setting', '/settings', 'setup']: return main_menu_setting(chat_id, token)
-        elif msg_text.startswith("/"): return dealing_tg_command(msg_text[1:], chat_id, user_parameters, token, engine, message_id)
+        elif msg_text.startswith("/"): return dealing_tg_command(msg_text[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = False)
         elif msg_text.lower().startswith("http"): return dealing_tg_command_http(msg_text.split()[0], chat_id, user_parameters, token, engine, message_id)
         
         elif len(msg_text) <= 20 and msg_text.lower() not in GREETINGS_OR_ANSWERS and msg_text.lower() in WORDS_SET: return check_word_in_vocabulary(msg_text, chat_id, engine, token, user_parameters)
@@ -662,8 +657,8 @@ def handle_message(update, token, engine = engine):
 
 
             elif doc_name in ["creator_post_journal.txt", "creator_post_news.txt", "creator_post_story.txt", "journal.txt", "story.txt", "news.txt"] or caption in ['creator_post_journal', 'creator_post_news', 'creator_post_story', 'news', 'journal', 'story']:
-                if user_ranking < 5: return send_message(chat_id, f"Sorry, this function is only for /Diamond or above users, and your /tier is /{tier}\n\n{commands_dict.get('get_premium')}", token)
                 with open(file_path, 'r') as f: prompt_text = f.read()
+                
                 if doc_name in ["creator_post_journal.txt", "journal.txt"] or caption in ['creator_post_journal', 'journal']: post_journal_to_ghost_creator_front(prompt_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, '', user_parameters, is_journal = True)
                 elif doc_name in ["creator_post_story.txt", "story.txt"] or caption in ['creator_post_story', 'story']: post_journal_to_ghost_creator_front(prompt_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, '', user_parameters, is_journal = False)
                 elif doc_name in ["creator_post_news.txt""news.txt"] or caption in ['creator_post_news', 'news']: post_news_to_ghost_creator_front(prompt_text, chat_id, engine, token, user_parameters)
@@ -1045,7 +1040,15 @@ def handle_message(update, token, engine = engine):
 
     if reply and reply == 'DONE': return
 
-    return openai_gpt_function(msg_text, chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_DOCUMENT_MODEL, engine = engine, token = token, user_parameters = user_parameters)
+    response = openai_gpt_chat(SYSTEM_PROMPT_COMMAND_CORRECTION, msg_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
+    if response == 'no': 
+        reply = openai_gpt_chat(f"Try your best to respond the user's prompt", msg_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
+        return send_message(chat_id, reply, token)
+    
+    elif response.startswith('/'): 
+        send_message(chat_id, f"Your command has been corrected by {ASSISTANT_MAIN_MODEL}: \n\n{response}", token)
+        return dealing_tg_command(response[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = True)
+    else: return openai_gpt_function(msg_text, chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_MAIN_MODEL, engine = engine, token = token, user_parameters = user_parameters)
 
 
 def handle_update(update, token, engine = engine):

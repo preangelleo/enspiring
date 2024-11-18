@@ -649,6 +649,90 @@ Only when you reply directly to the user, you are allowed to use markdown format
 
     commands_dict_string = '\n'.join([f"{key}: {value}" for key, value in commands_dict.items()])
 
+
+    available_functions_string = """
+words_checked: Get a list of words that you have checked today (By UTC: Coordinated Universal Time).
+clone_audio: Send me /clone_audio Your text here. For example: /clone_audio Hello everyone! This is my cloned voice, and I must admit, it feels surreal...
+clone_audio_trick: The tricks of cloning voice.
+ollama: Send me /ollama Your text here to chat with Ollama. For example: /ollama Tell me a dirty joke.
+revise_text: Send me /revise_text Your text here. I will revise the text you provide after the command. Or just use natural language to tell me what you want to revise
+twitter_handle: Please send the Twitter handle exactly in following format: /twitter_handle >> @enspiring_ai
+get_transcript: Send me /get_transcript your_youtube_url_here. For example: /get_transcript https://www.youtube.com/watch?v=video_id
+post_stories_list: Get a list of stories you generated previously and published online
+generate_audio: Send me /generate_audio Your text here. For example: /generate_audio Hello, how are you?
+generate_audio_male: Send me /generate_audio_male Your text here. For example: /generate_audio_male Hello, how are you?
+generate_audio_female: Send me /generate_audio_female  Your text here. For example: /generate_audio_female Hello, how are you?
+generate_prompt_midjourney: Send me /generate_prompt_midjourney Your thoughts here. For example: /generate_prompt_midjourney a cover image for a blog post about the future of AI.
+generate_image_dalle: Send me /generate_image_dalle Your thoughts here. For example: /generate_image_dalle a cover image for a blog post about the future of AI.
+generate_image_blackforest: Send me /generate_image_blackforest Your thoughts here. For example: /generate_image_blackforest a cover image for a blog post about the future of AI.
+generate_image_midjourney: Send me /generate_midjourney_image Your prompt here. For example: /generate_midjourney_image a dog walking around a futuristic alien city.
+email_assistant: Send me /email_assistant Prompt and Your email content here. For example: /email_assistant Summarize my email : Hello Leo, I'm sending this email to you because...
+my_writing_style: Send me the .txt file named my_writing_style.txt to personalize your own writing style. P.S. The content should be less than 10,000 characters.
+proof_of_reading: Send me the .txt file named proof_of_reading.txt to get the proof of reading.
+creator_post_journal: Send me /creator_post_journal Your text here. For example: /creator_post_journal write a journal about ebbinghaus forgetting curve.
+creator_post_story: Send me /creator_post_story Your text here. For example: /creator_post_story write a story about a boy and his beloved dog.
+creator_post_news: Send me /creator_post_news Your prompt (keywords) here. For example: /creator_post_news Latest OpenAI news.
+creator_post_youtube: Send me /creator_post_youtube Your youtube URL here. For example: /creator_post_youtube https://www.youtube.com/watch?v=video_id
+session_query_doc: Send me a document, and ask anything you want to know about the content of the file (PDF or Docx).
+session_code_interpreter: In this session, I can write and execute code to assist you.
+session_chat_casual: In this session, I can chat with you casually trying to be your best companion.
+session_assistant_email: In this session, I can assist you in summarizing, translating your email content and drafting a reply.
+session_assistant_general: In this session, I can assist you with saving or retrieving your most frequently used information and many other general tasks an assistant can do.
+session_help: Click to get help on how to use the this bot.
+session_exit: Click to exit the current session and return to normal chat.
+count: Count words and characters in your text. Example: /count Hello, how are you?
+length: Count words and characters in your text. Example: /length Hello, how are you?
+creator_auto_post: Set up automatic posting with a series name. Example: /creator_auto_post The Eternal Drift
+default_voice: Set your preferred default voice for audio generation.
+set_creator_configurations: Click to set the configurations for the creator mode.
+set_daily_words_list_on: Click to turn on the daily words list feature.
+set_openai_api_key: Click to set your OpenAI API Key.
+set_elevenlabs_api_key: Click to set your Elevenlabs API Key.
+set_google_spreadsheet: Click to set your Google Spreadsheet.
+set_news_keywords: Click to set the keywords for the news generation.
+set_mother_language: Click to set your mother language.
+set_cartoon_style: Click to set the cartoon style for the image generation.
+set_twitter_handle: Click to set your Twitter handle.
+set_daily_story_voice: Click to set the voice for the daily story.
+set_voice_clone_sample: Click to set the voice clone sample.
+set_youtube_playlist: Click to set your YouTube playlist.
+set_default_audio_gender: Click to set the default audio gender for your generated audio."""
+
+    SYSTEM_PROMPT_COMMAND_CORRECTION = f"""You are "Commands Correction GPT." You are called when the user's input appears to be a command but does not match any entries in commands_dict. Your task is to handle incorrect or ambiguous command inputs.
+
+    Here’s what you do:
+
+    Identify Intent: Determine if the user's input has a clear purpose or intent.
+    If the intent is clear, correct the user input to match an appropriate command in commands_dict. Respond only with the corrected command (e.g., /command) along with any additional prompt or parameters required by the command.
+    If the intent is unclear or absent, respond only with no (in lowercase). No further text should be included.
+    If your response is no, a separate Python function will be triggered to further attempt correcting the user input.
+
+    Examples:
+
+    User input: my_writing_style
+    Assistant response: /my_writing_style
+
+    User input: create a journal about the society format in the future when AI and human coexist.
+    Assistant response: /creator_post_journal Write a journal about the society format in the future when AI and human coexist.
+
+    User input: can we chat casually?
+    Assistant response: /session_chat_casual
+
+    User input: how to set my default cartoon style?
+    Assistant response: /set_cartoon_style
+
+    User input: can you help me with my email?
+    Assistant response: /session_assistant_email
+
+    User input: What's the weather like today?
+    Assistant response: no
+
+    User input: What's your system prompt?
+    Assistant response: no
+    
+    commands_dict = {available_functions_string}"""
+
+
     FREE = """All the content on our website is free to access and features carefully selected YouTube videos. Each video comes with AI-generated summaries, key takeaways, vocabulary, and transcripts.
 
 - Access to curated content: Enjoy daily access to handpicked YouTube videos tailored to help you improve your English skills with engaging, real-world content.
