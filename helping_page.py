@@ -1831,6 +1831,15 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
         'access_token_secret': TWITTER_ACCESS_TOKEN_SECRET
     }
 
+
+    twitter_codex = {
+        'bearer_token': os.getenv("TWITTER_BEARER_TOKEN_CODEX"),
+        'consumer_key': os.getenv("TWITTER_API_KEY_CODEX"),
+        'consumer_secret': os.getenv("TWITTER_API_KEY_SECRET_CODEX"),
+        'access_token': os.getenv("TWITTER_ACCESS_TOKEN_CODEX"),
+        'access_token_secret': os.getenv("TWITTER_ACCESS_TOKEN_SECRET_CODEX")
+    }
+
     FISH_AUDIO_API_KEY = os.getenv("FISH_AUDIO_API_KEY")
     FISH_AUDIO_ID_LEOWANG_CHINESE = os.getenv("FISH_AUDIO_ID_LEOWANG_CHINESE")
     FISH_AUDIO_ID_DANLI_CHINESE = os.getenv("FISH_AUDIO_ID_DANLI_CHINESE")
@@ -2786,7 +2795,6 @@ def get_users_parameters_by_email(email_address, engine = engine):
             user_parameters = {'status': user_status, 'name': user_name, 'tier': user_tier, 'ranking': user_ranking, 'email': email_address, 'chat_id': chat_id, 'mother_language': mother_language, 'text_character_limit': text_character_limit, 'daily_video_limit': daily_video_limit, 'video_duration_limit': video_duration_limit, 'is_whitelist': is_whitelist, 'openai_api_key': openai_api_key, 'session_thread_id': session_thread_id}
 
     return user_parameters
-
 
 
 def twitter_post(content, **kwargs):
@@ -8136,18 +8144,19 @@ def create_activation_webhook_button(email_address, chat_id, user_name, token, e
 
 def post_to_twitter_by_chat_id(chat_id, title, post_url, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
-    
-    twitter_handle = user_parameters.get('twitter_handle', '')
-    if not twitter_handle: return
-
     twitter_id = ''
-    try: twitter_id = twitter_post(f"{title}... {twitter_handle} {post_url}", **twitter_enspiring)
-    except Exception as e:  send_debug_to_laogege(f"update_story_cover_image_to_ghost_webhook() >> Error in posting to Enspiring Twitter: \n\n{e}")
+
+    if chat_id == DOLLARPLUS_CHAT_ID: twitter_id = twitter_post(f"{title} {post_url}", **twitter_codex)
+    else:
+        twitter_handle = user_parameters.get('twitter_handle', '')
+        if not twitter_handle: return
+        twitter_id = twitter_post(f"{title}... {twitter_handle} {post_url}", **twitter_enspiring)
 
     if twitter_id: 
         tweet_url = f"{TWITTER_BASE_URL}/{twitter_id}"
         markdown_message = f"Your article has been posted to out official twitter account and you'll x account has been @ed.\n\n[{title}]({tweet_url})"
         send_message_markdown(chat_id, markdown_message, token)
+        
     return
 
 

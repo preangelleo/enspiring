@@ -5,5 +5,3 @@ chat_id = DOLLARPLUS_CHAT_ID
 model=ASSISTANT_MAIN_MODEL_BEST
 # user_parameters = user_parameters_realtime(chat_id, engine)
 
-# r = auto_blog_post(chat_id, engine, token, model, user_parameters)
-# print(r)
