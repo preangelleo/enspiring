@@ -2769,27 +2769,38 @@ def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, mo
     titles_list_string = 'TITLES OF ALL PREVIOUS ENTRIES:\n'
     try: df = pd.read_sql(text(f"SELECT title FROM creator_auto_posts WHERE chat_id = :chat_id AND series_name = :series_name ORDER BY updated_time DESC LIMIT 365"), engine, params={'chat_id': chat_id, 'series_name': series_name})
     except: df = pd.DataFrame()
-    if not df.empty: titles_list_string += '\n'.join(df['title'].tolist())
-    else: titles_list_string += 'There is no previous entries. You are generating the first entry.'
+    if not df.empty: 
+        yestoday_title = df['title'].values[0]
+        titles_list_string += '\n'.join(df['title'].tolist())
+    else: 
+        yestoday_title = ''
+        titles_list_string += 'There is no previous entries. You are generating the first entry.'
+
+    print(f"titles_list_string: {titles_list_string}")
 
     day_count = df.shape[0] + 1
 
     # get the latest 3 posts from creator_auto_posts with the same chat_id, series_name
-    try: df = pd.read_sql(text(f"SELECT first_response, updated_time FROM creator_auto_posts WHERE chat_id = :chat_id AND series_name = :series_name ORDER BY updated_time DESC LIMIT 3"), engine, params={'chat_id': chat_id, 'series_name': series_name})
+    try: df = pd.read_sql(text(f"SELECT generated_journal, updated_time FROM creator_auto_posts WHERE chat_id = :chat_id AND series_name = :series_name ORDER BY updated_time DESC LIMIT 3"), engine, params={'chat_id': chat_id, 'series_name': series_name})
     except: df = pd.DataFrame()
     if not df.empty:
         # reorder do ascending order
         df = df.sort_values(by='updated_time', ascending=True)
-        first_response = df['first_response'].tolist()
-        first_response = '\n\n'.join(first_response)
-    else: first_response = ''
+        generated_journal = df['generated_journal'].tolist()
+        generated_journal = '\n\n'.join(generated_journal)
+    else: generated_journal = ''
 
-    auto_prompt = f"BELOW IS THE TITLES OF ALL PREVIOUS ENTRIES AND THE LATEST 3 ENTRIESn.\n\n{titles_list_string}\n\n{first_response}"
+    auto_prompt = f"Today is Day {day_count}, below is the titles of all previous entires and the latest 3 entries."
+    if yestoday_title: auto_prompt = f"Title of yestory's entry: {yestoday_title}, follow yesterday's entry but start a new sector.\n\n" + auto_prompt
+    auto_prompt += f"\n\n{titles_list_string}\n\n{generated_journal}"
 
     starting_time = time.time()
     date_today = str(datetime.now().date())
 
     first_response = openai_gpt_chat(system_prompt_auto_post, auto_prompt, chat_id, model, user_parameters, token)
+    # model = "claude-3-5-sonnet-20241022"
+    # first_response = cloude_basic(auto_prompt, system_prompt = system_prompt_auto_post, model = model, api_key = CLOUDE_API_KEY)
+    print(f"first_response: {first_response}")
 
     my_writing_style = user_parameters.get('writing_style_sample') if user_parameters.get('writing_style_sample') else MY_WRITING_STYLE_AND_FORMATTING_STYLE_DEFAULT
     system_prompt_creator = SYSTEM_PROMPT_AUTO_POST_STRUCTURED_OUTPUT.replace('_Language_Placeholder_', post_language).replace('_cartoon_style_place_holder_', cartoon_style).replace('_my_writing_style_placeholder_', my_writing_style)
@@ -2798,8 +2809,10 @@ def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, mo
     if not event_dict: return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the youtube link you provided.")
 
     title = event_dict.get('title', '')
+    print(f"title: {title}")
     custom_excerpt = event_dict.get('excerpt', '') or ''
     generated_journal = event_dict.get('article', '')
+    print(f"generated_journal: {generated_journal}")
     midjourney_prompt = event_dict.get('midjourney_prompt', '')
     tags = event_dict.get('tags', '')
 
