@@ -1039,16 +1039,18 @@ def handle_message(update, token, engine = engine):
         
     elif video_file_id: reply = "I'm sorry, I can't process video files directly. Please send me a youtube link or youtube video ID instead."
 
-    if reply and reply == 'DONE': return
-
-    response = openai_gpt_chat(SYSTEM_PROMPT_COMMAND_CORRECTION, msg_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
-    if response.startswith('/'): 
-        send_message(chat_id, f"Your command has been corrected by {ASSISTANT_MAIN_MODEL}: \n{response}", token)
-        return dealing_tg_command(response[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = True)
-    elif response == 'no':  return openai_gpt_function(msg_text, chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_MAIN_MODEL, engine = engine, token = token, user_parameters = user_parameters)
+    if reply:
+        if reply == 'DONE': return
+        else : return send_message(chat_id, reply, token)
     else:
-        reply = openai_gpt_chat(f"Try your best to respond the user's prompt", msg_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
-        return send_message(chat_id, reply, token)
+        ai_response = openai_gpt_function(msg_text, chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_MAIN_MODEL, engine = engine, token = token, user_parameters = user_parameters)
+        if ai_response and isinstance(ai_response, dict): 
+            action = ai_response.get('action', '')
+            reply = ai_response.get('response', '')
+            if action == 'run_command': return dealing_tg_command(reply[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = True)
+            elif action == 'ask_gpt': reply = openai_gpt_chat(f"Try your best to assistant the user, follow user's prompt.", msg_text, chat_id, model = ASSISTANT_MAIN_MODEL, user_parameters = user_parameters, token = token) 
+            return send_message(chat_id, reply, token)
+
 
 
 def handle_update(update, token, engine = engine):

@@ -22,7 +22,7 @@ available_functions = {
 } 
 
 functions_with_audio_output = ['Vocabulary_Dictionary']
-functions_with_dict_output = ['youtube_id_download', 'commands_correction']
+functions_with_dict_output = ['Post_Youtube_as_a_Blog_Post', 'Commands_Correction']
 
 FUNCTIONS_TOOLS = [
     {
@@ -186,6 +186,7 @@ def openai_gpt_function(prompt: str, chat_id: str, tools = FUNCTIONS_TOOLS, mode
     if ai_response and ai_response != "DONE":
         if function_name in functions_with_audio_output: pass
         elif function_name in functions_with_dict_output:
+            if function_name == 'Commands_Correction': return ai_response
             if ai_response.get('URL'):
                 url = ai_response.get('URL')
                 words_list = ai_response.get('words_list') or ''
