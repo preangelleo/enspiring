@@ -599,6 +599,7 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "ice_breaker": "Click me if you don't know what to say!",
         "random_quote": "I will send a random quote from a famous person.",
         "random_word": "I will send you a random English word to learn.",
+        "translate_to_audio": "Send me /translate_to_audio Your text here. For example: /translate_to_audio Hello, how are you?",
         "random_image": "I will generate a image prompt and call black-forest-labs/flux-pro model to generate an image for you.",
         "words_checked": "Get a list of words that you have checked today (By UTC: Coordinated Universal Time).",
         "clone_audio": "Send me /clone_audio Your text here. For example: \n\n/clone_audio Hello everyone! This is my cloned voice, and I must admit, it feels surreal...",
@@ -658,6 +659,7 @@ ollama: Send me /ollama Your text here to chat with Ollama. For example: /ollama
 revise_text: Send me /revise_text Your text here. I will revise the text you provide after the command. Or just use natural language to tell me what you want to revise
 twitter_handle: Please send the Twitter handle exactly in following format: /twitter_handle >> @enspiring_ai
 get_transcript: Send me /get_transcript your_youtube_url_here. For example: /get_transcript https://www.youtube.com/watch?v=video_id
+translate_to_audio: Send me /translate_to_audio Your text here. For example: /translate_to_audio Hello, how are you?
 post_stories_list: Get a list of stories you generated previously and published online
 generate_audio: Send me /generate_audio Your text here. For example: /generate_audio Hello, how are you?
 generate_audio_male: Send me /generate_audio_male Your text here. For example: /generate_audio_male Hello, how are you?
@@ -720,6 +722,9 @@ set_default_audio_gender: Click to set the default audio gender for your generat
 
     User input: how to set my default cartoon style?
     Assistant response: /set_cartoon_style
+
+    User input: Translate this text to audio of my native language: "Hello, how are you?"
+    Assistant response: /translate_to_audio Hello, how are you?
 
     User input: can you help me with my email?
     Assistant response: /session_assistant_email
@@ -4330,7 +4335,7 @@ def back_to_session(chat_id: str, session_name: str, engine = engine, token = TE
 
 
 def exit_session_name(chat_id: str, engine = engine):
-    with engine.begin() as conn: conn.execute(text("UPDATE chat_id_parameters SET session_name = NULL WHERE chat_id = :chat_id"), {"chat_id": chat_id})
+    with engine.begin() as conn: conn.execute(text("UPDATE chat_id_parameters SET session_name = NULL, session_thread_id = NULL WHERE chat_id = :chat_id"), {"chat_id": chat_id})
     return send_message(chat_id, "You've exited the session successfully. Now you can chat with the bot like normal.")
 
 
@@ -4777,6 +4782,7 @@ def generate_story_voice(prompt: str, chat_id: str, audio_file_path = story_audi
     language_name_detected = REVERSED_LANGUAGE_DICT.get(language_code, 'english') or 'english'
     print(f"Language code: {language_code}, Language name: {language_name_detected}")
     if language_name_detected == 'chinese': language_name = 'chinese'
+    if not language_name: language_name = language_name_detected
 
     if language_name not in ['chinese',  'others']:
         if user_parameters.get('daily_story_voice') or user_parameters.get('default_clone_voice'):
@@ -4790,8 +4796,13 @@ def generate_story_voice(prompt: str, chat_id: str, audio_file_path = story_audi
                     except Exception as e: remove_elevenlabs_api_key_for_chat_id(chat_id, engine, token, msg = f"Your /elevenlabs_api_key has been removed because an error happend:\n\n{str(e)}\n\nSolve the problem and reset your /elevenlabs_api_key to continue using your own voice for your articles.")
 
     default_audio_gender = user_parameters.get('default_audio_gender') or 'male'
+
+    print(f"Default audio gender: {default_audio_gender}")
+    print(f"language_name: {language_name}")
+
     voice_name = SUPPORTED_LANGUAGE_AZURE_VOICE_DICT.get(language_name, {}).get(default_audio_gender, [AZURE_VOICE_MALE]) or [AZURE_VOICE_MALE]
     voice_name = voice_name[0]
+
     audio_file = azure_text_to_speech(prompt, audio_file_path, service_region = "westus", speech_key = AZURE_VOICE_API_KEY_1, voice_name = voice_name, engine = engine, token = token, user_parameters = user_parameters)
     return audio_file
 

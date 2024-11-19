@@ -721,6 +721,7 @@ def handle_message(update, token, engine = engine):
                     update_session_name(chat_id, session_name, engine)
                     send_message_markdown(chat_id, f"You just entered in `{session_name}` session. Now the AI assistant is summarizing the key points of this DOCUMENT:\n\n`{doc_name}`", token)
                     user_parameters['session_document_id'] = doc_id
+                    user_parameters['message_id'] += 1
                     return session_conversation(chat_id, DEFAULT_PROMPT_DOCUMENT, session_name, token, engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = user_parameters)
 
             elif file_extension not in TELEGRAM_SUPPORTED_FILES: return send_message(chat_id, f"Sorry, the file format is not supported so far. Talk to {OWNER_HANDLE} if you want to add this feature. Supported file types: \n\n{TOTAL_SUPPORTED_FILES_STRING}", token)
@@ -1041,14 +1042,13 @@ def handle_message(update, token, engine = engine):
     if reply and reply == 'DONE': return
 
     response = openai_gpt_chat(SYSTEM_PROMPT_COMMAND_CORRECTION, msg_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
-    if response == 'no': 
+    if response.startswith('/'): 
+        send_message(chat_id, f"Your command has been corrected by {ASSISTANT_MAIN_MODEL}: \n{response}", token)
+        return dealing_tg_command(response[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = True)
+    elif response == 'no':  return openai_gpt_function(msg_text, chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_MAIN_MODEL, engine = engine, token = token, user_parameters = user_parameters)
+    else:
         reply = openai_gpt_chat(f"Try your best to respond the user's prompt", msg_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
         return send_message(chat_id, reply, token)
-    
-    elif response.startswith('/'): 
-        send_message(chat_id, f"Your command has been corrected by {ASSISTANT_MAIN_MODEL}: \n\n{response}", token)
-        return dealing_tg_command(response[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = True)
-    else: return openai_gpt_function(msg_text, chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_MAIN_MODEL, engine = engine, token = token, user_parameters = user_parameters)
 
 
 def handle_update(update, token, engine = engine):

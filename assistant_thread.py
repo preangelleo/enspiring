@@ -5,16 +5,24 @@ DEFAULT_PROMPT_DOCUMENT = "Please summarize the key points of the DOCUMENT."
 DEFAULT_PROMPT_HTML = "First, answers the question, what's the title of this article in the latest given file_id. Then please summarize the content in English in one sentence, what's the essence the author trying to deliver. Lastly, summarize with the key writing style of the content."
 DEFAULT_CONTENT_MESSAGE_CREATION = "I have uploaded the DOCUMENT for you. I want you to help me to dive into the content of the DOCUMENT."
 
+def commands_correction(prompt, chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+    response = openai_gpt_chat(SYSTEM_PROMPT_COMMAND_CORRECTION, prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
+    if response.startswith('/'): return {'response': response, 'action': 'run_command', 'prefix': '/'}
+    elif response  == 'no': return {'response': prompt, 'action': 'ask_gpt'}
+    return {'response': response, 'action': 'send_response'}
+
+
 available_functions = {
     "Vocabulary_Dictionary": check_word_in_vocabulary,
     "Post_Youtube_as_a_Blog_Post": youtube_id_download,
     "Audio_Generation": function_call_audio_generation,
     "Answer_Questions_about_the_Platform": platform_questions_and_answers_helper,
     "Calculate_with_Wolframalpha": calculate_with_wolframalpha,
+    "Commands_Correction": commands_correction
 } 
 
 functions_with_audio_output = ['Vocabulary_Dictionary']
-functions_with_dict_output = ['youtube_id_download']
+functions_with_dict_output = ['youtube_id_download', 'commands_correction']
 
 FUNCTIONS_TOOLS = [
     {
@@ -30,7 +38,21 @@ FUNCTIONS_TOOLS = [
                 "required": ["prompt"]
             }
         }
-    },{
+    }, {
+        "type": "function",
+        "function": {
+            "name": "commands_correction",
+            "description": "This function will correct the user's incorrect commands to the right one. If the user's intent is clear from the prompt and there's indeed a command for this purpose.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string", "description": "The user's input prompt which looks like a command for the bot but the reason you see this message is that the command is not correct or it's not a command."},
+                },
+                "required": ["prompt"]
+            }
+        }
+    }, 
+    {
         "type": "function",
         "function": {
             "name": "Post_Youtube_as_a_Blog_Post",
@@ -327,7 +349,7 @@ def run_assistant(chat_id, query, session_name, engine = engine, model = ASSISTA
         elif session_name == 'session_query_doc': client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"file_id": user_parameters.get('session_document_id'), "tools": [{"type": tools_type}]}])
         elif session_name in ['session_creator', 'session_translator']: client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"file_id": user_parameters.get('writing_style_sample'), "tools": [{"type": tools_type}]}])
         else: client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query)
-        
+
         run = client.beta.threads.runs.create_and_poll(thread_id=session_thread_id, assistant_id=assistant_id, model=model)
         if run.status == 'completed': 
             messages = list(client.beta.threads.messages.list(thread_id=session_thread_id, run_id=run.id))
