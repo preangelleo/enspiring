@@ -612,38 +612,39 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "activate": f"Please send me the email address you used for your subscription on {ENSPIRING_DOT_AI} to activate your Telegram account.",
         "settings": "Default preferences configuration.",
         "settings_shortcuts": "Click to know the shortcuts for some of the commands.",
-        "ice_breaker": "Click me if you don't know what to say!",
+        # "ice_breaker": "Click me if you don't know what to say!",
+        "today_news": "Get the latest news summary.",
         "random_quote": "I will send a random quote from a famous person.",
         "random_word": "I will send you a random English word to learn.",
-        "translate_to_audio": "Send me /translate_to_audio Your text here. For example: /translate_to_audio Hello, how are you?",
         "random_image": "I will generate a image prompt and call black-forest-labs/flux-pro model to generate an image for you.",
+        "translate_to_audio": "Send me /translate_to_audio Your text here. For example: /translate_to_audio Hello, how are you?",
         "words_checked": "Get a list of words that you have checked today (By UTC: Coordinated Universal Time).",
         "clone_audio": "Send me /clone_audio Your text here. For example: \n\n/clone_audio Hello everyone! This is my cloned voice, and I must admit, it feels surreal...",
         "clone_audio_trick": "The tricks of cloning voice.",
-        "ollama": "Send me /ollama Your text here to chat with Ollama. For example: /ollama Tell me a dirty joke.",
+        # "ollama": "Send me /ollama Your text here to chat with Ollama. For example: /ollama Tell me a dirty joke.",
         "revise_text": "Send me /revise_text Your text here. I will revise the text you provide after the command. Or just use natural language to tell me what you want to revise",
-        "video_id": "Send me a Youtube video ID, I will generate a blog post about this youtube video just for you.",
-        "query_doc": f"Send me a document, and ask anything you want to know about the content of the file (PDF or Docx).",
+        # "video_id": "Send me a Youtube video ID, I will generate a blog post about this youtube video just for you.",
+        # "query_doc": f"Send me a document, and ask anything you want to know about the content of the file (PDF or Docx).",
         "twitter_handle": "Please send the Twitter handle exactly in below format:\n\n/twitter_handle >> @enspiring_ai",
         "get_transcript": "Send me /get_transcript your_youtube_url_here. For example: /get_transcript https://www.youtube.com/watch?v=video_id",
         "get_premium": f"Visit {PAGE_PREMIUM} to explore the benefits and get a premium account for access to more features. \n{OWNER_HANDLE}",
         "youtube_url": "Send me a Youtube video URL, I will generate a blog post for you about this youtube video.",
-        "today_news": "Get the latest news summary.",
         "post_story": "Send me /post_story Your text here. For example: /post_story A boy found a magic lamp and a genie appeared.",
         "post_news": "Send me /post_news Your prompt (keywords) here. For example: /post_news Latest OpenAI news",
         "post_journal": "Send me /post_journal Your text here. For example: /post_journal I want to write a journal about ebbinghaus forgetting curve.",
         "post_stories_list": "Get a list of stories you generated previously and published online",
         "generate_audio": "Send me /generate_audio Your text here. For example: /generate_audio Hello, how are you?",
         "generate_audio_male": "Send me /generate_audio_male Your text here. For example: /generate_audio_male Hello, how are you?",
+        "generate_system_prompt": "Send me your draft system prompt and I will optimize for you.",
         "generate_audio_female": "Send me /generate_audio_female  Your text here. For example: /generate_audio_female Hello, how are you?",
         "generate_prompt_midjourney": "Send me /generate_prompt_midjourney Your thoughts here. For example: /generate_prompt_midjourney a cover image for a blog post about the future of AI.",
         "generate_image_dalle": "Send me /generate_image_dalle Your thoughts here. For example: /generate_image_dalle a cover image for a blog post about the future of AI.",
         "generate_image_blackforest": "Send me /generate_image_blackforest Your thoughts here. For example: /generate_image_blackforest a cover image for a blog post about the future of AI.",
         "generate_image_midjourney": "Send me /generate_midjourney_image Your prompt here. For example: /generate_midjourney_image a dog walking around a futuristic alien city.",
-        "email_assistant": "Send me /email_assistant Prompt and Your email content here. For example: /email_assistant Summarize my email : Hello Leo, I'm sending this email to you because...",
-        "check_tier_status": "Click to update your /tier_status status if you just upgraded your subscription.",
-        "supported_file_types": "Click to see the supported file types for the /session_query_doc command.",
-        "openai_api_consumption": "Click to check the consumption of your own OpenAI_API_Key.",
+        # "email_assistant": "Send me /email_assistant Prompt and Your email content here. For example: /email_assistant Summarize my email : Hello Leo, I'm sending this email to you because...",
+        # "check_tier_status": "Click to update your /tier_status status if you just upgraded your subscription.",
+        # "supported_file_types": "Click to see the supported file types for the /session_query_doc command.",
+        # "openai_api_consumption": "Click to check the consumption of your own OpenAI_API_Key.",
         # "inline_query_add": "Click to add a new inline query keyword: record for the bot.",
         # "inline_query_remove": "Click to remove an inline query keyword with record from the bot.",
         # "inline_query_list": "Click to list all the inline query keywords for the bot.",
@@ -657,10 +658,10 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "session_translation": "In this session, I will translate whatever you send into your /target_language",
         "session_query_doc": f"Send me a document, and ask anything you want to know about the content of the file (PDF or Docx).",
         "session_code_interpreter": "In this session, I can write and execute code to assist you.",
-        "session_chat_casual": "In this session, I can chat with you casually trying to be your best companion.",
+        # "session_chat_casual": "In this session, I can chat with you casually trying to be your best companion.",
         "session_assistant_email": "In this session, I can assist you in summarizing, translating your email content and drafting a reply.",
-        "session_assistant_general": "In this session, I can assist you with saving or retrieving your most frequently used information and many other general tasks an assistant can do.",
-        "session_generate_content": "In this session, I can generate various content for you based on your prompts. Images, audios, prompts, tweets, news, journals, stories, etc.",
+        # "session_assistant_general": "In this session, I can assist you with saving or retrieving your most frequently used information and many other general tasks an assistant can do.",
+        # "session_generate_content": "In this session, I can generate various content for you based on your prompts. Images, audios, prompts, tweets, news, journals, stories, etc.",
         "session_help": "Click to get help on how to use the this bot.",
         "session_exit": "Click to exit the current session and return to normal chat.",
     }
@@ -3553,7 +3554,7 @@ def validate_playlist_id(playlist_id: str, youtube_client):
         return False
 
 
-def delete_message(chat_id, message_id = '', token = TELEGRAM_BOT_TOKEN):
+def delete_message(chat_id, message_id, token = TELEGRAM_BOT_TOKEN):
     if not message_id: return
     # Function to delete a message using the Telegram API
     url = f"https://api.telegram.org/bot{token}/deleteMessage"
@@ -3908,7 +3909,7 @@ def escape_markdown_for_ai_response(text):
     return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
 
 
-def send_or_edit_inline_keyboard(prompt, inline_keyboard_dict, chat_id, button_per_list = 2, token = TELEGRAM_BOT_TOKEN, message_id = '',  is_markdown = False):
+def send_or_edit_inline_keyboard(prompt, inline_keyboard_dict, chat_id, button_per_list = 2, token = TELEGRAM_BOT_TOKEN, message_id = 0,  is_markdown = False):
     logging.info(f"Sending/Editing inline keyboard with inline_keyboard_dict: {inline_keyboard_dict}")
     inline_keyboard_list = []
 
@@ -4239,7 +4240,7 @@ def callback_image_prompt_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_
     return send_or_edit_inline_keyboard(prompt, text_audioinline_keyboard_dict, chat_id, button_per_list, token, message_id)
 
 
-def callback_session_audio(chat_id: str, prompt: str, session_name: str, token = TELEGRAM_BOT_TOKEN, engine = engine, user_parameters = {}, message_id = '', is_markdown = True):
+def callback_session_audio(chat_id: str, prompt: str, session_name: str, token = TELEGRAM_BOT_TOKEN, engine = engine, user_parameters = {}, message_id = 0, is_markdown = True):
     hash_md5 = convert_text_to_md5(prompt)
     with engine.connect() as conn:
         # put chat_id, prompt, and hash md5 prompt into a dataframe and append to the table
@@ -4251,7 +4252,8 @@ def callback_session_audio(chat_id: str, prompt: str, session_name: str, token =
         df = pd.DataFrame(data_dict)
         df.to_sql('markdown_text', con=conn, if_exists='append', index=False)
     button_per_list = 2
-    text_audioinline_keyboard_dict = {'Play Audio': f'markdown_audio_{hash_md5}'}
+    text_audioinline_keyboard_dict = {'Play Audio': f'markdown_audio_{hash_md5}', 'Exit Session': 'exit_session'}
+
     mother_language = user_parameters.get('mother_language', '')
     if mother_language != 'English': text_audioinline_keyboard_dict[f'Translate to {mother_language.capitalize()}'] = f'translate_to_{mother_language}_{hash_md5}'
     else: text_audioinline_keyboard_dict['Set Mother Language'] = 'set_mother_language'
@@ -4261,7 +4263,6 @@ def callback_session_audio(chat_id: str, prompt: str, session_name: str, token =
     else: text_audioinline_keyboard_dict['Set Secondary Language'] = 'set_secondary_language'
 
     if session_name == 'session_query_doc' and all([user_parameters.get('ghost_admin_api_key', ''), user_parameters.get('ghost_api_url', '')]): text_audioinline_keyboard_dict['Generate Blog Post'] = 'creator_post_doc'
-    text_audioinline_keyboard_dict['Exit Session'] = 'exit_session'
     return send_or_edit_inline_keyboard(prompt, text_audioinline_keyboard_dict, chat_id, button_per_list, token, message_id, is_markdown)
 
 
@@ -4634,7 +4635,7 @@ def convert_markdown_to_telegram_v2(text):
     return text
 
 
-def send_message_markdown(chat_id, text, token=TELEGRAM_BOT_TOKEN, message_id=''):
+def send_message_markdown(chat_id, text, token=TELEGRAM_BOT_TOKEN, message_id=0):
     # If text is empty, provide a random happy emoji
     if not text:
         text = random.choice(emoji_list_happy)
@@ -6799,7 +6800,7 @@ def set_spreadsheet_id_for_chat_id(chat_id, spreadsheet_id, engine = engine):
     return spreadsheet_id
 
 
-def creator_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
+def creator_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = 0):
     creator_menu_prompt = "As our esteemed /Diamond member, you have the privilege to create and post AI generated contents to your own Ghost Blog. Before you start, you need to setup your preferences and required API keys. Once all settings are done, you'll enjoy the full power of this AI bot. \n\nP.S. Buttons with * are required settings."
     creator_menu_inline_keyboard_dict = {
         'Ghost API Key *': 'creator_ghost_blog_api_key',
@@ -6821,15 +6822,15 @@ def creator_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
     return send_or_edit_inline_keyboard(creator_menu_prompt, creator_menu_inline_keyboard_dict, chat_id, button_per_list, token, message_id)
 
 
-def set_ghost_admin_api_key(chat_id, ghost_admin_api_key, token, engine, message_id=''):
+def set_ghost_admin_api_key(chat_id, ghost_admin_api_key, token, engine, message_id=0):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET ghost_admin_api_key = :ghost_admin_api_key WHERE chat_id = :chat_id;"""), {"ghost_admin_api_key": ghost_admin_api_key, "chat_id": chat_id})
-    delete_message(chat_id, message_id, token)
+    if message_id: delete_message(chat_id, message_id, token)
     return send_message(chat_id, "Ghost admin API key has been updated successfully.", token)
 
 
-def set_ghost_blog_url(chat_id, ghost_api_url, token, engine, message_id=''):
+def set_ghost_blog_url(chat_id, ghost_api_url, token, engine, message_id=0):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET ghost_api_url = :ghost_api_url WHERE chat_id = :chat_id;"""), {"ghost_api_url": ghost_api_url, "chat_id": chat_id})
-    delete_message(chat_id, message_id, token)
+    if message_id: delete_message(chat_id, message_id, token)
     return send_message(chat_id, "Ghost blog URL has been updated successfully.", token)
     
 
@@ -6907,14 +6908,16 @@ def prompt_user_send_voice_clone_sample(chat_id, token=TELEGRAM_BOT_TOKEN, engin
 def set_elevenlabs_api_key_for_chat_id(chat_id, elevenlabs_api_key, message_id, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
     elevenlabs_api_key_current = user_parameters.get('elevenlabs_api_key', '') or 'none'
     if elevenlabs_api_key_current == elevenlabs_api_key: 
-        delete_message(chat_id, message_id, token)
-        return send_message(chat_id, "The ElevenLabs_API_Key you just provided is the same as the current one. No need to update.", token)
+        send_message(chat_id, "The ElevenLabs_API_Key you just provided is the same as the current one. No need to update.", token)
+        if message_id: delete_message(chat_id, message_id, token)
+        return 
 
     query = f"""UPDATE chat_id_parameters SET elevenlabs_api_key = :elevenlabs_api_key WHERE chat_id = :chat_id;"""
     with engine.begin() as conn: conn.execute(text(query), {"elevenlabs_api_key": elevenlabs_api_key, "chat_id": chat_id})
 
-    delete_message(chat_id, message_id, token)
-    return prompt_user_send_voice_clone_sample(chat_id, token, engine, is_redo=False, user_parameters=user_parameters)
+    prompt_user_send_voice_clone_sample(chat_id, token, engine, is_redo=False, user_parameters=user_parameters)
+    if message_id: delete_message(chat_id, message_id, token)
+    return 
 
 
 def set_default_news_keywords_for_chat_id(chat_id, default_news_keywords, message_id, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
@@ -6922,13 +6925,15 @@ def set_default_news_keywords_for_chat_id(chat_id, default_news_keywords, messag
     default_news_keywords_current = user_parameters.get('default_news_keywords', '') or 'none'
 
     if default_news_keywords_current == default_news_keywords:
-        delete_message(chat_id, message_id, token)
-        return send_message(chat_id, "The default news keywords you just provided are the same as the current ones. No need to update.", token)
+        send_message(chat_id, "The default news keywords you just provided are the same as the current ones. No need to update.", token)
+        if message_id: delete_message(chat_id, message_id, token)
+        return 
      
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET default_news_keywords = :default_news_keywords WHERE chat_id = :chat_id;"""), {"default_news_keywords": default_news_keywords, "chat_id": chat_id})
 
-    delete_message(chat_id, message_id, token)
-    return send_message(chat_id, f"Great, your default /today_news keywords have been updated to `{default_news_keywords}` successfully. Click /today_news now to try it out.", token)
+    send_message(chat_id, f"Great, your default /today_news keywords have been updated to `{default_news_keywords}` successfully. Click /today_news now to try it out.", token)
+    if message_id: delete_message(chat_id, message_id, token)
+    return 
 
 
 def validate_openai_api_key(openai_api_key, chat_id=LAOGEGE_CHAT_ID):
@@ -6961,14 +6966,16 @@ def set_openai_api_key_for_chat_id(chat_id, openai_api_key, message_id, engine =
         query = f"""SELECT openai_api_key FROM chat_id_parameters WHERE chat_id = :chat_id;"""
         df = pd.read_sql(text(query), conn, params={"chat_id": chat_id})
         if df.empty: 
-            delete_message(chat_id, message_id, token)
-            return send_message(chat_id, "You have to be at least a free subscriber of Enspiring.ai to use Your Own OpenAI_API_Key with this bot.", token)
+            send_message(chat_id, "You have to be at least a free subscriber of Enspiring.ai to use Your Own OpenAI_API_Key with this bot.", token)
+            if message_id: delete_message(chat_id, message_id, token)
+            return 
         else:
             openai_api_key_current = df['openai_api_key'].values[0]
             if openai_api_key_current:
                 if openai_api_key_current == openai_api_key: 
-                    delete_message(chat_id, message_id, token)
-                    return send_message(chat_id, "The OpenAI_API_Key you just provided is the same as the current one. No need to update.", token)
+                    send_message(chat_id, "The OpenAI_API_Key you just provided is the same as the current one. No need to update.", token)
+                    if message_id: delete_message(chat_id, message_id, token)
+                    return 
                 # If the API key is different, remove the old data
                 conn.execute(text("""DELETE FROM ai_assistants WHERE chat_id = :chat_id;"""), {"chat_id": chat_id})
                 data_removed = "All the data associated with your previous OpenAI_API_Key has been removed."
@@ -6979,7 +6986,7 @@ def set_openai_api_key_for_chat_id(chat_id, openai_api_key, message_id, engine =
     if data_removed: success_message = f"Your OpenAI_API_Key has been renewed successfully. {data_removed}"
     else: success_message = f"Your OpenAI_API_Key has been set successfully."
 
-    delete_message(chat_id, message_id, token)
+    if message_id: delete_message(chat_id, message_id, token)
     return send_message(chat_id, success_message, token)
 
 
@@ -8478,7 +8485,7 @@ def generate_midjourney_prompt(chat_id, user_prompt, token, engine, user_paramet
     return 'DONE'
 
 
-def main_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
+def main_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = 0):
     main_menu_prompt = "Please select from the menu, what you want to set:"
     main_menu_inline_keyboard_dict = {
         'Mother Language': 'set_mother_language',
@@ -8951,9 +8958,10 @@ def session_translation(prompt, chat_id, token = TELEGRAM_BOT_TOKEN, user_parame
         send_message_markdown(chat_id, f"Generating `{mother_language}` audio...", token)
         audio_file = generate_story_voice(translated_prompt, chat_id, audio_generated_dir, engine, token, user_parameters, mother_language)
         if audio_file and os.path.isfile(audio_file): 
+            send_audio_from_file(chat_id, audio_file, token)
             message_id += 1
             delete_message(chat_id, message_id, token)
-            return send_audio_from_file(chat_id, audio_file, token)
+            return 
         return send_message(chat_id, "Failed to generate audio file.", token)
     
     return

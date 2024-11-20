@@ -320,8 +320,6 @@ def handle_doc_upload(chat_id, pdf_file_path, engine = engine, user_parameters =
 
 # Run the Assistant for the user's query with status check
 def run_assistant(chat_id, query, session_name, engine = engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = {}, token = TELEGRAM_BOT_TOKEN, from_email = False):
-    print(f"run_assistant() >> Session Name: {session_name}")
-
     if session_name == 'session_code_interpreter': tools_type = 'code_interpreter'
     elif session_name in ['session_query_doc', 'session_help', 'session_creator', 'session_translator']: tools_type = 'file_search'
     elif session_name in ['session_generate_content', 'session_assistant_general']: tools_type = 'function'
@@ -330,20 +328,19 @@ def run_assistant(chat_id, query, session_name, engine = engine, model = ASSISTA
     if session_name in ['session_creator', 'session_translator']: session_thread_id = user_parameters.get('session_thread_id_creator') or create_thread_id(chat_id, engine, user_parameters, is_creator=True)
     else: session_thread_id = user_parameters.get('session_thread_id') or create_thread_id(chat_id, engine, user_parameters)
 
-
     if not session_thread_id: return f"Failed to get or create a thread for the `{session_name}` assistant."
-    print(f"run_assistant() >> Session Thread ID: {session_thread_id}")
 
     assistant_id = get_or_create_assistant_id(chat_id, session_name, engine, user_parameters, token)
     if not assistant_id: return f"Failed to get or create an assistant for the `{session_name}` assistant."
-    print(f"run_assistant() >> Assistant ID: {assistant_id}")
 
     openai_api_key = user_parameters.get('openai_api_key') or OPENAI_API_KEY
     client = OpenAI(api_key=openai_api_key)
 
+    message_id = user_parameters.get('message_id', 0) or 0
+
     try:
-        if not from_email: send_message_markdown(chat_id, f"`{session_name}` agent is thinking...", token)
-        elif chat_id: send_message_markdown(chat_id, f"`Email Assistant` is processing your email...", os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"))
+        if not from_email: send_message_markdown(chat_id, f"`{session_name}` agent is thinking...", token, message_id)
+        elif chat_id: send_message_markdown(chat_id, f"`Email Assistant` is processing your email...", os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), message_id)
 
         # Add the user's query to the thread
         if session_name == 'session_help': client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"file_id": SESSION_HELP_FILE_ID, "tools": [{"type": tools_type}]}])
@@ -369,7 +366,6 @@ def run_assistant(chat_id, query, session_name, engine = engine, model = ASSISTA
                 cost_input = model_price_input * prompt_tokens
                 cost_output = model_price_output * completion_tokens
                 cost_total = cost_input + cost_output
-                print(f"run_assistant() >> Prompt Total Cost: {round(cost_total, 4)} usd")
                 update_chat_id_monthly_consumption(chat_id, cost_total, engine)
             except Exception as e: print(f"Failed to calculate token usage. Error: {str(e)}")
             
@@ -410,8 +406,7 @@ def session_conversation(chat_id: str, query: dict, session_name: str, token = T
         if not response: return send_message(chat_id, f"Failed to run the assistant for {session_name}\nClick /session_exit to exit.", token)
     
     response = f"`{session_name}` response:\n\n{response.replace('*', '')}"
-    message_id = user_parameters.get('message_id')
-    message_id = message_id + 1 if message_id else None
+    message_id = user_parameters.get('message_id', 0) or 0
 
     return callback_session_audio(chat_id, response, session_name, token, engine, user_parameters, message_id, is_markdown = True)
 

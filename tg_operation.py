@@ -49,7 +49,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
     update_message = callback_query["message"]
 
     chat_id = str(chat_id)
-    message_id = str(message_id)
+    message_id = int(message_id)
 
     # Send typing status
     send_typing_action(chat_id, action = "typing", token = token)
@@ -611,7 +611,7 @@ def handle_message(update, token, engine = engine):
             return callback_whitelist_blacklist_setup(chat_id, alert_to_owner, token)
         
         elif msg_text in ['/setting', '/settings', 'setup']: return main_menu_setting(chat_id, token)
-        elif msg_text.startswith("/"): return dealing_tg_command(msg_text[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = False)
+        elif msg_text.startswith("/"): return dealing_tg_command(msg_text[1:], chat_id, user_parameters, token, engine, message_id)
         elif msg_text.lower().startswith("http"): return dealing_tg_command_http(msg_text.split()[0], chat_id, user_parameters, token, engine, message_id)
         
         elif len(msg_text) <= 20 and msg_text.lower() not in GREETINGS_OR_ANSWERS and msg_text.lower() in WORDS_SET: return check_word_in_vocabulary(msg_text, chat_id, engine, token, user_parameters)
@@ -1100,7 +1100,7 @@ def handle_message(update, token, engine = engine):
         if ai_response and isinstance(ai_response, dict): 
             action = ai_response.get('action', '')
             reply = ai_response.get('response', '')
-            if action == 'run_command': return dealing_tg_command(reply[1:], chat_id, user_parameters, token, engine, message_id, command_corrected = True)
+            if action == 'run_command': return dealing_tg_command(reply[1:], chat_id, user_parameters, token, engine, message_id)
             elif action == 'ask_gpt': reply = openai_gpt_chat(f"Try your best to assistant the user, follow user's prompt.", msg_text, chat_id, model = ASSISTANT_MAIN_MODEL, user_parameters = user_parameters, token = token) 
             return send_message(chat_id, reply, token)
 

@@ -320,7 +320,7 @@ If you can't open the link above, please copy and paste below url into your brow
     return "Completed"
     
 
-def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_BOT_TOKEN, engine=engine, message_id=0, command_corrected = False):
+def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_BOT_TOKEN, engine=engine, message_id=0):
     user_ranking = user_parameters.get('ranking') or 0
     tier = user_parameters.get('tier') or 'Free'
     email_address = user_parameters.get('email', '')
@@ -435,11 +435,10 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
         webhook_push_table_name('user_news_jobs', chat_id)
         return 
-    
 
     elif msg_lower.startswith('set_news_keywords'):
         news_keywords = msg.replace('set_news_keywords', '').replace('>', '').strip()
-        if not news_keywords: return send_message(chat_id, "Please provide the keywords you want to search for the news.", token)
+        if not news_keywords: return send_message(chat_id, "Please provide the keywords you want to search for the news after /set_news_keywords >> . For example: /set_news_keywords >> Japanese Animate", token)
         return set_default_news_keywords_for_chat_id(chat_id, news_keywords, message_id, engine, token, user_parameters)
 
 
@@ -771,6 +770,23 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         else: return send_message(chat_id, "Failed to generate audio with your voice clone.", token)
     
     
+    elif msg_lower.startswith('generate_system_prompt'):
+        if user_ranking < 4 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Platinum or higher tier to use this function.\n\n/get_premium", token)
+        user_prompt = msg.replace('generate_system_prompt', '').strip()
+        if not user_prompt: return send_message(chat_id, commands_dict.get("generate_system_prompt"), token)
+        send_message(chat_id, f"Refining your system prompt...", token)
+        message_id += 1
+        refined_system_prompt = generate_prompt(user_prompt)
+        if refined_system_prompt:
+            user_folder = os.path.join(working_dir, chat_id)
+            timestamp_now = datetime.now().strftime('%Y%m%d_%H%M%S')
+            system_prompt_filepath = os.path.join(user_folder, f"system_prompt_{timestamp_now}.txt")
+            with open(system_prompt_filepath, "w", encoding='utf-8') as f: f.write(refined_system_prompt)
+            send_document_from_file(chat_id, system_prompt_filepath, 'Refined System Prompt', token)
+            return delete_message(chat_id, message_id, token)
+        else: return send_message(chat_id, f"Failed to refine your system prompt, please try later.", token, message_id)
+    
+
     elif msg_lower.startswith('generate_prompt_midjourney'):
         if user_ranking < 4 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Platinum or higher tier to use this function.\n\n/get_premium", token)
         user_prompt = msg.replace('generate_prompt_midjourney', '').strip()
@@ -1064,10 +1080,9 @@ def dealing_tg_command_http(msg: str, chat_id: str, user_parameters, token=TELEG
         google_sheet_id = set_spreadsheet_id_for_chat_id(chat_id, google_sheet_id, engine)
         if not google_sheet_id: return send_message(chat_id, "Failed to set the Google Sheet ID for the chat_id.", token)
         
-        delete_message(chat_id, message_id, token)
-
         replay_markdown = f"Your Google Spreadsheet ID has been set to```{google_sheet_id[:10]}......{google_sheet_id[-11:]}```\n\nNow please download and rename your Google Spreadsheet Credentials JSON file to: <`google_sheet_credentials.json`> and send it to me."
-        return send_message_markdown(chat_id, replay_markdown, token)
+        send_message_markdown(chat_id, replay_markdown, token)
+        return delete_message(chat_id, message_id, token)
     
 
     elif 'youtube.com/playlist?list=' in msg_lower:
@@ -1080,10 +1095,10 @@ def dealing_tg_command_http(msg: str, chat_id: str, user_parameters, token=TELEG
         daily_video_limit = user_parameters.get('daily_video_limit') or 0
         video_duration_limit = user_parameters.get('video_duration_limit') or 0
 
-        delete_message(chat_id, message_id, token)
-
         inform_msg = f"Your YouTube Playlist ID has been set to: \n`{playlist_id}`\n\nAs your /tier is /{tier}, the AI bot will process {int(daily_video_limit)} English videos for you per day, and each video should be less than {int(video_duration_limit//60)} minutes and longer than {int(SHORTEST_LENGTH_PER_VIDEO//60)} minutes. None-English or none-qualified videos will be skipped."
-        return inform_msg
+        send_message(chat_id, inform_msg, token)
+
+        return delete_message(chat_id, message_id, token)
 
 
     elif 'youtu' in msg_lower:
