@@ -316,6 +316,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
 
     elif callback_data == 'set_mother_language': callback_mother_language_setup(chat_id, token, message_id)
     elif callback_data == 'set_secondary_language': callback_secondary_language_setup(chat_id, token, message_id)
+    elif callback_data == 'set_target_language': callback_target_language_setup(chat_id, token, message_id)
     elif callback_data == 'set_cartoon_style': callback_cartoon_style_setup(chat_id, token, message_id)
 
     elif callback_data == 'set_default_audio_gender':
@@ -344,6 +345,12 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         secondary_language = set_secondary_language_for_chat_id(chat_id, secondary_language, engine)
         if secondary_language: send_message_markdown(chat_id, f"Secondary language set to `{secondary_language}` successfully.", token, message_id)
         else: send_message(chat_id, "Failed to set secondary language, please try again.", token)
+
+    elif callback_data.startswith('set_target_language_'):
+        target_language = callback_data.replace('set_target_language_', '').strip()
+        target_language = set_target_language_for_chat_id(chat_id, target_language, engine)
+        if target_language: send_message_markdown(chat_id, f"Target language set to `{target_language}` successfully.", token, message_id)
+        else: send_message(chat_id, "Failed to set target language, please try again.", token)
 
     # Actual setting functions below
     elif callback_data in REVERSED_CARTOON_STYLE_DICT:
@@ -608,7 +615,10 @@ def handle_message(update, token, engine = engine):
         elif len(msg_text) <= 20 and msg_text.lower() not in GREETINGS_OR_ANSWERS and msg_text.lower() in WORDS_SET: return check_word_in_vocabulary(msg_text, chat_id, engine, token, user_parameters)
 
         session_name = user_parameters.get('session_name', '')
-        if session_name: return session_conversation(chat_id, msg_text, session_name, token, engine, ASSISTANT_DOCUMENT_MODEL, user_parameters)
+        if session_name: 
+            send_message_markdown(chat_id, f"Back to `{session_name}`", token)
+            user_parameters['message_id'] += 1
+            return session_conversation(chat_id, msg_text, session_name, token, engine, ASSISTANT_DOCUMENT_MODEL, user_parameters)
 
     if 'animation' in update_message: animation_file_id = update_message['animation'].get('file_id')
     elif 'photo' in update_message: img_file_id = update_message['photo'][-1].get('file_id')
@@ -825,14 +835,20 @@ def handle_message(update, token, engine = engine):
             voice_folder = os.path.join(output_dir, 'voice')
             voice_file_name = str(int(datetime.now().timestamp())) + '.ogg'
 
+            send_message(chat_id, "Voice file received, downloading...", token)
+            message_id += 1
+            user_parameters['message_id'] = message_id
+
             file_path = download_file(voice_file_id, voice_folder, voice_file_name, token)
             if not file_path or not os.path.isfile(file_path): reply = "Failed to read out the file."
             else:
                 if user_parameters.get('is_waiting_for') and user_parameters.get('is_waiting_for') == 'voice_clone_sample': return save_clone_voice_sample(file_path, chat_id, engine, token)
                 else:
+                    send_message(chat_id, "Transcribing the voice file, this process may take a while, please wait patiently...", token, message_id)
                     msg_text = whisper_speech_to_text(file_path, chat_id, model='whisper-1', engine=engine, user_parameters=user_parameters)
-                    if not msg_text: reply = "Failed to recognize the audio file."
-                    else: send_message(chat_id, f"You just said:\n------\n{msg_text}", token)
+                    if not msg_text: reply = "Failed to transcribe the audio file."
+                    elif user_parameters.get('session_name', ''):  return session_conversation(chat_id, msg_text, user_parameters.get('session_name', ''), token, engine, ASSISTANT_DOCUMENT_MODEL, user_parameters)
+                    else: send_message(chat_id, f"You just said:\n------\n{msg_text}", token, message_id)
 
     elif audio_file_id:  # If the message contains an audio file
         print(f"Audio file id: {audio_file_id}")

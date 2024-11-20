@@ -457,6 +457,8 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
     elif msg_lower in ['mother_language', 'set_mother_language', 'set mother language', 'motherlanguage']: return callback_mother_language_setup(chat_id, token)
     
     elif msg_lower in ['secondary_language', 'set_secondary_language', 'set secondary language', 'secondarylanguage']: return callback_secondary_language_setup(chat_id, token)
+
+    elif msg_lower in ['target_language', 'set_target_language', 'set target language', 'targetlanguage']: return callback_target_language_setup(chat_id, token, user_parameters)
     
     elif msg_lower in ['cartoon_style', 'set_cartoon_style', 'set cartoon style']: return callback_cartoon_style_setup(chat_id, token)
 
@@ -595,7 +597,11 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         prompt = msg.replace('translate_to_audio', '').strip()
         if not prompt: return send_message(chat_id, commands_dict.get("translate_to_audio"), token)
 
+        send_message(chat_id, f"Command received...", token)
+        message_id = int(message_id) + 1 
+
         user_parameters['translate_to_audio'] = True
+        user_parameters['message_id'] = message_id
         return session_translation(prompt, chat_id, token, user_parameters)
     
 

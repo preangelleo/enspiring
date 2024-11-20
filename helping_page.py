@@ -654,7 +654,7 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "creator_post_story": "Send me /creator_post_story Your text here. For example: /creator_post_story write a story about a boy and his beloved dog.",
         "creator_post_news": "Send me /creator_post_news Your prompt (keywords) here. For example: /creator_post_news Latest OpenAI news.",
         "creator_post_youtube": "Send me /creator_post_youtube Your youtube URL here. For example: /creator_post_youtube https://www.youtube.com/watch?v=video_id",
-        "session_translation": "In this session, I will translate whatever you send into your mother language.",
+        "session_translation": "In this session, I will translate whatever you send into your /target_language",
         "session_query_doc": f"Send me a document, and ask anything you want to know about the content of the file (PDF or Docx).",
         "session_code_interpreter": "In this session, I can write and execute code to assist you.",
         "session_chat_casual": "In this session, I can chat with you casually trying to be your best companion.",
@@ -3972,6 +3972,23 @@ def callback_secondary_language_setup(chat_id, token = TELEGRAM_BOT_TOKEN, messa
     return send_or_edit_inline_keyboard(secondary_language_prompt, secondary_language_inline_keyboard_dict, chat_id, button_per_list, token, message_id)
 
 
+def callback_target_language_setup(chat_id, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+    mother_language = user_parameters.get('mother_language', '')
+    secondary_language = user_parameters.get('secondary_language', '')
+
+    target_language_inline_keyboard_dict = {'Target Language: English': "set_target_language_English"}
+    if mother_language: 
+        if mother_language != 'English': target_language_inline_keyboard_dict[f'Target Language: {mother_language}'] = f"set_target_language_{mother_language}"
+    else: target_language_inline_keyboard_dict['Set Mother Language'] = 'set_mother_language'
+    if secondary_language: 
+        if secondary_language != 'English': target_language_inline_keyboard_dict[f'Target Language: {secondary_language}'] = f"set_target_language_{secondary_language}"
+    else: target_language_inline_keyboard_dict['Set Secondary Language'] = 'set_secondary_language'
+
+    target_language_prompt = "Please set or change your target language for translation session. This setting will be used only when you enter into /session_translation mode. During this session, all of the text you send to the bot will be translated into your target language."
+    button_per_list = 1
+    return send_or_edit_inline_keyboard(target_language_prompt, target_language_inline_keyboard_dict, chat_id, button_per_list, token)
+
+
 def callback_creator_post_language_setup(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
     post_language_inline_keyboard_dict = POST_LANGUAGE_DICT_WITH_ORIGIN
     post_language_prompt = "The default language for your post is English. If you prefer to keep it as English, no action is needed. Otherwise, select your preferred language below. Future blog posts will be generated in your chosen language."
@@ -4499,7 +4516,11 @@ def back_to_session(chat_id: str, session_name: str, engine = engine, token = TE
         elif session_name == 'session_generate_content': msg = f"{prefix} you can continue to generate content with the bot, what's in your mind? I can generate image, audio, tweet, prompt, news, stories, journal and even blog post from a youtube link."
         elif session_name == 'session_assistant_general': msg = f"{prefix} you can continue save of retrieve your mostly need information, like your email, phone number, address or a coffee shop address."
         elif session_name == 'session_help': msg = f"{prefix} you can ask questions about {ENSPIRING_DOT_AI}, functions or differences among different tiers; Or about the bot, how to use the bot, or any specific function—anything related."
-        elif session_name == 'session_translation': msg = f"{prefix} This session will translate any text you send to your /secondary_language or your /mother_language."
+        elif session_name == 'session_translation': 
+            msg = f"{prefix} This session will translate any text you send to your /target_language. "
+            target_language = user_parameters.get('target_language')
+            if target_language: msg += f"Currrently, your target language is set to `{target_language}`. If you want to change the target language, please click /target_language."
+            else: msg += "Please set your target language by clicking /target_language."
 
     return callback_exit_session(chat_id, msg, token)
 
@@ -6710,6 +6731,9 @@ def set_secondary_language_for_chat_id(chat_id, secondary_language, engine = eng
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET secondary_language = :secondary_language WHERE chat_id = :chat_id;"""), {"secondary_language": secondary_language, "chat_id": chat_id})
     return secondary_language
 
+def set_target_language_for_chat_id(chat_id, target_language, engine = engine):
+    with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET target_language = :target_language WHERE chat_id = :chat_id;"""), {"target_language": target_language, "chat_id": chat_id})
+    return target_language
 
 def set_default_post_type_for_chat_id(chat_id, default_post_type, engine = engine):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET default_post_type = :default_post_type WHERE chat_id = :chat_id;"""), {"default_post_type": default_post_type, "chat_id": chat_id})
@@ -8916,21 +8940,22 @@ def session_translation(prompt, chat_id, token = TELEGRAM_BOT_TOKEN, user_parame
         next_language = mother_language
         mother_language = secondary_language
 
-    send_message(chat_id, f"Translating to {mother_language}...", token)
+    message_id = user_parameters.get('message_id')
+    send_message_markdown(chat_id, f"Translating to `{mother_language}`...", token, message_id)
 
     system_prompt = SYSTEM_PROMPT_TRANSLATOR.replace('_mother_language_placeholder_', mother_language)
     translated_prompt = openai_gpt_chat(system_prompt, prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
-    
-    message_id = user_parameters.get('message_id')
-    message_id = message_id + 1 if message_id else None
 
     callback_translation_audio(chat_id, translated_prompt, token, engine, user_parameters, message_id, mother_language, next_language, is_markdown = False)
 
     if user_parameters.get('translate_to_audio'):
-        send_message(chat_id, "Generating audio...", token)
+        send_message_markdown(chat_id, f"Generating `{mother_language}` audio...", token)
         audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
         audio_file = generate_story_voice(translated_prompt, chat_id, audio_generated_dir_user, engine, token, user_parameters, mother_language)
-        if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
+        if audio_file and os.path.isfile(audio_file): 
+            message_id += 1
+            delete_message(chat_id, message_id, token)
+            return send_audio_from_file(chat_id, audio_file, token)
         return send_message(chat_id, "Failed to generate audio file.", token)
     
     return
