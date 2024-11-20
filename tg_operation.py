@@ -315,6 +315,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         else: send_message(chat_id, f"Click below link to get a full understanding of how this function works and how to setup this feature. \n\n{GOOGLE_SPREADSHEET_SETUP_PAGE}", token)
 
     elif callback_data == 'set_mother_language': callback_mother_language_setup(chat_id, token, message_id)
+    elif callback_data == 'set_secondary_language': callback_secondary_language_setup(chat_id, token, message_id)
     elif callback_data == 'set_cartoon_style': callback_cartoon_style_setup(chat_id, token, message_id)
 
     elif callback_data == 'set_default_audio_gender':
@@ -338,6 +339,12 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if ranking < 1 and not openai_api_key: send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Starter or higher tier to use this function.\n\n/get_premium", token)
         else: openai_gpt_function(callback_data, chat_id, tools = FUNCTIONS_TOOLS, model = ASSISTANT_DOCUMENT_MODEL, engine = engine, token = token, user_parameters = user_parameters)
 
+    elif callback_data.startswith('set_secondary_language_'):
+        secondary_language = callback_data.replace('set_secondary_language_', '').strip()
+        secondary_language = set_secondary_language_for_chat_id(chat_id, secondary_language, engine)
+        if secondary_language: send_message_markdown(chat_id, f"Secondary language set to `{secondary_language}` successfully.", token, message_id)
+        else: send_message(chat_id, "Failed to set secondary language, please try again.", token)
+
     # Actual setting functions below
     elif callback_data in REVERSED_CARTOON_STYLE_DICT:
         cartoon_style = REVERSED_CARTOON_STYLE_DICT[callback_data]
@@ -345,8 +352,8 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if cartoon_style: send_message_markdown(chat_id, f"Cartoon style set to `{cartoon_style}` successfully.", token, message_id)
         else: send_message(chat_id, "Failed to set cartoon style, please try again.", token)
 
-    elif callback_data in REVERSED_LANGUAGE_DICT: 
-        mother_language = REVERSED_LANGUAGE_DICT[callback_data]
+    elif callback_data.startswith('set_mother_language_'): 
+        mother_language = callback_data.replace('set_mother_language_', '').strip()
         mother_language = set_mother_language_for_chat_id(chat_id, mother_language, engine)
         if mother_language: send_message_markdown(chat_id, f"Mother language set to `{mother_language}` successfully.", token, message_id)
         else: send_message(chat_id, "Failed to set mother language, please try again.", token)
@@ -384,15 +391,20 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         else:
             hash_md5 = callback_data.replace('markdown_audio_', '').strip()
             # from hash_md5 to get the prompt from table 'markdown_text'
-            query = f"SELECT prompt FROM markdown_text WHERE hash_md5 = :hash_md5"
+            query = f"SELECT prompt, language FROM markdown_text WHERE hash_md5 = :hash_md5"
             df = pd.read_sql(text(query), engine, params={"hash_md5": hash_md5})
             if df.empty: send_message(chat_id, "Failed to get the text to generate audio, sorry. You can try quote previous message text and send /audio to me.", token)
             else:
+                send_message(chat_id, "Generating audio now...", token)
                 prompt = df['prompt'].values[0]
-                voice_name = AZURE_VOICE_FEMALE if (user_parameters.get('audio_play_default') or 'nova') == 'nova' else AZURE_VOICE_MALE
-                audio_file = azure_text_to_speech(prompt, audio_generated_dir, service_region = "westus", speech_key = AZURE_VOICE_API_KEY_1, voice_name = voice_name, engine = engine, token = token, user_parameters = user_parameters)
-                if audio_file and os.path.isfile(audio_file): send_audio_from_file(chat_id, audio_file, token)
-                else: send_message(chat_id, "Failed to generate the audio, please try again later", token)
+                language = df['language'].values[0]
+
+                audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
+
+                audio_file = generate_story_voice(prompt, chat_id, audio_generated_dir_user, engine, token, user_parameters, language)
+
+                if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
+                return send_message(chat_id, "Failed to generate audio file.", token)
 
 
     elif callback_data.startswith('generate_image_'):
@@ -425,18 +437,35 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
     elif callback_data.startswith('translate_to_'):
         if ranking < 2 and not openai_api_key: send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Silver or higher tier to use this function.\n\n/get_premium", token)
         else:
-            mother_language = callback_data[13:]
-            hash_md5 = mother_language.split('_')[-1]
+            callback_split = callback_data.split('_')
+            hash_md5 = callback_split[-1]
+            target_language = callback_split[-2]
+
             # from hash_md5 to get the prompt from table 'markdown_text'
-            query = f"SELECT prompt FROM markdown_text WHERE hash_md5 = :hash_md5"
+            query = f"SELECT prompt, language FROM markdown_text WHERE hash_md5 = :hash_md5"
             df = pd.read_sql(text(query), engine, params={"hash_md5": hash_md5})
             if df.empty: send_message(chat_id, "Failed to get the text to generate audio, sorry. You can try quote previous message text and send /audio to me.", token)
             else:
                 prompt = df['prompt'].values[0]
-                prompt = f"Translate the below text to in a coherent and fluent way to {mother_language}:\n\n{prompt}"
-                translated_content = openai_gpt_chat(SYSTEM_PROMPT_TRANSLATE_TO, prompt, chat_id, model='gpt-4o-mini', user_parameters=user_parameters)
-                if translated_content: send_message_markdown(chat_id, translated_content, token)
-                else: send_message(chat_id, "Failed to translate the text, please try again.", token)
+                language = df['language'].values[0]
+
+                if target_language == language: return send_message(chat_id, f"The target language ({target_language}) is the same as the original language ({language}), no need to translate.", token)
+
+                secondary_language = user_parameters.get('secondary_language', target_language) or target_language
+                mother_language = user_parameters.get('mother_language', 'English') or 'English'
+
+                next_language = mother_language if mother_language != target_language else secondary_language if secondary_language != target_language else ''
+
+                send_message(chat_id, f"Translating {language} to {target_language}...", token)
+
+                system_prompt = SYSTEM_PROMPT_TRANSLATOR.replace('_mother_language_placeholder_', target_language)
+                translated_prompt = openai_gpt_chat(system_prompt, prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
+                
+                message_id = user_parameters.get('message_id')
+                message_id = message_id + 1 if message_id else None
+
+                return callback_translation_audio(chat_id, translated_prompt, token, engine, user_parameters, message_id, language, next_language, is_markdown = False)
+
 
     elif callback_data.startswith('generate_story_'):
         if ranking < 3 and not openai_api_key: send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Gold or higher tier to use this function.\n\n/get_premium", token)
@@ -454,14 +483,20 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
             callback_data = callback_data[8:]
             commands_list = callback_data.split('_in_')
             vocabulary = commands_list[0]
-            mother_language = commands_list[1]
-            print(f"Vocabulary: {vocabulary}, Mother language: {mother_language}")
-            if mother_language == 'Chinese': from_vocabulary_chinese_get_explanation(vocabulary, chat_id, engine, token, user_parameters)
+            target_language = commands_list[1]
+            if target_language == 'Chinese': from_vocabulary_chinese_get_explanation(vocabulary, chat_id, engine, token, user_parameters)
             else:
-                explanation = get_explanation_in_mother_language(vocabulary, chat_id, mother_language, model='gpt-4o-mini', engine = engine, user_parameters=user_parameters)
-                if explanation: send_message(chat_id, explanation, token)
+                send_message(chat_id, f"Generating explanation for the word `{vocabulary}` in {target_language}...", token)
+                explanation = get_explanation_in_mother_language(vocabulary, chat_id, target_language, model=ASSISTANT_MAIN_MODEL, engine = engine, user_parameters=user_parameters)
+                
+                if explanation: 
+                    mother_language = user_parameters.get('mother_language', 'English') or 'English'
+                    secondary_language = user_parameters.get('secondary_language', 'English') or 'English'
+                    next_language = mother_language if mother_language != target_language else secondary_language if secondary_language != target_language else ''
+                    return callback_translation_audio(chat_id, explanation, token, engine, user_parameters, int(message_id) + 1, target_language, next_language, is_markdown = False)
+                
                 else: send_message(chat_id, "Failed to generate the explanation, please try again.", token)
-
+                
     elif callback_data.startswith('renew_vocabulary_'):
         if ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Diamond or higher tier to use this function.\n\n/get_premium", token)
         else: return renew_vocabulary_chinese(callback_data.replace('renew_vocabulary_', '').strip(), chat_id, engine, token, user_parameters)

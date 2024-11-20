@@ -454,7 +454,9 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
 
     elif msg_lower.startswith('premium_'): return send_message(chat_id, f"We changed the way to /activate your telegram account. Now please submit the email address you used to subscribe the paid service on {ENSPIRING_DOT_AI} to unlock the full features of the bot.", token)
     
-    elif msg_lower in ['mother_language', 'set_mother_language', 'set mother language']: return callback_mother_language_setup(chat_id, token)
+    elif msg_lower in ['mother_language', 'set_mother_language', 'set mother language', 'motherlanguage']: return callback_mother_language_setup(chat_id, token)
+    
+    elif msg_lower in ['secondary_language', 'set_secondary_language', 'set secondary language', 'secondarylanguage']: return callback_secondary_language_setup(chat_id, token)
     
     elif msg_lower in ['cartoon_style', 'set_cartoon_style', 'set cartoon style']: return callback_cartoon_style_setup(chat_id, token)
 
@@ -586,7 +588,6 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         return send_message(chat_id, "Failed to generate audio file.", token)
 
 
-
     elif msg_lower.startswith('translate_to_audio'):
         if user_ranking < 3 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Gold or higher tier to use this function.\n\n/get_premium", token)
         audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
@@ -594,17 +595,11 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         prompt = msg.replace('translate_to_audio', '').strip()
         if not prompt: return send_message(chat_id, commands_dict.get("translate_to_audio"), token)
 
-        mother_language = user_parameters.get('mother_language') or 'English'
+        user_parameters['translate_to_audio'] = True
+        return session_translation(prompt, chat_id, token, user_parameters)
+    
 
-        send_message(chat_id, f"Translating to {mother_language}...", token)
-
-        translated_prompt = openai_gpt_chat(f"Please translate the user input into {mother_language} concisely. It will be used for audio generation, so user spoken tone like a native speaker.", prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
-
-        send_message(chat_id, f"Generating {mother_language} audio...\n\n{translated_prompt}", token)
-
-        audio_file = generate_story_voice(translated_prompt, chat_id, audio_generated_dir_user, engine, token, user_parameters, mother_language)
-        if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
-        return send_message(chat_id, "Failed to generate audio file.", token)
+    elif msg_lower == 'session_translation': return back_to_session(chat_id, msg_lower, engine, token, user_parameters)
 
 
     elif msg_lower.startswith('inline_query_add'):

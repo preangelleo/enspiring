@@ -399,32 +399,21 @@ def run_assistant(chat_id, query, session_name, engine = engine, model = ASSISTA
 
 def session_conversation(chat_id: str, query: dict, session_name: str, token = TELEGRAM_BOT_TOKEN, engine = engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = {}):
 
-    name = user_parameters.get('name')
-    mother_language = user_parameters.get('mother_language')
-    user_name = user_parameters.get('user_name')
+    if session_name == 'session_translation': return session_translation(query, chat_id, token, user_parameters)
+    else: 
+        name = user_parameters.get('name')
+        mother_language = user_parameters.get('mother_language')
+        user_name = user_parameters.get('user_name')
+        query = f"{query}\n\nMy name is: {name}\nMy Mother language is: {mother_language}\nMy telegram handle is: {user_name}"
 
-    query = f"{query}\n\nMy name is: {name}\nMy Mother language is: {mother_language}\nMy telegram handle is: {user_name}"
-
-    response = run_assistant(chat_id, query, session_name, engine, model, user_parameters, token, from_email = False)
-    if not response: return send_message(chat_id, "Failed to run the assistant. \nClick /session_exit to exit.", token)
+        response = run_assistant(chat_id, query, session_name, engine, model, user_parameters, token, from_email = False)
+        if not response: return send_message(chat_id, f"Failed to run the assistant for {session_name}\nClick /session_exit to exit.", token)
     
     response = f"`{session_name}` response:\n\n{response.replace('*', '')}"
     message_id = user_parameters.get('message_id')
     message_id = message_id + 1 if message_id else None
 
-    return callback_session_audio(chat_id, response, session_name, token, engine, user_parameters, message_id, is_markdown=True)
-
-
-def none_session_conversation(chat_id: str, query: dict, session_name: str, token = TELEGRAM_BOT_TOKEN, engine = engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = {}):
-
-    response = run_assistant(chat_id, query, session_name, engine, model, user_parameters, token, from_email = False)
-    if not response: return send_message(chat_id, "Failed to run the assistant. \nClick /session_exit to exit.", token)
-    
-    message_id = user_parameters.get('message_id')
-    message_id = message_id + 1 if message_id else None
-
-    return callback_markdown_audio(chat_id, response, token, engine, False, user_parameters)
-
+    return callback_session_audio(chat_id, response, session_name, token, engine, user_parameters, message_id, is_markdown = True)
 
 
 def email_assistant_response(email_content: str, email_address: str, subject: str, characters_limits: int, prefix: str, suffix: str, chat_id: str, user_parameters = {}):
