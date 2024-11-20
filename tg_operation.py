@@ -463,7 +463,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
 
                 next_language = mother_language if mother_language != target_language else secondary_language if secondary_language != target_language else ''
 
-                send_message(chat_id, f"Translating {language} to {target_language}...", token)
+                send_message_markdown(chat_id, f"Translating `{language}` to `{target_language}`...", token)
 
                 system_prompt = SYSTEM_PROMPT_TRANSLATOR.replace('_mother_language_placeholder_', target_language)
                 translated_prompt = openai_gpt_chat(system_prompt, prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
@@ -493,16 +493,18 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
             target_language = commands_list[1]
             if target_language == 'Chinese': from_vocabulary_chinese_get_explanation(vocabulary, chat_id, engine, token, user_parameters)
             else:
-                send_message(chat_id, f"Generating explanation for the word `{vocabulary}` in {target_language}...", token)
+                send_message_markdown(chat_id, f"Generating `{vocabulary}` explanation in {target_language}...", token)
+                message_id = int(message_id) + 1
+
                 explanation = get_explanation_in_mother_language(vocabulary, chat_id, target_language, model=ASSISTANT_MAIN_MODEL, engine = engine, user_parameters=user_parameters)
                 
                 if explanation: 
                     mother_language = user_parameters.get('mother_language', 'English') or 'English'
                     secondary_language = user_parameters.get('secondary_language', 'English') or 'English'
                     next_language = mother_language if mother_language != target_language else secondary_language if secondary_language != target_language else ''
-                    return callback_translation_audio(chat_id, explanation, token, engine, user_parameters, int(message_id) + 1, target_language, next_language, is_markdown = False)
+                    return callback_translation_audio(chat_id, explanation, token, engine, user_parameters, message_id, target_language, next_language, is_markdown = False)
                 
-                else: send_message(chat_id, "Failed to generate the explanation, please try again.", token)
+                else: send_message(chat_id, "Failed to generate the explanation, please try again.", token, message_id)
                 
     elif callback_data.startswith('renew_vocabulary_'):
         if ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Diamond or higher tier to use this function.\n\n/get_premium", token)
