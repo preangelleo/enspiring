@@ -572,7 +572,6 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
 
     elif msg_lower.startswith('generate_audio_'):
         if user_ranking < 3 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Gold or higher tier to use this function.\n\n/get_premium", token)
-        audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
 
         if 'generate_audio_male' in msg_lower: 
             user_parameters['default_audio_gender'] = 'male'
@@ -585,14 +584,13 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         if not prompt: return send_message(chat_id, commands_dict.get("audio"), token)
         else: send_message(chat_id, f"Generating audio for you...", token)
 
-        audio_file = generate_story_voice(prompt, chat_id, audio_generated_dir_user, engine, token, user_parameters, language_name='')
+        audio_file = generate_story_voice(prompt, chat_id, audio_generated_dir, engine, token, user_parameters, language_name='')
         if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
         return send_message(chat_id, "Failed to generate audio file.", token)
 
 
     elif msg_lower.startswith('translate_to_audio'):
         if user_ranking < 3 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Gold or higher tier to use this function.\n\n/get_premium", token)
-        audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
 
         prompt = msg.replace('translate_to_audio', '').strip()
         if not prompt: return send_message(chat_id, commands_dict.get("translate_to_audio"), token)

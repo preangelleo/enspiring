@@ -385,11 +385,12 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         else:
             vocabulary = callback_data.replace('generate_audio_', '').strip()
             generated_explanation = get_explanation_for_audio_generation(vocabulary, engine)
+
             if generated_explanation: 
-                voice_name = AZURE_VOICE_FEMALE if (user_parameters.get('audio_play_default') or 'nova') == 'nova' else AZURE_VOICE_MALE
-                audio_file = azure_text_to_speech(generated_explanation, audio_generated_dir, service_region = "westus", speech_key = AZURE_VOICE_API_KEY_1, voice_name = voice_name, engine = engine, token = token, user_parameters = user_parameters)
-                if audio_file and os.path.isfile(audio_file): send_audio_from_file(chat_id, audio_file, token)
-            else: send_message(chat_id, "Failed to generate the audio, please try again later", token)
+                audio_file = generate_story_voice(generated_explanation, chat_id, audio_generated_dir, engine, token, user_parameters, 'English')
+                if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
+
+            return send_message(chat_id, "Failed to generate audio file.", token)
     
     elif callback_data in ['random_word']: random_word(chat_id, token, engine, user_parameters)
     
@@ -406,9 +407,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
                 prompt = df['prompt'].values[0]
                 language = df['language'].values[0]
 
-                audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
-
-                audio_file = generate_story_voice(prompt, chat_id, audio_generated_dir_user, engine, token, user_parameters, language)
+                audio_file = generate_story_voice(prompt, chat_id, audio_generated_dir, engine, token, user_parameters, language)
 
                 if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
                 return send_message(chat_id, "Failed to generate audio file.", token)
@@ -506,6 +505,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
                 
                 else: send_message(chat_id, "Failed to generate the explanation, please try again.", token, message_id)
                 
+
     elif callback_data.startswith('renew_vocabulary_'):
         if ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Diamond or higher tier to use this function.\n\n/get_premium", token)
         else: return renew_vocabulary_chinese(callback_data.replace('renew_vocabulary_', '').strip(), chat_id, engine, token, user_parameters)

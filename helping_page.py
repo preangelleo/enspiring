@@ -2523,6 +2523,7 @@ def create_chat_directories(chat_id, working_dir = working_dir, base_dir=current
         os.path.join(base_dir, 'Video_downloaded', 'Video_creator', chat_id, 'Archived'),
         os.path.join(base_dir, 'Audio_generated', 'vocabulary', chat_id),
         os.path.join(base_dir, 'Audio_generated', 'Story_audio', chat_id),
+        os.path.join(base_dir, 'Audio_generated', chat_id),
         os.path.join(base_dir, 'Audio_downloaded', 'Generated_audio', chat_id),
     ]
 
@@ -4829,11 +4830,9 @@ def function_call_audio_generation(prompt: str, chat_id: str, engine = engine, t
     user_ranking = user_parameters.get('ranking') or 0
     if not user_ranking >= 3: return commands_dict.get("get_premium")
 
-    audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
-
     voice = user_parameters.get('audio_play_default') or 'nova'
 
-    speech_file_path = generate_audio_from_text(prompt, chat_id, audio_generated_dir_user, voice, model="tts-1", engine = engine, user_parameters = user_parameters)
+    speech_file_path = generate_audio_from_text(prompt, chat_id, audio_generated_dir, voice, model="tts-1", engine = engine, user_parameters = user_parameters)
     if not os.path.isfile(speech_file_path): return "Failed to generate audio file."
 
     return send_audio_from_file(chat_id, speech_file_path, token)
@@ -8950,8 +8949,7 @@ def session_translation(prompt, chat_id, token = TELEGRAM_BOT_TOKEN, user_parame
 
     if user_parameters.get('translate_to_audio'):
         send_message_markdown(chat_id, f"Generating `{mother_language}` audio...", token)
-        audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
-        audio_file = generate_story_voice(translated_prompt, chat_id, audio_generated_dir_user, engine, token, user_parameters, mother_language)
+        audio_file = generate_story_voice(translated_prompt, chat_id, audio_generated_dir, engine, token, user_parameters, mother_language)
         if audio_file and os.path.isfile(audio_file): 
             message_id += 1
             delete_message(chat_id, message_id, token)
