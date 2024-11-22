@@ -8967,8 +8967,24 @@ def session_translation(prompt, chat_id, token = TELEGRAM_BOT_TOKEN, user_parame
     return
 
 
+def msg_ghost_blog(token=os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), engine=engine):
+    # Step 1: Check if subdomain name is unique
+    df = pd.read_sql(text("SELECT name, Sub_domain_name, chat_id FROM chat_id_parameters WHERE Sub_domain_name is not NULL"), engine)
+    for _, row in df.iterrows():
+        domain_name = row['Sub_domain_name']
+        if domain_name in ['www', 'leo', 'danli', 'viviana', 'silver', 'elaine']: continue
+        url = f"https://{domain_name}.{AUTO_BLOG_BASE_URL}"
+        dashboard = f"{url}/ghost"
+        name = row['name']
+        chat_id = row['chat_id']
+        msg = f"Hi {name}, I just created a self hosted ghost blog for you, now you don't need to pay ghost anymore. You can access your blog at \n{url} and your dashboard at \n{dashboard}."
+        send_message(chat_id, msg, token)
+        print(f"Message sent to {name} at {chat_id}")
+
+
 if __name__ == '__main__':
     print("Helping page constants")
     # insert_or_update_system_prompts("SYSTEM_PROMPT_PROOF_READING_GHOST", SYSTEM_PROMPT_PROOF_READING_GHOST, OWNER_CHAT_ID, engine)
     # r = read_prompt_by_name('SYSTEM_PROMPT_PROOF_READING_GHOST', engine)
     # print(r)
+    msg_ghost_blog()
