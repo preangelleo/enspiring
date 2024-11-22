@@ -2325,7 +2325,7 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
     if title in generated_journal: generated_journal = '\n'.join(generated_journal.split('\n')[1:]).strip()
     if midjourney_prompt in generated_journal: generated_journal = generated_journal.replace(midjourney_prompt, '').strip()
     
-    translated_journal, prefix = '', ''
+    translated_journal, prefix, new_tags = '', '', ''
     post_language = user_parameters.get('mother_language') or 'English'
     if need_translate and post_language != 'English':
         send_message(chat_id, f"Translating the article into {post_language}...", token)

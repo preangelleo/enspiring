@@ -1,5 +1,5 @@
 from ghost_blog import *
-
+from ghost_deployment_manager import *
 
 def get_video_dimensions(video_file):
     probe = ffmpeg.probe(video_file)
@@ -938,6 +938,16 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
                 send_message(chat_id, '\n'.join(chat_id_consumption_list), token)
             else: send_message(chat_id, f"No consumption data found for month {this_month}", token)
             return
+
+        elif msg_lower.startswith('create_ghost_blog'):
+            sub_domain_name_with_user_chat_id = msg.replace('create_ghost_blog', '').strip()
+            if not sub_domain_name_with_user_chat_id: return send_message(chat_id, "Please provide the domain name and user chat_id after the command. Example: /create_ghost_blog sub_domain_name user_chat_id", token)
+            sub_domain_name_with_user_chat_id_list = sub_domain_name_with_user_chat_id.split(' ')
+            if len(sub_domain_name_with_user_chat_id_list) < 2: return send_message(chat_id, "Please provide the domain name and user chat_id after the command. Example: /create_ghost_blog sub_domain_name user_chat_id", token)
+            sub_domain_name = sub_domain_name_with_user_chat_id_list[0].strip()
+            user_chat_id = sub_domain_name_with_user_chat_id_list[1].strip()
+            send_message(chat_id, f"Creating the Ghost blog for /chat_{user_chat_id}...", token)
+            return create_ghost_blog(sub_domain_name, user_chat_id, token, engine)
 
 
         elif msg_lower.startswith('create_author_id'):

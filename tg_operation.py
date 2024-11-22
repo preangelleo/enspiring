@@ -607,7 +607,7 @@ def handle_message(update, token, engine = engine):
         if msg_text == '/start': 
             send_message_markdown(chat_id, WELCOME_MESSAGE, token)
             create_chat_directories(chat_id)
-            alert_to_owner = f"New user {user_name} just started the bot, take action if necessary.\n/chat_{chat_id}"
+            alert_to_owner = f"New user {user_name} just started the bot, take action if necessary.\n/chat_{chat_id}\n\n/create_ghost_blog {user_name.replace(' ', '_')} {chat_id}"
             return callback_whitelist_blacklist_setup(chat_id, alert_to_owner, token)
         
         elif msg_text in ['/setting', '/settings', 'setup']: return main_menu_setting(chat_id, token)
