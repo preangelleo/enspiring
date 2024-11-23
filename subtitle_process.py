@@ -951,6 +951,12 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             send_message(chat_id, f"Creating the Ghost blog for /chat_{user_chat_id}...", token)
             return create_ghost_blog(sub_domain_name, user_chat_id, token, engine)
         
+        
+        elif msg_lower.startswith('remove_ghost_instance'):
+            sub_domain_name = msg.replace('remove_ghost_instance', '').strip()
+            if not sub_domain_name: return send_message(chat_id, "Please provide the sub_domain_name after the command. Example: /remove_ghost_instance sub_domain_name", token)
+            return remove_ghost_user(chat_id)
+        
 
         elif msg_lower.startswith('set_ghost_api_key'):
             ghost_admin_api_key_and_chat_id = msg.replace('set_ghost_api_key', '').strip()

@@ -26,6 +26,7 @@ EMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS_ADMIN")
 EMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD_ADMIN")
 MAX_INSTANCES_PER_SERVER = 5
 
+SSH_USER = "ubuntu"
 
 @dataclass
 class LightsailInstance:
@@ -356,6 +357,30 @@ docker run -d \
   --restart always \
   ghost:latest
 """
+    
+
+def get_next_server_ip(missing_id: int, existing_ids_df: pd.DataFrame) -> str:
+    """
+    Determine which server's IP to use for a missing ID slot.
+    
+    Args:
+        missing_id: The ID slot we're filling
+        existing_ids_df: DataFrame with existing IDs and their server IPs
+    
+    Returns:
+        The internal IP address to use
+    """
+    if (missing_id - 1) % MAX_INSTANCES_PER_SERVER == 0:
+        # Previous server was full, look at next higher ID's server
+        higher_ids = existing_ids_df[existing_ids_df['Auto_blog_id'] > missing_id]
+        if not higher_ids.empty:
+            return higher_ids.iloc[0]['Docker_internal_ip']
+    else:
+        # Previous server had space, look at previous ID's server
+        lower_ids = existing_ids_df[existing_ids_df['Auto_blog_id'] < missing_id]
+        if not lower_ids.empty:
+            return lower_ids.iloc[-1]['Docker_internal_ip']
+    return None
 
 
 def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOKEN, engine=engine):
@@ -365,11 +390,21 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
         engine,
         params={'sub_domain_name': sub_domain_name}
     )
-    if not df.empty: return send_message(OWNER_CHAT_ID, f"Sorry, `{sub_domain_name}` has been used, try another name.\n\nhttps://{sub_domain_name}.{AUTO_BLOG_BASE_URL}", token)
+    if not df.empty:
+        return send_message(
+            OWNER_CHAT_ID,
+            f"Sorry, `{sub_domain_name}` has been used, try another name.\n\nhttps://{sub_domain_name}.{AUTO_BLOG_BASE_URL}",
+            token
+        )
 
-    # Step 2: Fetch current maximum Auto_blog_id and the corresponding Docker information
+    # Step 2: Fetch all existing Auto_blog_ids and Docker information
     df = pd.read_sql(
-        text("SELECT Docker_public_ip, Docker_internal_ip, Auto_blog_id FROM chat_id_parameters ORDER BY Auto_blog_id DESC LIMIT 1"),
+        text("""
+            SELECT Auto_blog_id, Docker_internal_ip, Docker_public_ip 
+            FROM chat_id_parameters 
+            WHERE Auto_blog_id IS NOT NULL 
+            ORDER BY Auto_blog_id
+        """),
         engine
     )
 
@@ -377,29 +412,46 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
         max_blog_id = 0
         Docker_internal_ip = None
     else:
-        max_blog_id = df['Auto_blog_id'].values[0]
-        Docker_internal_ip = df['Docker_internal_ip'].values[0]
+        max_blog_id = df['Auto_blog_id'].max()
+        # Get list of existing IDs
+        existing_ids = set(df['Auto_blog_id'].values)
+        # Find gaps in ID sequence from 1 to max_id
+        all_possible_ids = set(range(1, max_blog_id + 1))
+        missing_ids = sorted(all_possible_ids - existing_ids)
 
-    max_blog_id = int(max_blog_id)
+        if missing_ids:
+            # Use the first available gap
+            new_auto_blog_id = missing_ids[0]
+            # Determine which server's IP to use
+            Docker_internal_ip = get_next_server_ip(new_auto_blog_id, df)
+        else:
+            # No gaps, proceed with normal logic
+            new_auto_blog_id = max_blog_id + 1
+            if max_blog_id % MAX_INSTANCES_PER_SERVER == 0:
+                Docker_internal_ip = None  # Will create new server
+            else:
+                Docker_internal_ip = df.iloc[-1]['Docker_internal_ip']
 
-    # Decide whether to create a new instance
-    if max_blog_id % MAX_INSTANCES_PER_SERVER == 0 and max_blog_id != 0: existing_private_ip = None
-    else: existing_private_ip = Docker_internal_ip
+    print(f"New Auto_blog_id: {new_auto_blog_id}, Docker_internal_ip: {Docker_internal_ip}")
 
     # Now deploy the Ghost instance
     manager = GhostDeploymentManager()
 
-    try: blog_url, instance = manager.deploy_ghost_instance(sub_domain_name, existing_private_ip)
-    except Exception as e: return send_debug_to_laogege(f"Creat ghost blog for `{sub_domain_name}` failed: \n\n{e}")
+    try:
+        blog_url, instance = manager.deploy_ghost_instance(sub_domain_name, Docker_internal_ip)
+    except Exception as e:
+        return send_debug_to_laogege(f"Create ghost blog for `{sub_domain_name}` failed: \n\n{e}")
 
     # Save user's data
-    new_auto_blog_id = max_blog_id + 1
-    # Use UPDATE since the row must exist
     with engine.begin() as conn:
         conn.execute(
             text("""
                 UPDATE chat_id_parameters 
-                SET Auto_blog_id = :auto_blog_id, Sub_domain_name = :sub_domain_name, ghost_api_url = :ghost_api_url, Docker_internal_ip = :docker_internal_ip, Docker_public_ip = :docker_public_ip 
+                SET Auto_blog_id = :auto_blog_id, 
+                    Sub_domain_name = :sub_domain_name, 
+                    ghost_api_url = :ghost_api_url, 
+                    Docker_internal_ip = :docker_internal_ip, 
+                    Docker_public_ip = :docker_public_ip 
                 WHERE chat_id = :chat_id
             """),
             {
@@ -412,10 +464,122 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
             }
         )
 
-    send_message(OWNER_CHAT_ID, f"New Ghost blog created: \n{blog_url}\n\nDashboard url:\n{blog_url}/ghost", token)
-    return send_message(chat_id, f"Your Ghost Auto Blog has been created: \n\n{blog_url}\n\nDashboard url:\n{blog_url}/ghost", token)
+    send_message(
+        OWNER_CHAT_ID,
+        f"New Ghost blog created: \n{blog_url}\n\nDashboard url:\n{blog_url}/ghost",
+        token
+    )
+    return send_message(
+        chat_id,
+        f"Your Ghost Auto Blog has been created: \n\n{blog_url}\n\nDashboard url:\n{blog_url}/ghost",
+        token
+    )
+
+
+def remove_ghost_user(chat_id):
+    """
+    SSH into the Ghost server and remove a user's blog instance.
+    First makes the remove_user.sh script executable, then runs it.
+    
+    Args:
+        username: The username of the Ghost blog to remove
+        private_ip: The private IP address of the Ghost server
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+
+    df = pd.read_sql(text("SELECT Docker_internal_ip, Sub_domain_name FROM chat_id_parameters WHERE chat_id = :chat_id"), engine,params={'chat_id': chat_id})
+    if not df.empty: return send_message(OWNER_CHAT_ID, f"Can't find the user's blog subdomain with chat_id: {chat_id}")
+
+    private_ip = df['Docker_internal_ip'].values[0]
+    username = df['Sub_domain_name'].values[0]
+
+    try:
+        # Verify PEM file exists
+        if not os.path.exists(SSH_PEM):
+            print(f"Error: PEM file not found at {SSH_PEM}")
+            return False
+
+        # Input validation for IP address format
+        if not private_ip:
+            print("Error: Private IP address is required")
+            return False
+
+        # First, make the script executable
+        chmod_cmd = [
+            "ssh",
+            "-i", SSH_PEM,
+            "-o", "StrictHostKeyChecking=no",
+            f"{SSH_USER}@{private_ip}",
+            "chmod +x /home/ubuntu/ghost_user_data/remove_user.sh"
+        ]
+
+        print("Making remove_user.sh executable...")
+        chmod_process = subprocess.run(
+            chmod_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        if chmod_process.returncode != 0:
+            print("Failed to make script executable")
+            print("Error output:")
+            print(chmod_process.stderr)
+            return False
+
+        # Now execute the removal script
+        remove_cmd = [
+            "ssh",
+            "-i", SSH_PEM,
+            "-o", "StrictHostKeyChecking=no",
+            f"{SSH_USER}@{private_ip}",
+            f"cd /home/ubuntu/ghost_user_data && ./remove_user.sh {username}"
+        ]
+
+        print(f"Removing Ghost blog for user: {username} on server: {private_ip}")
+        process = subprocess.run(
+            remove_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        # Check if the command was successful
+        if process.returncode == 0:
+            print("Successfully removed Ghost blog instance")
+            print(process.stdout)
+
+            # Update the database
+            with engine.begin() as conn:
+                conn.execute(
+                    text("""
+                        UPDATE chat_id_parameters 
+                        SET 
+                            Auto_blog_id = NULL, 
+                            Sub_domain_name = NULL, 
+                            ghost_api_url = NULL, 
+                            Docker_internal_ip = NULL, 
+                            Docker_public_ip = NULL
+                        WHERE 
+                            chat_id = :chat_id"""),
+                    {'chat_id': chat_id}
+                )
+            send_debug_to_laogege(f"/chat_{chat_id} | {username} | Ghost blog instance removed successfully, {private_ip} database updated.")
+            return True
+        else:
+            print("Failed to remove Ghost blog instance")
+            print("Error output:")
+            print(process.stderr)
+            return False 
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return False
+
 
 
 if __name__ == "__main__":
     print("Creating Ghost blog...")
-    # create_ghost_blog('www', LAOGEGE_CHAT_ID)
+    create_ghost_blog('elvis', '5504365532')
