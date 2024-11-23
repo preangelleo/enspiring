@@ -65,22 +65,20 @@ class GhostDeploymentManager:
                     )
                     # Get ghost instance count through SSH
                     self._update_instance_count(instances[instance['name']])
-        except Exception as e:
-            print(f"Error loading instances: {e}")
+
+        except Exception as e: send_debug_to_laogege(f"Error loading instances: {e}")
         return instances
 
     def _update_instance_count(self, instance: LightsailInstance):
         """Get number of running Ghost instances via SSH"""
         ssh = self._get_ssh_client(instance.public_ip)
         try:
-            stdin, stdout, stderr = ssh.exec_command(
-                "docker ps | grep ghost | wc -l"
-            )
+            stdin, stdout, stderr = ssh.exec_command("docker ps | grep ghost | wc -l")
             instance.ghost_instances = int(stdout.read().decode().strip())
-        except Exception as e:
-            print(f"Error updating instance count: {e}")
-        finally:
-            ssh.close()
+
+        except Exception as e: send_debug_to_laogege(f"Error updating instance count: {e}")
+
+        finally: ssh.close()
 
     def _get_ssh_client(self, host: str) -> paramiko.SSHClient:
         """Create SSH client for instance management"""
@@ -95,23 +93,26 @@ class GhostDeploymentManager:
                 timeout=10
             )
             return ssh
+        
         except Exception as e:
-            print(f"SSH connection failed: {e}")
+            send_debug_to_laogege(f"SSH connection failed: {e}")
             raise
 
     def wait_for_ssh(self, public_ip: str, max_attempts: int = 24) -> bool:
         """Wait for SSH to become available on the instance"""
         print(f"Waiting for SSH to become available on public IP {public_ip}...")
-        import time
+
         for attempt in range(max_attempts):
+
             try:
                 ssh = self._get_ssh_client(public_ip)
                 ssh.close()
-                print(f"Successfully connected to {public_ip} via SSH!")
                 return True
+            
             except Exception as e:
-                print(f"Attempt {attempt + 1}/{max_attempts}: SSH not ready yet on {public_ip}: {e}")
-                time.sleep(10)
+                if attempt >= 5: send_debug_to_laogege(f"Attempt {attempt + 1}/{max_attempts}: SSH not ready yet on {public_ip}: {e}")
+                time.sleep(20)
+
         return False
 
     def _create_new_instance(self) -> LightsailInstance:
@@ -119,15 +120,15 @@ class GhostDeploymentManager:
         instance_count = len(self.instances)
         instance_name = f"ghost-{instance_count + 1}"
         try:
-            print(f"Creating new instance: {instance_name}")
+            send_debug_to_laogege(f"Creating new instance: {instance_name}")
             self.lightsail_client.create_instances_from_snapshot(
                 instanceNames=[instance_name],
                 availabilityZone=f'{self.region}a',
                 bundleId=self.instance_plan,
                 instanceSnapshotName=self.snapshot_name
             )
-            import time
-            print(f"Waiting for instance {instance_name} to be ready...")
+            send_debug_to_laogege(f"Waiting for instance {instance_name} to be ready...")
+
             for _ in range(60):
                 try:
                     response = self.lightsail_client.get_instance(
@@ -135,38 +136,39 @@ class GhostDeploymentManager:
                     )
                     state = response['instance']['state']['name']
                     print(f"Instance state: {state}")
-                    if state == 'running':
-                        print("Instance is now running!")
-                        break
+
+                    if state == 'running': break
+
                     time.sleep(10)
-                except Exception as e:
-                    print(f"Error checking instance state: {e}")
-                    time.sleep(10)
-            else:
-                raise TimeoutError("Instance failed to reach running state in time")
+
+                except: time.sleep(10)
+
+            else: raise TimeoutError("Instance failed to reach running state in time")
+            
             response = self.lightsail_client.get_instance(instanceName=instance_name)
             public_ip = response['instance']['publicIpAddress']
             private_ip = response['instance']['privateIpAddress']
-            print(f"Instance public IP: {public_ip}")
-            print(f"Instance private IP: {private_ip}")
+
+            send_debug_to_laogege(f"Instance \npublic IP: {public_ip}\nprivate IP: {private_ip}")
+
             instance = LightsailInstance(
                 instance_name=instance_name,
                 public_ip=public_ip,
                 private_ip=private_ip,
                 region=self.region
             )
-            if not self.wait_for_ssh(public_ip):
-                raise TimeoutError("SSH service failed to become available")
-            print(f"Initializing instance...")
+            if not self.wait_for_ssh(public_ip): raise TimeoutError("SSH service failed to become available")
+
             self.initialize_instance(instance)
             return instance
+        
         except Exception as e:
-            print(f"Error creating new instance: {e}")
+            send_debug_to_laogege(f"Error creating new instance: {e}")
             raise
 
     def initialize_instance(self, instance: LightsailInstance):
         """Initialize new instance by cleaning up existing Ghost installations"""
-        print(f"Starting instance initialization: {instance.instance_name}")
+        send_debug_to_laogege(f"Starting instance initialization: {instance.instance_name}")
         ssh = self._get_ssh_client(instance.public_ip)
         try:
             commands = [
@@ -184,12 +186,11 @@ class GhostDeploymentManager:
                 if exit_status != 0:
                     error = stderr.read().decode().strip()
                     print(f"Command failed with status {exit_status}: {error}")
-            print(f"Instance initialization completed: {instance.instance_name}")
-        except Exception as e:
-            print(f"Error during instance initialization: {e}")
-            raise
-        finally:
-            ssh.close()
+            send_debug_to_laogege(f"Instance initialization completed: {instance.instance_name}")
+
+        except Exception as e: raise e
+
+        finally: ssh.close()
 
     def _update_nginx_config(self, username: str, instance: LightsailInstance, port: int):
         """Update Nginx configuration on primary instance"""
@@ -228,8 +229,7 @@ server {{
 
             # Use SCP to upload the configuration to the server
             from scp import SCPClient
-            with SCPClient(ssh.get_transport()) as scp:
-                scp.put(config_path, config_path)
+            with SCPClient(ssh.get_transport()) as scp: scp.put(config_path, config_path)
 
             # Move the configuration to the final destination with correct permissions
             cmd = f'sudo mv {config_path} {final_config_path} && sudo chown root:root {final_config_path} && sudo chmod 644 {final_config_path}'
@@ -246,22 +246,20 @@ server {{
                 "sudo nginx -t",
                 "sudo systemctl reload nginx"
             ]
+
             for cmd in commands:
                 stdin, stdout, stderr = ssh.exec_command(cmd)
                 exit_status = stdout.channel.recv_exit_status()
                 if exit_status != 0:
                     error = stderr.read().decode().strip()
                     print(f"Command failed with status {exit_status}: {error}")
-                    if cmd == "sudo nginx -t":
-                        raise Exception(f"Nginx configuration test failed: {error}")
-        finally: 
-            ssh.close()
+                    if cmd == "sudo nginx -t": raise Exception(f"Nginx configuration test failed: {error}")
+
+        finally: ssh.close()
 
     def _get_next_available_port(self, ssh: paramiko.SSHClient) -> int:
         """Get the next available port for Docker container"""
-        stdin, stdout, stderr = ssh.exec_command(
-            "docker ps --format '{{.Ports}}' | grep -oP '(?<=0.0.0.0:)\d+(?=->2368)' | sort -n | tail -1"
-        )
+        stdin, stdout, stderr = ssh.exec_command("docker ps --format '{{.Ports}}' | grep -oP '(?<=0.0.0.0:)\d+(?=->2368)' | sort -n | tail -1")
         last_port = stdout.read().decode().strip()
         port = 2368 if not last_port else int(last_port) + 1
         return port
@@ -281,7 +279,7 @@ server {{
             if not target_instance:
                 raise ValueError(f"No instance found with private IP {existing_private_ip}")
             if target_instance.ghost_instances >= target_instance.max_instances:
-                print(f"Instance {target_instance.instance_name} has reached max capacity. Creating a new instance.")
+                send_debug_to_laogege(f"Instance {target_instance.instance_name} has reached max capacity. Creating a new instance.")
                 target_instance = self._create_new_instance()
                 self.instances[target_instance.instance_name] = target_instance
         else:
@@ -316,8 +314,7 @@ server {{
 
             return f"https://{username}.{BASE_URL}", target_instance
         
-        finally: 
-            ssh.close()
+        finally: ssh.close()
 
     def _get_ghost_config_command(self, username: str, user_dir: str) -> str:
         """Generate Ghost config creation command"""
@@ -379,21 +376,15 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
     if df.empty:
         max_blog_id = 0
         Docker_internal_ip = None
-        Docker_public_ip = None
     else:
         max_blog_id = df['Auto_blog_id'].values[0]
         Docker_internal_ip = df['Docker_internal_ip'].values[0]
-        Docker_public_ip = df['Docker_public_ip'].values[0]
 
     max_blog_id = int(max_blog_id)
 
     # Decide whether to create a new instance
-    if max_blog_id % MAX_INSTANCES_PER_SERVER == 0 and max_blog_id != 0:
-        # Need to create a new instance
-        existing_private_ip = None
-    else:
-        # Can use existing instance
-        existing_private_ip = Docker_internal_ip
+    if max_blog_id % MAX_INSTANCES_PER_SERVER == 0 and max_blog_id != 0: existing_private_ip = None
+    else: existing_private_ip = Docker_internal_ip
 
     # Now deploy the Ghost instance
     manager = GhostDeploymentManager()
@@ -408,8 +399,7 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
         conn.execute(
             text("""
                 UPDATE chat_id_parameters 
-                SET Auto_blog_id = :auto_blog_id, Sub_domain_name = :sub_domain_name, 
-                    Docker_internal_ip = :docker_internal_ip, Docker_public_ip = :docker_public_ip 
+                SET Auto_blog_id = :auto_blog_id, Sub_domain_name = :sub_domain_name, ghost_api_url = :ghost_api_url, Docker_internal_ip = :docker_internal_ip, Docker_public_ip = :docker_public_ip 
                 WHERE chat_id = :chat_id
             """),
             {
@@ -417,6 +407,7 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
                 'sub_domain_name': sub_domain_name,
                 'docker_internal_ip': instance.private_ip,
                 'docker_public_ip': instance.public_ip,
+                'ghost_api_url': blog_url,
                 'chat_id': chat_id
             }
         )
@@ -427,4 +418,4 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
 
 if __name__ == "__main__":
     print("Creating Ghost blog...")
-    create_ghost_blog('www', LAOGEGE_CHAT_ID)
+    # create_ghost_blog('www', LAOGEGE_CHAT_ID)

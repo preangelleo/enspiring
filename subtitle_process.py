@@ -326,6 +326,8 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
     email_address = user_parameters.get('email', '')
     openai_api_key = user_parameters.get('openai_api_key', '')
 
+    if msg.startswith('/'): msg = msg[1:]
+
     msg_lower = msg.lower()
     length_msg = len(msg)
 
@@ -948,6 +950,35 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             user_chat_id = sub_domain_name_with_user_chat_id_list[1].strip()
             send_message(chat_id, f"Creating the Ghost blog for /chat_{user_chat_id}...", token)
             return create_ghost_blog(sub_domain_name, user_chat_id, token, engine)
+        
+
+        elif msg_lower.startswith('set_ghost_api_key'):
+            ghost_admin_api_key_and_chat_id = msg.replace('set_ghost_api_key', '').strip()
+            if not ghost_admin_api_key_and_chat_id: return send_message(chat_id, "Please provide the Ghost admin key after the command. Example: /set_ghost_api_key your_ghost_admin_key user_chat_id", token)
+            ghost_admin_api_key_and_chat_id_list = ghost_admin_api_key_and_chat_id.split(' ')
+            if len(ghost_admin_api_key_and_chat_id_list) < 2: return send_message(chat_id, "Please provide the Ghost admin key and user chat_id after the command. Example: /set_ghost_api_key your_ghost_admin_key user_chat_id", token)
+            ghost_admin_api_key = ghost_admin_api_key_and_chat_id_list[0].strip()
+            user_chat_id = ghost_admin_api_key_and_chat_id_list[1].strip()
+            return set_ghost_admin_api_key(user_chat_id, ghost_admin_api_key, token, engine, message_id=0)
+        
+
+        elif msg_lower.startswith('set_ghost_url'):
+            ghost_url_and_chat_id = msg.replace('set_ghost_url', '').strip()
+            if not ghost_url_and_chat_id: return send_message(chat_id, "Please provide the Ghost URL after the command. Example: /set_ghost_url your_ghost_url user_chat_id", token)
+            ghost_url_and_chat_id_list = ghost_url_and_chat_id.split(' ')
+            if len(ghost_url_and_chat_id_list) < 2: return send_message(chat_id, "Please provide the Ghost URL and user chat_id after the command. Example: /set_ghost_url your_ghost_url user_chat_id", token)
+            ghost_url = ghost_url_and_chat_id_list[0].strip()
+            user_chat_id = ghost_url_and_chat_id_list[-1].strip()
+            return set_ghost_blog_url(user_chat_id, ghost_url, token, engine, message_id=0)
+        
+
+        elif msg_lower.startswith('get_chat_id'):
+            user_name = msg.replace('get_chat_id', '').strip()
+            if not user_name: return send_message(chat_id, "Please provide the user's name after the command. Example: /get_chat_id Danli", token)
+            df = pd.read_sql(text("SELECT chat_id FROM chat_id_parameters WHERE LOWER(name) = LOWER(:name)"), engine, params={'name': user_name})
+            if df.empty: return send_message(chat_id, f"No such user found with the name: {user_name}", token)
+            user_chat_id = df['chat_id'].values[0]
+            return send_message(chat_id, f"{user_name} \n/chat_{user_chat_id}\n/simulate {user_chat_id} message here.", token)
 
 
         elif msg_lower.startswith('create_author_id'):

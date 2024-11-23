@@ -2096,7 +2096,7 @@ The eagle offered Leo one wish for returning the feather. Leo wished for his vil
 From that day on, the village was the happiest place, thanks to one golden feather and a kind wish.
 """
 
-    CARTOON_STYLES_SAMPLE_URL = '''https://enspiring.ai/cartoon_styles/'''
+    CARTOON_STYLES_SAMPLE_URL = f'''{BLOG_POST_API_URL}/cartoon_styles/'''
 
     SYSTEM_PROMPT_WORDS_CHECKED_TODAY = f"""
 Here are the lists of words user has checked today, please use these words to generate a compelling story to reinfore user's memory. You can use the words in any order, but make sure to include most of them in the story (as many as possible, but the result should be as short as possible, otherswise the user don't have the patience to finish reading. 2000 ~ 3000 character would be good. But the output need to have at least 6 paragraphs). The story should be engaging, interesting, and memorable. You can use the words or their derivatives in any form (noun, verb, adjective, adverb) to create a coherent narrative. The story should be suitable for all ages and should not contain any inappropriate content. The goal is to help the user remember the words and their meanings in a fun and engaging way. Generate a intriguing title for the story and bold the words from the user's prompt. At the bottom of the sotry, please provide a `MIDJOURNEY_PROMPT:` for further cover image generation, follow the rules of midjourney prompt restrictions:
@@ -6825,14 +6825,21 @@ def creator_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = 0):
 def set_ghost_admin_api_key(chat_id, ghost_admin_api_key, token, engine, message_id=0):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET ghost_admin_api_key = :ghost_admin_api_key WHERE chat_id = :chat_id;"""), {"ghost_admin_api_key": ghost_admin_api_key, "chat_id": chat_id})
     if message_id: delete_message(chat_id, message_id, token)
+    send_message(OWNER_CHAT_ID, f"/chat_{chat_id} just updated Ghost admin API key.", token)
     return send_message(chat_id, "Ghost admin API key has been updated successfully.", token)
 
 
 def set_ghost_blog_url(chat_id, ghost_api_url, token, engine, message_id=0):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET ghost_api_url = :ghost_api_url WHERE chat_id = :chat_id;"""), {"ghost_api_url": ghost_api_url, "chat_id": chat_id})
     if message_id: delete_message(chat_id, message_id, token)
+    send_message(OWNER_CHAT_ID, f"/chat_{chat_id} just updated Ghost blog URL to \n{ghost_api_url}.", token)
     return send_message(chat_id, "Ghost blog URL has been updated successfully.", token)
     
+def get_name_by_chat_id(chat_id, engine = engine):
+    df = pd.read_sql(text("SELECT name FROM chat_id_parameters WHERE chat_id = :chat_id"), engine, params={"chat_id": chat_id})
+    if df.empty: return None
+    return df['name'].values[0]
+
 
 def set_audio_play_default_for_chat_id(chat_id, audio_play_default, engine = engine):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET audio_play_default = :audio_play_default WHERE chat_id = :chat_id;"""), {"audio_play_default": audio_play_default, "chat_id": chat_id})

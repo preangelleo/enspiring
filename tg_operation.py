@@ -604,7 +604,25 @@ def handle_message(update, token, engine = engine):
         if quoted_msg: msg_text = f"{msg_text}\n\n----------------\n\nQuoted previous message:\n\n{quoted_msg}"
 
     if msg_text:
-        if msg_text == '/start': 
+
+        if chat_id == OWNER_CHAT_ID and msg_text.startswith('/simulate '):
+            user_chat_id_msg = msg_text.replace('/simulate ', '').strip()
+            if ' ' in user_chat_id_msg: 
+                chat_id, msg_text = user_chat_id_msg.split(' ', 1)
+                chat_id = str(chat_id)
+                user_name = get_name_by_chat_id(chat_id, engine = engine)
+                if not user_name: return send_message(chat_id, f"Can't find chat_id {chat_id} from the table.", token)
+                else: send_message(OWNER_CHAT_ID, f"Simulating `{user_name}` /chat_{chat_id} sending message: \n\n{msg_text}", token)
+
+                output_dir = os.path.join(working_dir, chat_id)
+
+                user_parameters['message_id'] = 0
+                user_parameters['chat_id'] = chat_id
+                user_parameters['user_name'] = user_name
+
+                return dealing_tg_command(msg_text, chat_id, user_parameters, token, engine, message_id)
+
+        elif msg_text == '/start': 
             send_message_markdown(chat_id, WELCOME_MESSAGE, token)
             create_chat_directories(chat_id)
             alert_to_owner = f"New user {user_name} just started the bot, take action if necessary.\n/chat_{chat_id}\n\n/create_ghost_blog {user_name.replace(' ', '_')} {chat_id}"

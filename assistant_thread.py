@@ -41,7 +41,7 @@ FUNCTIONS_TOOLS = [
     }, {
         "type": "function",
         "function": {
-            "name": "commands_correction",
+            "name": "Commands_Correction",
             "description": "This function will correct the user's incorrect commands to the right one. If the user's intent is clear from the prompt and there's indeed a command for this purpose.",
             "parameters": {
                 "type": "object",
@@ -106,6 +106,7 @@ FUNCTIONS_TOOLS = [
         }
     },
     ]
+
 
 def create_assistant(chat_id, assistant_name, model, instructions = "None", tools_type = '', engine = engine, user_parameters = {}, token = TELEGRAM_BOT_TOKEN):
     client = OpenAI(api_key=user_parameters.get('openai_api_key'))
