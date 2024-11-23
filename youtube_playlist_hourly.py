@@ -13,11 +13,17 @@ if __name__ == "__main__":
     try: tweet_id = get_one_post_url_and_tweet(engine, twitter_preangelleo)
     except Exception as e: logging.info(e)
 
-    if datetime.now().hour == 6: random_word_daily(token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), engine = engine)
+    if datetime.now().hour == 6: 
+        try: random_word_daily(token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), engine = engine)
+        except Exception as e: send_debug_to_laogege(f"random_word_daily() >> {e}")
 
-    if datetime.now().hour == 12: daily_quote(token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), engine = engine)
+    if datetime.now().hour == 12: 
+        try: daily_quote(token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), engine = engine)
+        except Exception as e: send_debug_to_laogege(f"daily_quote() >> {e}")
 
-    if datetime.now().hour == 18: words_list_of_today(engine = engine, token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"))
+    if datetime.now().hour == 18: 
+        try: words_list_of_today(engine = engine, token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"))
+        except Exception as e: send_debug_to_laogege(f"words_list_of_today() >> {e}")
 
     if datetime.now().hour == 0: 
         try: auto_blog_post(DOLLARPLUS_CHAT_ID, engine, os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), ASSISTANT_MAIN_MODEL_BEST, user_parameters_realtime(DOLLARPLUS_CHAT_ID, engine))

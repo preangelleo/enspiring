@@ -4541,6 +4541,85 @@ def get_session_name(chat_id: str, engine = engine):
         return result[0] if result else None
 
 
+def chunk_text(text, chunk_size, by_words=True):
+    """
+    将文本分割成块，可以按单词数或字符数进行分割
+    
+    Args:
+        text (str): 需要分割的文本
+        chunk_size (int): 每个块的最大大小（单词数或字符数）
+        by_words (bool): True则按单词数分割，False则按字符数分割
+    
+    Returns:
+        list: 分割后的文本块列表
+    """
+    text = text.strip()
+    
+    # 检查是否需要分割
+    if by_words:
+        if len(text.split()) <= chunk_size:
+            return [text]
+    else:
+        if len(text) <= chunk_size:
+            return [text]
+    
+    # 按段落分割
+    paragraphs = text.split("\n\n")
+    chunks = []
+    current_chunk = []
+    current_size = 0
+    
+    for paragraph in paragraphs:
+        # 计算当前段落的大小
+        paragraph_size = len(paragraph.split()) if by_words else len(paragraph)
+        
+        # 如果段落本身超过限制
+        if paragraph_size > chunk_size:
+            # 先保存当前chunk
+            if current_chunk:
+                chunks.append("\n\n".join(current_chunk))
+                current_chunk = []
+                current_size = 0
+            
+            # 按句子分割长段落
+            sentences = paragraph.replace('。', '。\n').replace('！', '！\n').replace('？', '？\n').split('\n')
+            temp_chunk = []
+            temp_size = 0
+            
+            for sentence in sentences:
+                if not sentence.strip():
+                    continue
+                
+                sentence_size = len(sentence.split()) if by_words else len(sentence)
+                
+                if temp_size + sentence_size > chunk_size:
+                    if temp_chunk:
+                        chunks.append(''.join(temp_chunk))
+                    temp_chunk = [sentence]
+                    temp_size = sentence_size
+                else:
+                    temp_chunk.append(sentence)
+                    temp_size += sentence_size
+            
+            if temp_chunk:
+                chunks.append(''.join(temp_chunk))
+        
+        # 如果添加这个段落会超出限制
+        elif current_size + paragraph_size > chunk_size:
+            chunks.append("\n\n".join(current_chunk))
+            current_chunk = [paragraph]
+            current_size = paragraph_size
+        else:
+            current_chunk.append(paragraph)
+            current_size += paragraph_size
+    
+    # 添加最后一个chunk
+    if current_chunk:
+        chunks.append("\n\n".join(current_chunk))
+    
+    return chunks
+
+
 def chunk_punctuated_text(text, words_limit = 1000):
     text = text.strip()
     if len(text.split()) <= words_limit: return [text]
@@ -4901,6 +4980,45 @@ def instant_clone_voice_audio_elevenlabs(text_to_speak, chat_id, voice_sample, a
     return output_path
 
 
+def instant_clone_voice_audio_elevenlabs_with_voice_id(text_to_speak, voice_id, audio_generated_dir_user, model="eleven_turbo_v2_5", chunk_characters = 5000, user_parameters = {}):
+    elevenlabs_api_key = user_parameters.get("elevenlabs_api_key", '')
+    if not elevenlabs_api_key: return "You have not set up your Eleven Labs API key. Please set it up using the /set_elevenlabs_api_key command."
+    
+    output_path = None
+
+    client = ElevenLabs(api_key=elevenlabs_api_key)
+
+    output_file_basename = hashlib.md5((text_to_speak + voice_id).encode()).hexdigest()
+    output_path = os.path.join(audio_generated_dir_user, f"{output_file_basename}.mp3")
+    if os.path.isfile(output_path): return output_path
+
+    chunks = chunk_text(text_to_speak, chunk_size=chunk_characters, by_words=False)
+    
+     # 用于存储所有音频数据
+    all_audio_bytes = []
+    
+    try:
+        # 生成每个块的音频并收集
+        for chunk in chunks:
+            # 生成音频
+            audio_generator = client.generate(text=chunk, voice=voice_id, model=model)
+            # 收集这个块的音频数据
+            chunk_audio = b''.join(audio_generator)
+            all_audio_bytes.append(chunk_audio)
+
+        # 合并所有音频数据
+        final_audio = b''.join(all_audio_bytes)
+        
+        # 保存合并后的音频文件
+        with open(output_path, "wb") as f: f.write(final_audio)
+        return output_path
+        
+    except Exception as e:
+        # 如果生成过程中出现错误，确保清理任何可能的临时文件
+        if os.path.exists(output_path): os.remove(output_path)
+        return f"Error generating audio: {str(e)}"
+
+
 def generate_audio_elevenlabs(text_to_speak, chat_id, api_key = ELEVENLABS_API_KEY_LEO, voice_id = ELEVENLABS_VOICE_ID_LEO, chunk_size = ELEVENLABS_CHUNK_SIZE):
     audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
 
@@ -4968,6 +5086,7 @@ def markdown_to_plain_text(markdown_text: str) -> str:
 def generate_story_voice(prompt: str, chat_id: str, audio_file_path = story_audio, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}, language_name=''):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
     prompt = markdown_to_plain_text(prompt)
+    audio_file = None
 
     language_code = identify_language(prompt)
     language_name_detected = REVERSED_LANGUAGE_DICT.get(language_code, 'english') or 'english'
@@ -4975,16 +5094,11 @@ def generate_story_voice(prompt: str, chat_id: str, audio_file_path = story_audi
     if language_name_detected == 'chinese': language_name = 'chinese'
     if not language_name: language_name = language_name_detected
 
-    if language_name not in ['chinese',  'others']:
+    if user_parameters.get('elevenlabs_api_key') and language_name not in ['chinese',  'others']:
         if user_parameters.get('daily_story_voice') or user_parameters.get('default_clone_voice'):
-            elevenlabs_api_key = user_parameters.get('elevenlabs_api_key', '')
-            if elevenlabs_api_key: 
-                voice_sample = user_parameters.get('voice_clone_sample', '')
-                if voice_sample: 
-                    try:
-                        audio_file = instant_clone_voice_audio_elevenlabs(prompt, chat_id, voice_sample, audio_file_path, model="eleven_turbo_v2_5", chunk_size = ELEVENLABS_CHUNK_SIZE, engine = engine, user_parameters = user_parameters)
-                        if audio_file and os.path.isfile(audio_file): return audio_file
-                    except Exception as e: remove_elevenlabs_api_key_for_chat_id(chat_id, engine, token, msg = f"Your /elevenlabs_api_key has been removed because an error happend:\n\n{str(e)}\n\nSolve the problem and reset your /elevenlabs_api_key to continue using your own voice for your articles.")
+            if user_parameters.get('elevenlabs_voice_id'): audio_file = instant_clone_voice_audio_elevenlabs_with_voice_id(prompt, user_parameters.get('elevenlabs_voice_id'), audio_file_path, model="eleven_turbo_v2_5", chunk_characters = 5000, user_parameters = user_parameters)
+            elif user_parameters.get('voice_clone_sample'): audio_file = instant_clone_voice_audio_elevenlabs(prompt, chat_id, user_parameters.get('voice_clone_sample'), audio_file_path, model="eleven_turbo_v2_5", chunk_size = ELEVENLABS_CHUNK_SIZE, engine = engine, user_parameters = user_parameters)
+            if audio_file and os.path.isfile(audio_file): return audio_file
 
     default_audio_gender = user_parameters.get('default_audio_gender') or 'male'
 

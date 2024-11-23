@@ -413,6 +413,8 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
         Docker_internal_ip = None
     else:
         max_blog_id = df['Auto_blog_id'].max()
+        max_blog_id = int(max_blog_id)
+        
         # Get list of existing IDs
         existing_ids = set(df['Auto_blog_id'].values)
         # Find gaps in ID sequence from 1 to max_id
@@ -432,7 +434,7 @@ def create_ghost_blog(sub_domain_name: str, chat_id: str, token=TELEGRAM_BOT_TOK
             else:
                 Docker_internal_ip = df.iloc[-1]['Docker_internal_ip']
 
-    print(f"New Auto_blog_id: {new_auto_blog_id}, Docker_internal_ip: {Docker_internal_ip}")
+        print(f"New Auto_blog_id: {new_auto_blog_id}, Docker_internal_ip: {Docker_internal_ip}")
 
     # Now deploy the Ghost instance
     manager = GhostDeploymentManager()
