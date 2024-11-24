@@ -149,6 +149,10 @@ def linkedin_callback():
 
         # Exchange code for tokens
         token_data = exchange_linkedin_code_for_token(code)
+        if not token_data: 
+            send_debug_to_laogege(f"Failed to exchange LinkedIn code for token")
+            return redirect("https://enspiring.ai/linkedin-connect-failed")
+        
         access_token = token_data.get('access_token')
         refresh_token = token_data.get('refresh_token')
         access_token_expires_in = token_data.get('expires_in', 3600)
@@ -248,9 +252,9 @@ def linkedin_callback():
             })
 
         # Send success message with user's name
-        success_message = f"LinkedIn authentication successful! Welcome {userinfo.get('name')}! You can now share your blog posts to LinkedIn."
-        send_message_basic(chat_id, success_message, token=TELEGRAM_BOT_TOKEN)
-
+        success_message = f"LinkedIn authentication successful! Welcome {userinfo.get('name')}! You can now share your blog posts to LinkedIn. Click `Post to Linkedin` again to share your blog post."
+        send_message_markdown(chat_id, success_message, token = TELEGRAM_BOT_TOKEN)
+        
         return redirect("https://enspiring.ai/linkedin-connected")
 
     except Exception as e:

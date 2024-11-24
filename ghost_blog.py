@@ -2759,7 +2759,7 @@ If you can't open the link above, please copy and paste below url into your brow
     return
 
 
-def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, model=ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}):
+def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), model=ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
 
     admin_api_key = user_parameters.get('ghost_admin_api_key', '')
@@ -2974,7 +2974,7 @@ def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, mo
 
             share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
             reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
-            send_message_markdown(chat_id, reply)
+            send_message_markdown(chat_id, reply, token)
 
         if image_id:
             with engine.begin() as conn: conn.execute(text(f"UPDATE image_midjourney SET post_id = :post_id, title = :title, slug = :slug, post_url = :url WHERE image_id = :image_id"), {'post_id': post_id, 'image_id': image_id, 'title': title, 'slug': returned_slug, 'url': url})

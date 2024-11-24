@@ -4080,7 +4080,7 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
         elif table_name == 'creator_auto_posts': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_auto_{post_id}'
         elif table_name == 'creator_journals': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
 
-    button_per_list = 1
+    button_per_list = 2
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, is_markdown=True)
 
 
@@ -9145,8 +9145,7 @@ def exchange_linkedin_code_for_token(code):
         "redirect_uri": LINKEDIN_REDIRECT_URI
     }
     response = requests.post(url, data=data)
-    if response.status_code != 200: raise Exception(f"Token exchange failed: {response.text}")
-    return response.json()
+    if response.status_code == 200: return response.json()
 
 
 def get_linkedin_token(chat_id):
@@ -9171,7 +9170,7 @@ def get_linkedin_token(chat_id):
             access_token, refresh_token, access_expires, refresh_expires = result
             
             # Check if refresh token is expired
-            if refresh_expires and datetime.now() >= refresh_expires: return None  # Need complete re-authentication
+            if refresh_expires and datetime.now() >= refresh_expires: return
                 
             # Check if access token is expired and we have a valid refresh token
             if datetime.now() >= access_expires and refresh_token:
@@ -9206,16 +9205,10 @@ def get_linkedin_token(chat_id):
                             "refresh_expires": refresh_expires
                         }
                     )
-                    
-                except Exception as e:
-                    send_debug_to_laogege(f"Failed to refresh LinkedIn token: {str(e)}")
-                    return None
-                    
+                except: pass
+
             return access_token
-            
-    except Exception as e:
-        send_debug_to_laogege(f"Error getting LinkedIn token: {str(e)}")
-        return None
+    except: return
     
 
 # Add this function to initiate LinkedIn authentication
@@ -9253,12 +9246,9 @@ def upload_image_to_linkedin(access_token, image_path, member_id):
             }
         }
         
-        send_debug_to_laogege(f"Registering upload with payload: {register_payload}")
         register_response = requests.post(register_url, headers=headers, json=register_payload)
-        send_debug_to_laogege(f"Register response: {register_response.status_code} - {register_response.text}")
-        
-        if register_response.status_code != 200:
-            raise Exception(f"Failed to register image upload: {register_response.text}")
+
+        if register_response.status_code != 200: return ''
             
         upload_data = register_response.json()
         
@@ -9274,13 +9264,10 @@ def upload_image_to_linkedin(access_token, image_path, member_id):
                 data=image_file
             )
             
-        if upload_response.status_code != 201:
-            raise Exception(f"Failed to upload image: {upload_response.text}")
-            
-        return asset
+        if upload_response.status_code == 201: return asset
         
-    except Exception as e:
-        raise Exception(f"Image upload failed: {str(e)}")
+    except Exception as e: send_debug_to_laogege(f"Error uploading image to LinkedIn: {str(e)}")
+
 
 def share_post_to_linkedin(access_token, title, post_excerpt, article_url, image_path=None):
     try:
@@ -9372,17 +9359,11 @@ def share_post_to_linkedin(access_token, title, post_excerpt, article_url, image
             "X-Restli-Protocol-Version": "2.0.0"
         }
         
-        send_debug_to_laogege(f"Sharing with payload: {payload}")
         response = requests.post(url, headers=headers, json=payload)
-        send_debug_to_laogege(f"Share response: {response.status_code} - {response.text}")
+        if response.status_code == 201: return response.headers.get('X-RestLi-Id')
+        else: raise Exception(f"Failed to share post: {response.text}")
         
-        if response.status_code == 201:
-            return response.headers.get('X-RestLi-Id')
-        else:
-            raise Exception(f"Failed to share post: {response.text}")
-        
-    except Exception as e: 
-        return send_debug_to_laogege(f"Error sharing to LinkedIn: {str(e)}")
+    except Exception as e: return send_debug_to_laogege(f"ERROR sharing to LinkedIn: {str(e)}")
     
 
 def handle_share_to_linkedin_button(chat_id, title, post_excerpt, article_url, image = '', token = TELEGRAM_BOT_TOKEN):
@@ -9396,8 +9377,7 @@ def handle_share_to_linkedin_button(chat_id, title, post_excerpt, article_url, i
         return send_message_markdown(chat_id, markdown_msg, token)
     
     # If we have token, proceed with sharing
-    try: return share_post_to_linkedin(access_token, title, post_excerpt, article_url, image)
-    except Exception as e: send_debug_to_laogege(f"Error sharing post to Linkedin: {str(e)}")
+    return share_post_to_linkedin(access_token, title, post_excerpt, article_url, image)
 
 
 
