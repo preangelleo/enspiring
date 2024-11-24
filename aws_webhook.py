@@ -126,16 +126,151 @@ def webhook_test():
     return jsonify({"status": "success", "message": "An email confirmation or notification has been sent to your email address, please check your email inbox."}), 200
 
 
-# Future social media callbacks can be added like this:
-@app.route('/callback/twitter/')
-def twitter_callback():
-    return jsonify({"status": "success"}), 200
-
-
 @app.route('/callback/wechat/')
 def wechat_callback():
     return jsonify({"status": "success"}), 200
 
+
+
+# Future social media callbacks can be added like this:
+@app.route('/callback/twitter')
+def twitter_callback():
+    try:
+        code = request.args.get('code')
+        chat_id = request.args.get('state')
+        
+        if not code or not chat_id:
+            send_debug_to_laogege(f"Missing code or chat_id in Twitter callback")
+            return redirect("https://enspiring.ai/twitter-connect-failed")
+
+        # Retrieve stored code verifier
+        code_verifier = get_stored_verifier(chat_id)
+        if not code_verifier:
+            send_debug_to_laogege(f"No code verifier found for chat_id: {chat_id}")
+            return redirect("https://enspiring.ai/twitter-connect-failed")
+
+        # Exchange code for tokens using PKCE
+        token_data = exchange_twitter_code_for_token(code, code_verifier)
+        if not token_data:
+            send_debug_to_laogege(f"Failed to exchange Twitter code for token")
+            return redirect("https://enspiring.ai/twitter-connect-failed")
+        
+        access_token = token_data.get('access_token')
+        refresh_token = token_data.get('refresh_token')
+        token_type = token_data.get('token_type')  # Should be 'bearer'
+        expires_in = token_data.get('expires_in', 7200)  # Default 2 hours
+        
+        if not access_token or token_type != 'bearer':
+            send_debug_to_laogege(f"Invalid token response from Twitter")
+            return redirect("https://enspiring.ai/twitter-connect-failed")
+
+        # Get user info using Twitter v2 API
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        userinfo_response = requests.get(
+            "https://api.twitter.com/2/users/me",
+            headers=headers,
+            params={
+                "user.fields": "id,name,username,profile_image_url,verified,description,public_metrics"
+            }
+        )
+        
+        if userinfo_response.status_code != 200:
+            send_debug_to_laogege(f"Failed to get Twitter userinfo: {userinfo_response.text}")
+            return redirect("https://enspiring.ai/twitter-connect-failed")
+
+        user_data = userinfo_response.json().get('data', {})
+        public_metrics = user_data.get('public_metrics', {})
+
+        # Store in database
+        with engine.begin() as connection:
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS twitter_tokens (
+                    chat_id VARCHAR(32) PRIMARY KEY,
+                    access_token TEXT NOT NULL,
+                    refresh_token TEXT,
+                    token_type VARCHAR(20),
+                    access_token_expires_at TIMESTAMP NOT NULL,
+                    refresh_token_expires_at TIMESTAMP,
+                    twitter_id VARCHAR(32),
+                    username VARCHAR(255),
+                    display_name VARCHAR(255),
+                    profile_image_url TEXT,
+                    verified BOOLEAN,
+                    description TEXT,
+                    followers_count INT,
+                    following_count INT,
+                    tweet_count INT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            """))
+
+            access_token_expires_at = datetime.now() + timedelta(seconds=expires_in)
+            # Twitter refresh tokens expire in 180 days
+            refresh_token_expires_at = datetime.now() + timedelta(days=180) if refresh_token else None
+
+            connection.execute(text("""
+                INSERT INTO twitter_tokens (
+                    chat_id, access_token, refresh_token, token_type,
+                    access_token_expires_at, refresh_token_expires_at,
+                    twitter_id, username, display_name,
+                    profile_image_url, verified, description,
+                    followers_count, following_count, tweet_count
+                ) VALUES (
+                    :chat_id, :access_token, :refresh_token, :token_type,
+                    :access_token_expires_at, :refresh_token_expires_at,
+                    :twitter_id, :username, :display_name,
+                    :profile_image_url, :verified, :description,
+                    :followers_count, :following_count, :tweet_count
+                )
+                ON DUPLICATE KEY UPDATE
+                    access_token = VALUES(access_token),
+                    refresh_token = VALUES(refresh_token),
+                    token_type = VALUES(token_type),
+                    access_token_expires_at = VALUES(access_token_expires_at),
+                    refresh_token_expires_at = VALUES(refresh_token_expires_at),
+                    twitter_id = VALUES(twitter_id),
+                    username = VALUES(username),
+                    display_name = VALUES(display_name),
+                    profile_image_url = VALUES(profile_image_url),
+                    verified = VALUES(verified),
+                    description = VALUES(description),
+                    followers_count = VALUES(followers_count),
+                    following_count = VALUES(following_count),
+                    tweet_count = VALUES(tweet_count)
+            """), {
+                "chat_id": chat_id,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": token_type,
+                "access_token_expires_at": access_token_expires_at,
+                "refresh_token_expires_at": refresh_token_expires_at,
+                "twitter_id": user_data.get('id'),
+                "username": user_data.get('username'),
+                "display_name": user_data.get('name'),
+                "profile_image_url": user_data.get('profile_image_url'),
+                "verified": user_data.get('verified', False),
+                "description": user_data.get('description'),
+                "followers_count": public_metrics.get('followers_count', 0),
+                "following_count": public_metrics.get('following_count', 0),
+                "tweet_count": public_metrics.get('tweet_count', 0)
+            })
+
+        success_message = (
+            f"Twitter authentication successful! Welcome @{user_data.get('username')}! "
+            "You can now share your blog posts to Twitter. Click `Post to Twitter` again to share your blog post."
+        )
+        send_message_markdown(chat_id, success_message, token=TELEGRAM_BOT_TOKEN)
+        
+        return redirect("https://enspiring.ai/twitter-connected")
+
+    except Exception as e:
+        send_debug_to_laogege(f"Twitter callback error: {str(e)}")
+        return redirect("https://enspiring.ai/twitter-connect-failed")
+    
 
 @app.route('/callback/linkedin')
 def linkedin_callback():

@@ -105,9 +105,13 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         title, url, custom_excerpt = df['title'].values[0], df['post_url'].values[0], df['custom_excerpt'].values[0]
         if not all([title, url]): return send_message(chat_id, "Failed to get the post details, please try again later.", token)
 
-        if custom_excerpt: title = custom_excerpt[:180]
+        if custom_excerpt: title = custom_excerpt
 
-        return post_to_twitter_by_chat_id(chat_id, title, url, token, user_parameters)
+        tweet_result = handle_share_to_twitter_button(chat_id, title, url, token)
+        if tweet_result: 
+            reply = f"Click [HERE]({tweet_result}) to view the tweet."
+            return send_message_markdown(chat_id, reply, token)
+        else: return send_message(chat_id, "Failed to share the post to Twitter, please try again later.", token)
     
 
     elif callback_data.startswith('linkedin_'):
@@ -125,8 +129,6 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         title, url, custom_excerpt, image_path = df['title'].values[0], df['post_url'].values[0], df['custom_excerpt'].values[0], df['image_path'].values[0]
         if not all([title, url]): return send_message(chat_id, "Failed to get the post details, please try again later.", token)
 
-        if custom_excerpt: title = custom_excerpt[:180]
-
         if not os.path.isfile(image_path):
             feature_image = df['feature_image'].values[0]
             if feature_image: 
@@ -143,8 +145,8 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
         if share_asset and share_asset.startswith('urn:li:share:'):
             reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
-            send_message_markdown(chat_id, reply, token)
-        return
+            return send_message_markdown(chat_id, reply, token)
+        else: return send_message(chat_id, "Failed to share the post to LinkedIn, please try again later.", token)
 
 
     elif callback_data.startswith('creator_unfeatured_') or callback_data.startswith('creator_featured_') or callback_data.startswith('creator_public_') or callback_data.startswith('creator_private_') or callback_data.startswith('creator_publish_') or callback_data.startswith('creator_unpublish_'):

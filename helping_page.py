@@ -55,6 +55,8 @@ if 'Making variables':
     LINKEDIN_CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID')
     LINKEDIN_CLIENT_SECRET = os.getenv('LINKEDIN_CLIENT_SECRET')
     LINKEDIN_REDIRECT_URI = f"{BLOG_BASE_URL}/callback/linkedin"
+
+    
     
     # Database connection parameters
     DB_HOST_AWS = os.getenv('DB_HOST_AWS')
@@ -2007,6 +2009,11 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     TWITTER_ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
     TWITTER_ACCESS_TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
     TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
+
+    TWITTER_CLIENT_ID = os.getenv("TWITTER_AUTH20_CLIENT_ID")
+    TWITTER_CLIENT_SECRET = os.getenv("TWITTER_AUTH20_CLIENT_SECRET")
+
+    TWITTER_REDIRECT_URI = f"{BLOG_BASE_URL}/callback/twitter"
     
     TWITTER_API_KEY_PREANGELLEO=os.getenv("TWITTER_API_KEY_PREANGELLEO")
     TWITTER_API_KEY_SECRET_PREANGELLEO=os.getenv("TWITTER_API_KEY_SECRET_PREANGELLEO")
@@ -4071,14 +4078,17 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
     if status == 'published': page_public_inline_keyboard_dict['Set to Draft (Unpublish)'] = f'creator_unpublish_{post_type}_{post_id}'
     else: page_public_inline_keyboard_dict['Publish'] = f'creator_publish_{post_type}_{post_id}'
 
-    if table_name == 'creator_journals_repost': page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_post_{post_id}'
-    elif table_name == 'creator_auto_posts': page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_auto_{post_id}'
-    elif table_name == 'creator_journals': page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_page_{post_id}'
+    if table_name == 'creator_journals_repost': 
+        page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_post_{post_id}'
+        page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_post_{post_id}'
 
-    if user_parameters.get('twitter_handle', ''):  
-        if table_name == 'creator_journals_repost': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_post_{post_id}'
-        elif table_name == 'creator_auto_posts': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_auto_{post_id}'
-        elif table_name == 'creator_journals': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
+    elif table_name == 'creator_auto_posts': 
+        page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_auto_{post_id}'
+        page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_auto_{post_id}'
+
+    elif table_name == 'creator_journals': 
+        page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_page_{post_id}'
+        page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
 
     button_per_list = 2
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, is_markdown=True)
@@ -4090,7 +4100,8 @@ def callback_translate_page_to_post(chat_id, prompt, post_id, token = TELEGRAM_B
     if mother_language != 'English': page_public_inline_keyboard_dict.update({f'Publish in {mother_language}': f'creator_translate_to_post_{post_id}'})
     button_per_list = 2
     page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_page_{post_id}'
-    if user_parameters.get('twitter_handle', ''):  page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
+    page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
+
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, message_id = '', is_markdown = True)
 
 
@@ -5108,10 +5119,18 @@ def generate_story_voice(prompt: str, chat_id: str, audio_file_path = story_audi
     if not language_name: language_name = language_name_detected
 
     if user_parameters.get('elevenlabs_api_key') and language_name not in ['chinese',  'others']:
+        print(f"1. Get elevenlabs_api_key and language not in chinese or others")
         if user_parameters.get('daily_story_voice') or user_parameters.get('default_clone_voice'):
-            if user_parameters.get('elevenlabs_voice_id'): audio_file = instant_clone_voice_audio_elevenlabs_with_voice_id(prompt, user_parameters.get('elevenlabs_voice_id'), audio_file_path, model="eleven_turbo_v2_5", chunk_characters = 5000, user_parameters = user_parameters)
-            elif user_parameters.get('voice_clone_sample'): audio_file = instant_clone_voice_audio_elevenlabs(prompt, chat_id, user_parameters.get('voice_clone_sample'), audio_file_path, model="eleven_turbo_v2_5", chunk_size = ELEVENLABS_CHUNK_SIZE, engine = engine, user_parameters = user_parameters)
+            print(f"2. Get daily_story_voice or default_clone_voice")
+            if user_parameters.get('elevenlabs_voice_id'): 
+                print(f"3. Get elevenlabs_voice_id")
+                audio_file = instant_clone_voice_audio_elevenlabs_with_voice_id(prompt, user_parameters.get('elevenlabs_voice_id'), audio_file_path, model="eleven_turbo_v2_5", chunk_characters = 5000, user_parameters = user_parameters)
+            elif user_parameters.get('voice_clone_sample'): 
+                print(f"4. Get voice_clone_sample")
+                audio_file = instant_clone_voice_audio_elevenlabs(prompt, chat_id, user_parameters.get('voice_clone_sample'), audio_file_path, model="eleven_turbo_v2_5", chunk_size = ELEVENLABS_CHUNK_SIZE, engine = engine, user_parameters = user_parameters)
             if audio_file and os.path.isfile(audio_file): return audio_file
+    
+    print(f"5. Not using elevenlabs")
 
     default_audio_gender = user_parameters.get('default_audio_gender') or 'male'
 
@@ -9391,6 +9410,455 @@ def handle_share_to_linkedin_button(chat_id, title, post_excerpt, article_url, i
     
     # If we have token, proceed with sharing
     return share_post_to_linkedin(access_token, title, post_excerpt, article_url, image)
+
+
+
+def generate_code_verifier():
+    """Generate a code verifier for PKCE"""
+    return base64.urlsafe_b64encode(os.urandom(32)).decode('utf-8').rstrip('=')
+
+
+def generate_code_challenge(code_verifier):
+    """Generate a code challenge for PKCE"""
+    # For this simple example, we're using 'plain' method
+    # In production, you should use S256
+    return code_verifier
+
+
+def get_twitter_token(chat_id):
+    """
+    Get valid Twitter token, refresh if necessary
+    Returns access token if valid, None if no valid token exists
+    """
+    try:
+        with engine.begin() as connection:
+            # Get token data from database
+            result = connection.execute(
+                text("""
+                    SELECT 
+                        access_token, 
+                        refresh_token,
+                        access_token_expires_at,
+                        refresh_token_expires_at,
+                        token_type
+                    FROM twitter_tokens 
+                    WHERE chat_id = :chat_id
+                """),
+                {'chat_id': chat_id}
+            ).fetchone()
+            
+            if not result: return None
+                
+            access_token, refresh_token, access_expires, refresh_expires, token_type = result
+            
+            # Check if refresh token is expired
+            if refresh_expires and datetime.now() >= refresh_expires:
+                send_debug_to_laogege(f"Refresh token expired for chat_id: {chat_id}")
+                return None
+                
+            # Check if access token is expired and we have a valid refresh token
+            if datetime.now() >= access_expires and refresh_token:
+                try:
+                    # Try to refresh the token
+                    new_tokens = refresh_twitter_token(refresh_token)
+                    
+                    if not new_tokens:
+                        send_debug_to_laogege(f"Failed to refresh token for chat_id: {chat_id}")
+                        return None
+                    
+                    # Update tokens in database
+                    access_token = new_tokens['access_token']
+                    new_refresh_token = new_tokens.get('refresh_token', refresh_token)
+                    expires_in = new_tokens.get('expires_in', 7200)  # Default 2 hours
+                    
+                    access_expires = datetime.now() + timedelta(seconds=expires_in)
+                    # Twitter refresh tokens expire in 180 days
+                    refresh_expires = datetime.now() + timedelta(days=180)
+                    
+                    # Update database with new tokens
+                    connection.execute(
+                        text("""
+                            UPDATE twitter_tokens 
+                            SET access_token = :access_token,
+                                refresh_token = :refresh_token,
+                                token_type = :token_type,
+                                access_token_expires_at = :access_expires,
+                                refresh_token_expires_at = :refresh_expires
+                            WHERE chat_id = :chat_id
+                        """),
+                        {
+                            "chat_id": chat_id,
+                            "access_token": access_token,
+                            "refresh_token": new_refresh_token,
+                            "token_type": new_tokens.get('token_type', 'bearer'),
+                            "access_expires": access_expires,
+                            "refresh_expires": refresh_expires
+                        }
+                    )
+                except Exception as e:
+                    send_debug_to_laogege(f"Error refreshing Twitter token: {str(e)}")
+                    return None
+
+            return access_token
+            
+    except Exception as e:
+        send_debug_to_laogege(f"Error getting Twitter token: {str(e)}")
+        return None
+
+
+def refresh_twitter_token(refresh_token):
+    """
+    Refresh Twitter access token using refresh token
+    Returns new token data or None if refresh fails
+    """
+    try:
+        url = "https://api.twitter.com/2/oauth2/token"
+        
+        # Prepare the headers and data
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        
+        data = {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token
+        }
+        
+        # Add appropriate authentication based on client type
+        if TWITTER_CLIENT_SECRET:  # If confidential client
+            # Use Basic Authentication
+            auth_string = f"{TWITTER_CLIENT_ID}:{TWITTER_CLIENT_SECRET}"
+            encoded_auth = base64.b64encode(auth_string.encode()).decode()
+            headers["Authorization"] = f"Basic {encoded_auth}"
+        else:
+            # For public clients, include client_id in body
+            data["client_id"] = TWITTER_CLIENT_ID
+        
+        response = requests.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        
+        return response.json()
+        
+    except Exception as e:
+        send_debug_to_laogege(f"Failed to refresh Twitter token: {str(e)}")
+        return None
+
+
+def revoke_twitter_token(token):
+    """
+    Revoke a Twitter token (can be either access token or refresh token)
+    Returns True if successful, False otherwise
+    """
+    try:
+        url = "https://api.twitter.com/2/oauth2/revoke"
+        
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        
+        data = {
+            "token": token
+        }
+        
+        # Add appropriate authentication based on client type
+        if TWITTER_CLIENT_SECRET:
+            auth_string = f"{TWITTER_CLIENT_ID}:{TWITTER_CLIENT_SECRET}"
+            encoded_auth = base64.b64encode(auth_string.encode()).decode()
+            headers["Authorization"] = f"Basic {encoded_auth}"
+        else:
+            data["client_id"] = TWITTER_CLIENT_ID
+        
+        response = requests.post(url, headers=headers, data=data)
+        return response.status_code == 200
+        
+    except Exception as e:
+        send_debug_to_laogege(f"Failed to revoke Twitter token: {str(e)}")
+        return False
+    
+
+def store_verifier(chat_id, code_verifier):
+    """Store code verifier temporarily"""
+    with engine.begin() as connection:
+        connection.execute(text("""
+            CREATE TABLE IF NOT EXISTS twitter_verifiers (
+                chat_id VARCHAR(32) PRIMARY KEY,
+                code_verifier TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        
+        connection.execute(text("""
+            INSERT INTO twitter_verifiers (chat_id, code_verifier)
+            VALUES (:chat_id, :code_verifier)
+            ON DUPLICATE KEY UPDATE
+                code_verifier = VALUES(code_verifier),
+                created_at = CURRENT_TIMESTAMP
+        """), {
+            "chat_id": chat_id,
+            "code_verifier": code_verifier
+        })
+
+
+def get_stored_verifier(chat_id):
+    """Retrieve stored code verifier"""
+    with engine.begin() as connection:
+        result = connection.execute(text("""
+            SELECT code_verifier 
+            FROM twitter_verifiers 
+            WHERE chat_id = :chat_id
+            AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+        """), {"chat_id": chat_id}).fetchone()
+        
+        if result:
+            # Clean up after retrieving
+            connection.execute(text("""
+                DELETE FROM twitter_verifiers
+                WHERE chat_id = :chat_id
+            """), {"chat_id": chat_id})
+            
+            return result[0]
+    return None
+
+
+def start_twitter_auth(chat_id):
+    """Initiate Twitter OAuth2 PKCE flow"""
+    # Generate and store PKCE verifier
+    code_verifier = generate_code_verifier()
+    store_verifier(chat_id, code_verifier)
+    
+    # Generate challenge from verifier
+    code_challenge = generate_code_challenge(code_verifier)
+    
+    # Define required scopes
+    scopes = [
+        "tweet.read",
+        "tweet.write",
+        "users.read",
+        "offline.access"  # For refresh token
+    ]
+    
+    auth_params = {
+        "response_type": "code",
+        "client_id": TWITTER_CLIENT_ID,
+        "redirect_uri": TWITTER_REDIRECT_URI,
+        "scope": " ".join(scopes),
+        "state": chat_id,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "plain"  # Use S256 in production
+    }
+    
+    return f"https://twitter.com/i/oauth2/authorize?{urlencode(auth_params)}"
+
+
+def exchange_twitter_code_for_token(code, code_verifier):
+    """Exchange authorization code for tokens using PKCE"""
+    url = "https://api.twitter.com/2/oauth2/token"
+    
+    data = {
+        "code": code,
+        "grant_type": "authorization_code",
+        "client_id": TWITTER_CLIENT_ID,
+        "redirect_uri": TWITTER_REDIRECT_URI,
+        "code_verifier": code_verifier
+    }
+    
+    # If using confidential client, add basic auth header
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    
+    if TWITTER_CLIENT_SECRET:  # If confidential client
+        auth_string = f"{TWITTER_CLIENT_ID}:{TWITTER_CLIENT_SECRET}"
+        encoded_auth = base64.b64encode(auth_string.encode()).decode()
+        headers["Authorization"] = f"Basic {encoded_auth}"
+    
+    try:
+        response = requests.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        raise Exception(f"Failed to exchange code: {str(e)}")
+
+
+def refresh_twitter_token(refresh_token):
+    """Refresh Twitter access token"""
+    url = "https://api.twitter.com/2/oauth2/token"
+    
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token
+    }
+    
+    # If using confidential client, add basic auth header
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    
+    if TWITTER_CLIENT_SECRET:  # If confidential client
+        auth_string = f"{TWITTER_CLIENT_ID}:{TWITTER_CLIENT_SECRET}"
+        encoded_auth = base64.b64encode(auth_string.encode()).decode()
+        headers["Authorization"] = f"Basic {encoded_auth}"
+    else:
+        data["client_id"] = TWITTER_CLIENT_ID
+    
+    try:
+        response = requests.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        raise Exception(f"Failed to refresh token: {str(e)}")
+    
+
+def upload_media_to_twitter(access_token, image_path):
+    """
+    Upload media to Twitter using v2 API
+    Note: Twitter v2 API requires a two-step process for media upload:
+    1. Initialize upload
+    2. Append and finalize the media
+    """
+    try:
+        if not os.path.exists(image_path):
+            return send_debug_to_laogege(f"Image file not found: {image_path}")
+            
+        # Set file permissions
+        try:
+            image_file = Path(image_path)
+            image_file.chmod(0o644)
+            image_file.parent.chmod(0o755)
+        except Exception as e:
+            send_debug_to_laogege(f"Warning: Could not set file permissions: {str(e)}")
+
+        # Get file size and type
+        file_size = os.path.getsize(image_path)
+        mime_type = mimetypes.guess_type(image_path)[0]
+        
+        # Step 1: Initialize upload
+        init_url = "https://upload.twitter.com/1.1/media/upload.json"
+        init_headers = {"Authorization": f"Bearer {access_token}"}
+        init_data = {
+            "command": "INIT",
+            "total_bytes": file_size,
+            "media_type": mime_type,
+            "media_category": "tweet_image"
+        }
+        
+        init_response = requests.post(init_url, headers=init_headers, data=init_data)
+        if init_response.status_code != 202:
+            raise Exception(f"Failed to initialize media upload: {init_response.text}")
+        
+        media_id = init_response.json().get('media_id_string')
+        
+        # Step 2: Upload media chunks
+        chunk_size = 4 * 1024 * 1024  # 4MB chunks
+        segment_index = 0
+        
+        with open(image_path, 'rb') as file:
+            while True:
+                chunk = file.read(chunk_size)
+                if not chunk:
+                    break
+                    
+                append_url = "https://upload.twitter.com/1.1/media/upload.json"
+                append_data = {
+                    "command": "APPEND",
+                    "media_id": media_id,
+                    "segment_index": segment_index
+                }
+                files = {"media": chunk}
+                
+                append_response = requests.post(
+                    append_url,
+                    headers=init_headers,
+                    data=append_data,
+                    files=files
+                )
+                
+                if append_response.status_code != 204:
+                    raise Exception(f"Failed to append media chunk: {append_response.text}")
+                
+                segment_index += 1
+        
+        # Step 3: Finalize
+        finalize_url = "https://upload.twitter.com/1.1/media/upload.json"
+        finalize_data = {
+            "command": "FINALIZE",
+            "media_id": media_id
+        }
+        
+        finalize_response = requests.post(finalize_url, headers=init_headers, data=finalize_data)
+        if finalize_response.status_code != 201:
+            raise Exception(f"Failed to finalize media upload: {finalize_response.text}")
+            
+        return media_id
+            
+    except Exception as e:
+        send_debug_to_laogege(f"Error uploading media to Twitter: {str(e)}")
+        return None
+
+
+def share_post_to_twitter(access_token, title, article_url):
+    """Share post to Twitter using v2 API"""
+    try:
+        # Twitter v2 API endpoint for creating tweets
+        url = "https://api.twitter.com/2/tweets"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-type": "application/json"
+        }
+        
+        # Prepare tweet text
+        # Twitter link cards will automatically be created when a URL is included
+        # We'll format the tweet as: Title + URL
+        # The URL will automatically create a preview card if the page has proper meta tags
+        tweet_text = f"{title}\n\n{article_url}"
+        
+        # Keep tweet within Twitter's character limit (280)
+        if len(tweet_text) > 280:
+            # Truncate title if needed, leaving room for URL and ellipsis
+            url_length = len(article_url) + 2  # +2 for newlines
+            max_title_length = 277 - url_length  # 280 - 3 for ellipsis - url_length
+            tweet_text = f"{title[:max_title_length]}...\n\n{article_url}"
+        
+        payload = {"text": tweet_text}
+        
+        # Create the tweet
+        response = requests.post(url, headers=headers, json=payload)
+        
+        if response.status_code == 201:
+            tweet_data = response.json()
+            tweet_id = tweet_data['data']['id']
+            
+            # Get user info to construct tweet URL
+            user_response = requests.get(
+                "https://api.twitter.com/2/users/me",
+                headers=headers
+            )
+            
+            if user_response.status_code == 200:
+                username = user_response.json()['data']['username']
+                tweet_url = f"https://twitter.com/{username}/status/{tweet_id}"
+                return tweet_url
+            
+            else: return tweet_id
+
+        else: return send_debug_to_laogege(f"ERROR sharing to Twitter: {response.text}")
+    except Exception as e: return send_debug_to_laogege(f"ERROR sharing to Twitter: {str(e)}")
+
+
+def handle_share_to_twitter_button(chat_id, title, article_url, token=TELEGRAM_BOT_TOKEN):
+    """Handle the Share to Twitter button click"""
+    # Check for valid token
+    access_token = get_twitter_token(chat_id)
+    
+    if not access_token:
+        # Start authentication process
+        auth_url = start_twitter_auth(chat_id)
+        markdown_msg = f"Please click [here]({auth_url}) to authenticate your Twitter account."
+        return send_message_markdown(chat_id, markdown_msg, token)
+    
+    # Share the post
+    tweet_result = share_post_to_twitter(access_token, title, article_url)
+    if tweet_result and tweet_result.startswith('http'): return tweet_result
 
 
 
