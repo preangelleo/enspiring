@@ -141,7 +141,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
                 except: image_path = ''
 
         share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
-        if share_asset and share_asset != 'DONE':
+        if share_asset and share_asset.startswith('urn:li:share:'):
             reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
             send_message_markdown(chat_id, reply, token)
         return
