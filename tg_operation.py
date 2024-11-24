@@ -128,9 +128,10 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if custom_excerpt: title = custom_excerpt[:180]
 
         share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
-
-        reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
-        return send_message_markdown(chat_id, reply)
+        if share_asset and share_asset != 'DONE':
+            reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
+            send_message_markdown(chat_id, reply, token)
+        return
 
 
     elif callback_data.startswith('creator_unfeatured_') or callback_data.startswith('creator_featured_') or callback_data.startswith('creator_public_') or callback_data.startswith('creator_private_') or callback_data.startswith('creator_publish_') or callback_data.startswith('creator_unpublish_'):

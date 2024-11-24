@@ -9227,6 +9227,19 @@ def start_linkedin_auth(chat_id):
 def upload_image_to_linkedin(access_token, image_path, member_id):
     """First register the image upload, then upload the image"""
     try:
+        # Check if file exists and is readable
+        if not os.path.exists(image_path): return send_debug_to_laogege(f"Image file not found: {image_path}")
+        # Try to fix permissions
+        try:
+            image_file = Path(image_path)
+            image_file.chmod(0o644)  # Make file readable
+            # Also try to make parent directory accessible
+            image_file.parent.chmod(0o755)
+        except Exception as e: return send_debug_to_laogege(f"Warning: Could not set file permissions: {str(e)}")
+
+        # Verify file is readable
+        if not os.access(image_path, os.R_OK): return send_debug_to_laogege(f"Image file not readable: {image_path}")
+
         # Step 1: Register upload
         register_url = "https://api.linkedin.com/v2/assets?action=registerUpload"
         headers = {
@@ -9290,6 +9303,9 @@ def share_post_to_linkedin(access_token, title, post_excerpt, article_url, image
         if image_path:
             try:
                 image_asset = upload_image_to_linkedin(access_token, image_path, member_id)  # Pass member_id
+                print(f"Image asset: {image_asset}")
+                if not image_asset: image_path = None
+
                 payload = {
                     "author": author,
                     "lifecycleState": "PUBLISHED",
@@ -9317,10 +9333,7 @@ def share_post_to_linkedin(access_token, title, post_excerpt, article_url, image
                         "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
                     }
                 }
-            except Exception as e:
-                send_debug_to_laogege(f"Failed to upload image, falling back to article-only share: {str(e)}")
-                # Fall back to article-only share
-                image_path = None
+            except Exception as e: image_path = None
 
         # If no image or image upload failed, share as article
         if not image_path:
