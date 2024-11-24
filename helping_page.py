@@ -35,6 +35,7 @@ from googleapiclient.discovery import build
 from flask import Flask, request, jsonify
 import azure.cognitiveservices.speech as speechsdk
 import assemblyai as aai
+from urllib.parse import urlencode
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -48,6 +49,13 @@ if 'Making variables':
     OWNER_EMAIL_PREANGEL_ORG = os.getenv('OWNER_EMAIL_PREANGEL_ORG')
     PAGE_PREMIUM = os.getenv('PAGE_PREMIUM')
     GOOGLE_SPREADSHEET_SETUP_PAGE = os.getenv('GOOGLE_SPREADSHEET_SETUP_PAGE')
+
+    BLOG_BASE_URL = os.getenv("BLOG_BASE_URL")
+
+    LINKEDIN_CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID')
+    LINKEDIN_CLIENT_SECRET = os.getenv('LINKEDIN_CLIENT_SECRET')
+    LINKEDIN_REDIRECT_URI = f"{BLOG_BASE_URL}/callback/linkedin"
+    
     # Database connection parameters
     DB_HOST_AWS = os.getenv('DB_HOST_AWS')
 
@@ -81,7 +89,7 @@ if 'Making variables':
 
     GHOST_ADMIN_API_KEY = os.getenv("BLOG_POST_ADMIN_API_KEY")
     GHOST_API_URL = os.getenv("BLOG_POST_API_URL")
-    BLOG_BASE_URL = os.getenv("BLOG_BASE_URL")
+    
 
     ENSPIRING_BOT_HANDLE = os.getenv('ENSPIRING_BOT_HANDLE')
     ENSPIRING_ACTIVATE_PAGE = f'{BLOG_BASE_URL}/activate'
@@ -4063,6 +4071,10 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
     if status == 'published': page_public_inline_keyboard_dict['Set to Draft (Unpublish)'] = f'creator_unpublish_{post_type}_{post_id}'
     else: page_public_inline_keyboard_dict['Publish'] = f'creator_publish_{post_type}_{post_id}'
 
+    if table_name == 'creator_journals_repost': page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_post_{post_id}'
+    elif table_name == 'creator_auto_posts': page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_auto_{post_id}'
+    elif table_name == 'creator_journals': page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_page_{post_id}'
+
     if user_parameters.get('twitter_handle', ''):  
         if table_name == 'creator_journals_repost': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_post_{post_id}'
         elif table_name == 'creator_auto_posts': page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_auto_{post_id}'
@@ -4073,10 +4085,11 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
 
 
 def callback_translate_page_to_post(chat_id, prompt, post_id, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
-    page_public_inline_keyboard_dict = {'Publish as Post in English': f'creator_page_to_post_{post_id}'}
+    page_public_inline_keyboard_dict = {'Publish in English': f'creator_page_to_post_{post_id}'}
     mother_language = user_parameters.get('mother_language', 'English') or 'English'
-    if mother_language != 'English': page_public_inline_keyboard_dict.update({f'Publish as Post in {mother_language}': f'creator_translate_to_post_{post_id}'})
-    button_per_list = 1
+    if mother_language != 'English': page_public_inline_keyboard_dict.update({f'Publish in {mother_language}': f'creator_translate_to_post_{post_id}'})
+    button_per_list = 2
+    page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_page_{post_id}'
     if user_parameters.get('twitter_handle', ''):  page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, message_id = '', is_markdown = True)
 
@@ -9103,9 +9116,294 @@ def msg_ghost_blog(token=os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), engine=engin
         print(f"Message sent to {name} at {chat_id}")
 
 
+def refresh_linkedin_token(refresh_token):
+    """Refresh the LinkedIn access token using the refresh token"""
+    url = "https://www.linkedin.com/oauth/v2/accessToken"
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": LINKEDIN_CLIENT_ID,
+        "client_secret": LINKEDIN_CLIENT_SECRET
+    }
+    
+    try:
+        response = requests.post(url, data=data)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        raise Exception(f"Failed to refresh token: {str(e)}")
+    
+
+# Add this function to handle LinkedIn token exchange
+def exchange_linkedin_code_for_token(code):
+    url = "https://www.linkedin.com/oauth/v2/accessToken"
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "client_id": LINKEDIN_CLIENT_ID,
+        "client_secret": LINKEDIN_CLIENT_SECRET,
+        "redirect_uri": LINKEDIN_REDIRECT_URI
+    }
+    response = requests.post(url, data=data)
+    if response.status_code != 200: raise Exception(f"Token exchange failed: {response.text}")
+    return response.json()
+
+
+def get_linkedin_token(chat_id):
+    """Get valid LinkedIn token, refresh if necessary"""
+    try:
+        with engine.begin() as connection:
+            result = connection.execute(
+                text("""
+                    SELECT 
+                        access_token, 
+                        refresh_token,
+                        access_token_expires_at,
+                        refresh_token_expires_at
+                    FROM linkedin_tokens 
+                    WHERE chat_id = :chat_id
+                """),
+                {'chat_id': chat_id}
+            ).fetchone()
+            
+            if not result: return None
+                
+            access_token, refresh_token, access_expires, refresh_expires = result
+            
+            # Check if refresh token is expired
+            if refresh_expires and datetime.now() >= refresh_expires: return None  # Need complete re-authentication
+                
+            # Check if access token is expired and we have a valid refresh token
+            if datetime.now() >= access_expires and refresh_token:
+                try:
+                    # Try to refresh the token
+                    new_tokens = refresh_linkedin_token(refresh_token)
+                    
+                    # Update tokens in database
+                    access_token = new_tokens['access_token']
+                    new_refresh_token = new_tokens.get('refresh_token', refresh_token)
+                    access_expires_in = new_tokens.get('expires_in', 3600)
+                    refresh_expires_in = new_tokens.get('refresh_token_expires_in', 31536000)
+                    
+                    access_expires = datetime.now() + timedelta(seconds=access_expires_in)
+                    refresh_expires = datetime.now() + timedelta(seconds=refresh_expires_in)
+                    
+                    # Update database with new tokens
+                    connection.execute(
+                        text("""
+                            UPDATE linkedin_tokens 
+                            SET access_token = :access_token,
+                                refresh_token = :refresh_token,
+                                access_token_expires_at = :access_expires,
+                                refresh_token_expires_at = :refresh_expires
+                            WHERE chat_id = :chat_id
+                        """),
+                        {
+                            "chat_id": chat_id,
+                            "access_token": access_token,
+                            "refresh_token": new_refresh_token,
+                            "access_expires": access_expires,
+                            "refresh_expires": refresh_expires
+                        }
+                    )
+                    
+                except Exception as e:
+                    send_debug_to_laogege(f"Failed to refresh LinkedIn token: {str(e)}")
+                    return None
+                    
+            return access_token
+            
+    except Exception as e:
+        send_debug_to_laogege(f"Error getting LinkedIn token: {str(e)}")
+        return None
+    
+
+# Add this function to initiate LinkedIn authentication
+def start_linkedin_auth(chat_id):
+    auth_params = {
+        "response_type": "code",
+        "client_id": LINKEDIN_CLIENT_ID,
+        "redirect_uri": LINKEDIN_REDIRECT_URI,
+        "state": chat_id,  # Pass chat_id as state parameter
+        "scope": "w_member_social openid profile email" 
+    }
+    auth_url = f"https://www.linkedin.com/oauth/v2/authorization?{urlencode(auth_params)}"
+    return auth_url
+
+
+def upload_image_to_linkedin(access_token, image_path, member_id):
+    """First register the image upload, then upload the image"""
+    try:
+        # Step 1: Register upload
+        register_url = "https://api.linkedin.com/v2/assets?action=registerUpload"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0"
+        }
+        
+        register_payload = {
+            "registerUploadRequest": {
+                "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
+                "owner": f"urn:li:person:{member_id}",  # Use actual member_id
+                "serviceRelationships": [{
+                    "relationshipType": "OWNER",
+                    "identifier": "urn:li:userGeneratedContent"
+                }]
+            }
+        }
+        
+        send_debug_to_laogege(f"Registering upload with payload: {register_payload}")
+        register_response = requests.post(register_url, headers=headers, json=register_payload)
+        send_debug_to_laogege(f"Register response: {register_response.status_code} - {register_response.text}")
+        
+        if register_response.status_code != 200:
+            raise Exception(f"Failed to register image upload: {register_response.text}")
+            
+        upload_data = register_response.json()
+        
+        # Get upload URL and asset value from response
+        upload_url = upload_data['value']['uploadMechanism']['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']['uploadUrl']
+        asset = upload_data['value']['asset']
+        
+        # Step 2: Upload the image
+        with open(image_path, 'rb') as image_file:
+            upload_response = requests.post(
+                upload_url,
+                headers={"Authorization": f"Bearer {access_token}"},
+                data=image_file
+            )
+            
+        if upload_response.status_code != 201:
+            raise Exception(f"Failed to upload image: {upload_response.text}")
+            
+        return asset
+        
+    except Exception as e:
+        raise Exception(f"Image upload failed: {str(e)}")
+
+def share_post_to_linkedin(access_token, title, post_excerpt, article_url, image_path=None):
+    try:
+        # Get member_id from database
+        with engine.begin() as connection:
+            result = connection.execute(
+                text("SELECT member_id FROM linkedin_tokens WHERE access_token = :token"),
+                {"token": access_token}
+            ).fetchone()
+            
+            if not result or not result[0]:
+                raise Exception("Member ID not found")
+                
+            member_id = result[0]
+            author = f"urn:li:person:{member_id}"
+
+        print(f"Author: {author}")
+
+        # If image path is provided, share with image
+        if image_path:
+            try:
+                image_asset = upload_image_to_linkedin(access_token, image_path, member_id)  # Pass member_id
+                payload = {
+                    "author": author,
+                    "lifecycleState": "PUBLISHED",
+                    "specificContent": {
+                        "com.linkedin.ugc.ShareContent": {
+                            "shareCommentary": {
+                                "text": f"{title} - {post_excerpt}\n\nRead more: {article_url}"
+                            },
+                            "shareMediaCategory": "IMAGE",
+                            "media": [
+                                {
+                                    "status": "READY",
+                                    "description": {
+                                        "text": post_excerpt
+                                    },
+                                    "media": image_asset,
+                                    "title": {
+                                        "text": title
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "visibility": {
+                        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+                    }
+                }
+            except Exception as e:
+                send_debug_to_laogege(f"Failed to upload image, falling back to article-only share: {str(e)}")
+                # Fall back to article-only share
+                image_path = None
+
+        # If no image or image upload failed, share as article
+        if not image_path:
+            payload = {
+                "author": author,
+                "lifecycleState": "PUBLISHED",
+                "specificContent": {
+                    "com.linkedin.ugc.ShareContent": {
+                        "shareCommentary": {
+                            "text": post_excerpt
+                        },
+                        "shareMediaCategory": "ARTICLE",
+                        "media": [
+                            {
+                                "status": "READY",
+                                "description": {
+                                    "text": post_excerpt[:100] + "..." if len(post_excerpt) > 100 else post_excerpt
+                                },
+                                "originalUrl": article_url,
+                                "title": {
+                                    "text": title
+                                }
+                            }
+                        ]
+                    }
+                },
+                "visibility": {
+                    "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+                }
+            }
+
+        url = "https://api.linkedin.com/v2/ugcPosts"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0"
+        }
+        
+        send_debug_to_laogege(f"Sharing with payload: {payload}")
+        response = requests.post(url, headers=headers, json=payload)
+        send_debug_to_laogege(f"Share response: {response.status_code} - {response.text}")
+        
+        if response.status_code == 201:
+            return response.headers.get('X-RestLi-Id')
+        else:
+            raise Exception(f"Failed to share post: {response.text}")
+        
+    except Exception as e: 
+        return send_debug_to_laogege(f"Error sharing to LinkedIn: {str(e)}")
+    
+
+def handle_share_to_linkedin_button(chat_id, title, post_excerpt, article_url, image = '', token = TELEGRAM_BOT_TOKEN):
+    # First, check if user has valid token
+    access_token = get_linkedin_token(chat_id)
+    
+    if not access_token:
+        # No valid token found, start authentication process
+        auth_url = start_linkedin_auth(chat_id)
+        markdown_msg = f"Please click [here]({auth_url}) to authenticate your Linkedin account."
+        return send_message_markdown(chat_id, markdown_msg, token)
+    
+    # If we have token, proceed with sharing
+    try: return share_post_to_linkedin(access_token, title, post_excerpt, article_url, image)
+    except Exception as e: send_debug_to_laogege(f"Error sharing post to Linkedin: {str(e)}")
+
+
+
 if __name__ == '__main__':
     print("Helping page constants")
     # insert_or_update_system_prompts("SYSTEM_PROMPT_PROOF_READING_GHOST", SYSTEM_PROMPT_PROOF_READING_GHOST, OWNER_CHAT_ID, engine)
     # r = read_prompt_by_name('SYSTEM_PROMPT_PROOF_READING_GHOST', engine)
     # print(r)
-    msg_ghost_blog()
+    # msg_ghost_blog()

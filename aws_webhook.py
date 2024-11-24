@@ -126,6 +126,138 @@ def webhook_test():
     return jsonify({"status": "success", "message": "An email confirmation or notification has been sent to your email address, please check your email inbox."}), 200
 
 
+# Future social media callbacks can be added like this:
+@app.route('/callback/twitter/')
+def twitter_callback():
+    return jsonify({"status": "success"}), 200
+
+
+@app.route('/callback/wechat/')
+def wechat_callback():
+    return jsonify({"status": "success"}), 200
+
+
+@app.route('/callback/linkedin')
+def linkedin_callback():
+    try:
+        code = request.args.get('code')
+        chat_id = request.args.get('state')
+        
+        if not code or not chat_id:
+            send_debug_to_laogege(f"Missing code or chat_id in callback")
+            return redirect("https://enspiring.ai/linkedin-connect-failed")
+
+        # Exchange code for tokens
+        token_data = exchange_linkedin_code_for_token(code)
+        access_token = token_data.get('access_token')
+        refresh_token = token_data.get('refresh_token')
+        access_token_expires_in = token_data.get('expires_in', 3600)
+        refresh_token_expires_in = token_data.get('refresh_token_expires_in', 31536000)
+
+        if not access_token:
+            send_debug_to_laogege(f"Failed to get LinkedIn access token")
+            return redirect("https://enspiring.ai/linkedin-connect-failed")
+
+        # Get user info from userinfo endpoint
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        userinfo_response = requests.get("https://api.linkedin.com/v2/userinfo", headers=headers)
+        if userinfo_response.status_code != 200:
+            send_debug_to_laogege(f"Failed to get userinfo: {userinfo_response.text}")
+            return redirect("https://enspiring.ai/linkedin-connect-failed")
+
+        userinfo = userinfo_response.json()
+        send_debug_to_laogege(f"Got userinfo: {userinfo}")
+
+        # Handle locale dictionary
+        locale_info = userinfo.get('locale', {})
+
+        # Store in database
+        with engine.begin() as connection:
+            # Update schema to split locale into country and language
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS linkedin_tokens (
+                    chat_id VARCHAR(32) PRIMARY KEY,
+                    access_token TEXT NOT NULL,
+                    refresh_token TEXT,
+                    access_token_expires_at TIMESTAMP NOT NULL,
+                    refresh_token_expires_at TIMESTAMP,
+                    member_id VARCHAR(32),
+                    full_name VARCHAR(255),
+                    given_name VARCHAR(255),
+                    family_name VARCHAR(255),
+                    email VARCHAR(255),
+                    email_verified BOOLEAN,
+                    profile_picture TEXT,
+                    locale_language VARCHAR(10),
+                    locale_country VARCHAR(10),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            """))
+
+            access_token_expires_at = datetime.now() + timedelta(seconds=access_token_expires_in)
+            refresh_token_expires_at = datetime.now() + timedelta(seconds=refresh_token_expires_in) if refresh_token else None
+
+            upsert_query = text("""
+                INSERT INTO linkedin_tokens (
+                    chat_id, access_token, refresh_token, 
+                    access_token_expires_at, refresh_token_expires_at,
+                    member_id, full_name, given_name, family_name,
+                    email, email_verified, profile_picture, 
+                    locale_language, locale_country
+                ) VALUES (
+                    :chat_id, :access_token, :refresh_token,
+                    :access_token_expires_at, :refresh_token_expires_at,
+                    :member_id, :full_name, :given_name, :family_name,
+                    :email, :email_verified, :profile_picture,
+                    :locale_language, :locale_country
+                )
+                ON DUPLICATE KEY UPDATE
+                    access_token = VALUES(access_token),
+                    refresh_token = VALUES(refresh_token),
+                    access_token_expires_at = VALUES(access_token_expires_at),
+                    refresh_token_expires_at = VALUES(refresh_token_expires_at),
+                    member_id = VALUES(member_id),
+                    full_name = VALUES(full_name),
+                    given_name = VALUES(given_name),
+                    family_name = VALUES(family_name),
+                    email = VALUES(email),
+                    email_verified = VALUES(email_verified),
+                    profile_picture = VALUES(profile_picture),
+                    locale_language = VALUES(locale_language),
+                    locale_country = VALUES(locale_country)
+            """)
+
+            connection.execute(upsert_query, {
+                "chat_id": chat_id,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "access_token_expires_at": access_token_expires_at,
+                "refresh_token_expires_at": refresh_token_expires_at,
+                "member_id": userinfo.get('sub'),
+                "full_name": userinfo.get('name'),
+                "given_name": userinfo.get('given_name'),
+                "family_name": userinfo.get('family_name'),
+                "email": userinfo.get('email'),
+                "email_verified": userinfo.get('email_verified'),
+                "profile_picture": userinfo.get('picture'),
+                "locale_language": locale_info.get('language'),
+                "locale_country": locale_info.get('country')
+            })
+
+        # Send success message with user's name
+        success_message = f"LinkedIn authentication successful! Welcome {userinfo.get('name')}! You can now share your blog posts to LinkedIn."
+        send_message_basic(chat_id, success_message, token=TELEGRAM_BOT_TOKEN)
+
+        return redirect("https://enspiring.ai/linkedin-connected")
+
+    except Exception as e:
+        send_debug_to_laogege(f"LinkedIn callback error: {str(e)}")
+        return redirect("https://enspiring.ai/linkedin-connect-failed")
+    
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8686)

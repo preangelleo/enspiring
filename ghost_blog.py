@@ -1282,11 +1282,11 @@ def update_story_cover_image_to_ghost_webhook(payload: dict, midjourney_images_d
             if upscaled_url: upscaled_image_list.append(upscaled_url)
 
         if upscaled_image_list:
-            update_query = """UPDATE `image_midjourney` SET `img_updated` = 1, {} WHERE `image_id` = :image_id"""
+            update_query = """UPDATE `image_midjourney` SET `img_updated` = 1, `image_path` = :image_path, {} WHERE `image_id` = :image_id"""
             
             # Creating parts of the query to dynamically update the columns
             url_columns = []
-            params = {'image_id': image_id}
+            params = {'image_id': image_id, 'image_path': upscaled_image_list[0]}
             
             for i, url in enumerate(upscaled_image_list):
                 column_name = f'upscaled_url_{i + 1}'
@@ -1599,11 +1599,13 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
 
     slug = generate_youtube_slug(length=11)
 
+
+    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
     image_id, img_url = '', ''
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
         image_id = generate_image_midjourney(chat_id, midjourney_prompt, post_type, IMAGEAPI_MIDJOURNEY)
-    else: img_url = first_cover_image_blackforest(midjourney_prompt, os.path.join(midjourney_images_dir, chat_id, f"{slug}.png"), admin_api_key, ghost_url)
+    else: img_url = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
 
     key_id, secret = admin_api_key.split(':')
     iat = int(time.time())
@@ -1683,6 +1685,8 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
         returned_slug = url.replace(f'{ghost_url}/', '')
         if returned_slug.endswith('/'): returned_slug = returned_slug[:-1]
 
+        if not os.path.isfile(image_path): image_path = ''
+
         data_dict = {
             'chat_id': [chat_id],
             'title': [title],
@@ -1701,6 +1705,7 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
             'updated_time': [datetime.now()],
             'visibility': [visibility],
             'status': [publish_status],
+            'image_path': [image_path],
             'featured': [0]
         }
 
@@ -1769,11 +1774,12 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
     callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', '', suffix='The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
 
     slug = generate_youtube_slug(length=11)
+    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
     image_id, img_url = '', ''
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
         image_id = generate_image_midjourney(chat_id, midjourney_prompt, post_type, IMAGEAPI_MIDJOURNEY)
-    else: img_url = first_cover_image_blackforest(midjourney_prompt, os.path.join(midjourney_images_dir, chat_id, f"{slug}.png"), admin_api_key, ghost_url)
+    else: img_url = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
 
     key_id, secret = admin_api_key.split(':')
     iat = int(time.time())
@@ -1855,6 +1861,8 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
         returned_slug = url.replace(f'{ghost_url}/', '')
         if returned_slug.endswith('/'): returned_slug = returned_slug[:-1]
 
+        if not os.path.isfile(image_path): image_path = ''
+
         data_dict = {
             'chat_id': [chat_id],
             'title': [title],
@@ -1872,6 +1880,7 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
             'updated_time': [datetime.now()],
             'visibility': [visibility],
             'status': [publish_status],
+            'image_path': [image_path],
             'featured': [0]
         }
         df = pd.DataFrame(data_dict)
@@ -1978,11 +1987,12 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
     callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', '', suffix='The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
 
     slug = video_id
+    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
     image_id, img_url = '', ''
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
         image_id = generate_image_midjourney(chat_id, midjourney_prompt, post_type, IMAGEAPI_MIDJOURNEY)
-    else: img_url = first_cover_image_blackforest(midjourney_prompt, os.path.join(midjourney_images_dir, chat_id, f"{slug}.png"), admin_api_key, ghost_url)
+    else: img_url = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
 
     key_id, secret = admin_api_key.split(':')
     iat = int(time.time())
@@ -2063,6 +2073,8 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
         returned_slug = url.replace(f'{ghost_url}/', '')
         if returned_slug.endswith('/'): returned_slug = returned_slug[:-1]
 
+        if not os.path.isfile(image_path): image_path = ''
+
         data_dict = {
             'chat_id': [chat_id],
             'title': [title],
@@ -2082,6 +2094,7 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
             'updated_time': [datetime.now()],
             'visibility': [visibility],
             'status': [publish_status],
+            'image_path': [image_path],
             'featured': [0]
         }
         df = pd.DataFrame(data_dict)
@@ -2317,6 +2330,7 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
     custom_excerpt = df['custom_excerpt'].values[0]
     generated_journal = df['generated_journal'].values[0]
     midjourney_prompt = df['midjourney_prompt'].values[0]
+    image_path = df['image_path'].values[0]
 
     admin_api_key = user_parameters.get('ghost_admin_api_key', '')
     ghost_url = user_parameters.get('ghost_api_url', '')
@@ -2438,6 +2452,7 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
             'updated_time': [datetime.now()],
             'visibility': [visibility],
             'status': [publish_status],
+            'image_path': [image_path],
             'featured': [0]
         }
         df = pd.DataFrame(data_dict)
@@ -2832,10 +2847,11 @@ def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, mo
     else: slug = generate_youtube_slug(length=11)
 
     image_id, img_url = '', ''
+    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
         image_id = generate_image_midjourney(chat_id, midjourney_prompt, post_type, IMAGEAPI_MIDJOURNEY)
-    else: img_url = first_cover_image_blackforest(midjourney_prompt, os.path.join(midjourney_images_dir, chat_id, f"{slug}.png"), admin_api_key, ghost_url)
+    else: img_url = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
 
     key_id, secret = admin_api_key.split(':')
     iat = int(time.time())
@@ -2922,6 +2938,8 @@ def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, mo
         returned_slug = url.replace(f'{ghost_url}/', '')
         if returned_slug.endswith('/'): returned_slug = returned_slug[:-1]
 
+        if not os.path.isfile(image_path): image_path = ''
+
         data_dict = {
             'chat_id': [chat_id],
             'series_name': [series_name],
@@ -2943,8 +2961,8 @@ def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, mo
             'updated_time': [datetime.now()],
             'visibility': [visibility],
             'status': [publish_status],
-            'featured': [1]
-
+            'featured': [1],
+            'image_path': [image_path]
         }
 
         df = pd.DataFrame(data_dict)
@@ -2953,6 +2971,10 @@ def auto_blog_post(chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, mo
         if img_url and post_type == 'post': 
             callback_update_post_status(chat_id, url_markdown, post_id, token, user_parameters, 'creator_auto_posts')
             post_to_twitter_by_chat_id(chat_id, custom_excerpt[:180], url, token, user_parameters)
+
+            share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
+            reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
+            send_message_markdown(chat_id, reply)
 
         if image_id:
             with engine.begin() as conn: conn.execute(text(f"UPDATE image_midjourney SET post_id = :post_id, title = :title, slug = :slug, post_url = :url WHERE image_id = :image_id"), {'post_id': post_id, 'image_id': image_id, 'title': title, 'slug': returned_slug, 'url': url})
@@ -2973,7 +2995,7 @@ Midjourney prompt generated by AI:
 
 AI generated {journal_or_story} in raw text:
 {generated_journal}"""
-        
+
         return send_notifition_to_email(email_subject, markdown_text, user_parameters)
 
     else: return send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to create post: \n{response.status_code} {response.text}")

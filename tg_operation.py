@@ -110,6 +110,29 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         return post_to_twitter_by_chat_id(chat_id, title, url, token, user_parameters)
     
 
+    elif callback_data.startswith('linkedin_'):
+        post_id = callback_data.split('_')[-1]
+        if not post_id: return send_message(chat_id, "Failed to get the post ID, please try again later.", token)
+
+        if callback_data.startswith('linkedin_creator_page_'): table_name = 'creator_journals'
+        elif callback_data.startswith('linkedin_creator_auto_'): table_name = 'creator_auto_posts'
+        elif callback_data.startswith('linkedin_creator_post_'): table_name = 'creator_journals_repost'
+        else: table_name = 'image_midjourney'
+            
+        df = pd.read_sql(text(f"SELECT title, custom_excerpt, post_url, image_path FROM `{table_name}` WHERE post_id = :post_id;"), engine, params={"post_id": post_id})
+        if df.empty: return send_message(chat_id, "Failed to get the post details, please try again later.", token)
+
+        title, url, custom_excerpt, image_path = df['title'].values[0], df['post_url'].values[0], df['custom_excerpt'].values[0], df['image_path'].values[0]
+        if not all([title, url]): return send_message(chat_id, "Failed to get the post details, please try again later.", token)
+
+        if custom_excerpt: title = custom_excerpt[:180]
+
+        share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
+
+        reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
+        return send_message_markdown(chat_id, reply)
+
+
     elif callback_data.startswith('creator_unfeatured_') or callback_data.startswith('creator_featured_') or callback_data.startswith('creator_public_') or callback_data.startswith('creator_private_') or callback_data.startswith('creator_publish_') or callback_data.startswith('creator_unpublish_'):
         if ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Diamond or higher tier to use this function.\n\n/get_premium", token)
 
