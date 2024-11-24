@@ -119,13 +119,26 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         elif callback_data.startswith('linkedin_creator_post_'): table_name = 'creator_journals_repost'
         else: table_name = 'image_midjourney'
             
-        df = pd.read_sql(text(f"SELECT title, custom_excerpt, post_url, image_path FROM `{table_name}` WHERE post_id = :post_id;"), engine, params={"post_id": post_id})
+        df = pd.read_sql(text(f"SELECT title, custom_excerpt, post_url, image_path, feature_image FROM `{table_name}` WHERE post_id = :post_id;"), engine, params={"post_id": post_id})
         if df.empty: return send_message(chat_id, "Failed to get the post details, please try again later.", token)
 
         title, url, custom_excerpt, image_path = df['title'].values[0], df['post_url'].values[0], df['custom_excerpt'].values[0], df['image_path'].values[0]
         if not all([title, url]): return send_message(chat_id, "Failed to get the post details, please try again later.", token)
 
         if custom_excerpt: title = custom_excerpt[:180]
+
+        if not os.path.isfile(image_path):
+            feature_image = df['feature_image'].values[0]
+            if feature_image: 
+                try:
+                    base_name = feature_image.split('/')[-1]
+                    # download the image from the feature_image URL
+                    response = requests.get(feature_image)
+                    # Create the file path for each image
+                    image_path = os.path.join(midjourney_images_dir, base_name)
+                    # Save the image to the local folder
+                    with open(image_path, 'wb') as file: file.write(response.content)
+                except: image_path = ''
 
         share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
         if share_asset and share_asset != 'DONE':

@@ -1282,11 +1282,11 @@ def update_story_cover_image_to_ghost_webhook(payload: dict, midjourney_images_d
             if upscaled_url: upscaled_image_list.append(upscaled_url)
 
         if upscaled_image_list:
-            update_query = """UPDATE `image_midjourney` SET `img_updated` = 1, `image_path` = :image_path, {} WHERE `image_id` = :image_id"""
+            update_query = """UPDATE `image_midjourney` SET `img_updated` = 1, `image_path` = :image_path, `feature_image` = :feature_image, {} WHERE `image_id` = :image_id"""
             
             # Creating parts of the query to dynamically update the columns
             url_columns = []
-            params = {'image_id': image_id, 'image_path': upscaled_image_list[0]}
+            params = {'image_id': image_id, 'image_path': upscaled_filepath[0], 'feature_image': upscaled_image_list[0]}
             
             for i, url in enumerate(upscaled_image_list):
                 column_name = f'upscaled_url_{i + 1}'
