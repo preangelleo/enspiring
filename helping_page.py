@@ -9343,14 +9343,14 @@ def share_post_to_linkedin(access_token, title, post_excerpt, article_url, image
                 "specificContent": {
                     "com.linkedin.ugc.ShareContent": {
                         "shareCommentary": {
-                            "text": post_excerpt
+                            "text": title
                         },
                         "shareMediaCategory": "ARTICLE",
                         "media": [
                             {
                                 "status": "READY",
                                 "description": {
-                                    "text": post_excerpt[:100] + "..." if len(post_excerpt) > 100 else post_excerpt
+                                    "text": post_excerpt
                                 },
                                 "originalUrl": article_url,
                                 "title": {
