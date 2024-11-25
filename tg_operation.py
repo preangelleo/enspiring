@@ -706,31 +706,29 @@ def handle_message(update, token, engine = engine):
             file_path = download_image(img_file_id, img_folder, photo_file_name, token=token)
             print(f"File path: {file_path}")
             if os.path.isfile(file_path): 
-                caption = caption if caption else update_message.get('caption')
-                if CURRENT_SYSTEM == 'mac': print(f"Caption for image: {caption}")
-                if caption: 
-                    if caption.lower() in ['mirror', 'flip', 'mirror image', 'flip image']:
-                        file_path = mirror_image(file_path)
-                        if os.path.isfile(file_path): return send_image_from_file(chat_id, file_path, "Here is the mirrored image.", token)
-
-                    cleaned_text = extract_text_from_image(file_path)
-                    if cleaned_text: 
-                        if caption.lower() in ['menu', 'dish', 'food', 'visualize', 'food menu', 'menu dish', 'menu food', 'food dish', 'dish menu', 'dish food']:
-                            cleaned_text = extract_text_from_image(file_path)
-                            if cleaned_text: 
-                                dish_list = openai_gpt_chat(SYSTEM_PROMPT_MENU_DISH_LIST, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
-                                if dish_list: 
-                                    prompt = f"A table of  dishes: {dish_list}"
-                                    output_file = os.path.join(midjourney_images_dir, chat_id, f"{prompt[:100]}.jpg")
-                                    output_file = generate_image_replicate(prompt, output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
-                                    send_image_from_file(chat_id, output_file, prompt, token)
-
-                            print("no dish list")
-                            return
+                cleaned_text = extract_text_from_image(file_path)
+                if cleaned_text: 
+                    print(f"Cleaned text from image: {cleaned_text[:100]}")
+                    caption = caption if caption else update_message.get('caption')
+                    if caption: 
+                        if caption.lower() in ['mirror', 'flip', 'mirror image', 'flip image']:
+                            file_path = mirror_image(file_path)
+                            if os.path.isfile(file_path): return send_image_from_file(chat_id, file_path, "Here is the mirrored image.", token)
                         
-                        elif caption.lower in ['journal', 'creator_post_journal']: return post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = True)
-                        elif caption.lower in ['story', 'creator_post_story']: return post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = False)
-                        elif caption.lower in ['news', 'creator_post_news']: return post_news_to_ghost_creator_front(cleaned_text, chat_id, engine, token, user_parameters)
+                        elif caption.lower() in ['journal', 'creator_post_journal']: post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = True)
+                        elif caption.lower() in ['story', 'creator_post_story']: post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = False)
+                        elif caption.lower() in ['news', 'creator_post_news']: post_news_to_ghost_creator_front(cleaned_text, chat_id, engine, token, user_parameters)
+                        
+                        return
+                    
+                    elif not caption or caption.lower() in ['menu', 'dish', 'food', 'visualize', 'food menu', 'menu dish', 'menu food', 'food dish', 'dish menu', 'dish food']:
+                        dish_list = openai_gpt_chat(SYSTEM_PROMPT_MENU_DISH_LIST, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
+                        if dish_list: 
+                            prompt = f"A table of  dishes: {dish_list}"
+                            output_file = os.path.join(midjourney_images_dir, chat_id, f"{prompt[:100]}.jpg")
+                            output_file = generate_image_replicate(prompt, output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
+                            send_image_from_file(chat_id, output_file, prompt, token)
+                        return
 
                     elif user_ranking >= 3: 
                         slug = caption.replace(BLOG_BASE_URL, '').replace('/', '').strip()
@@ -741,12 +739,14 @@ def handle_message(update, token, engine = engine):
                             image_url = upload_image_to_ghost(file_path, BLOG_POST_ADMIN_API_KEY, BLOG_POST_API_URL)
                             reply_dict = update_story_cover_image_to_ghost(post_id, image_url, 'page', BLOG_POST_ADMIN_API_KEY, BLOG_POST_API_URL)
                             if reply_dict['Status'] and image_midjourney_posted_updated(post_id, engine): return send_message(chat_id, f"The cover image for your story is updated.\n{reply_dict['Message']}", token)
-
+                            return 
+                    
                     elif user_ranking >= 66: 
                         caption = caption.replace('/', '').strip()
                         caption = caption.replace(' ', '_')
                         if caption.lower() in ['group_send_image', 'send_to_group', 'group_image', 'send_group_image', 'send_image_group']: send_img_to_everyone(file_path, token, engine)
                         else: reply = dealing_tg_photo(file_path, caption, chat_id, engine, token)
+                        return 
 
                 else: reply = "You need to provide a caption for the image. So I know what to do with it."
 

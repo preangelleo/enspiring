@@ -1324,6 +1324,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
         'Czech | Čeština': 'post_language_Czech',
         'Danish | Dansk': 'post_language_Danish',
         'Dutch | Nederlands': 'post_language_Dutch',
+        'English | English': 'post_language_English',
         'Estonian | Eesti': 'post_language_Estonian',
         'Filipino | Filipino': 'post_language_Filipino',
         'Finnish | Suomi': 'post_language_Finnish',
@@ -8211,8 +8212,10 @@ def generate_image_replicate(prompt, output_file, model = "black-forest-labs/flu
 
 
 def from_gpt_to_replicate_image(chat_id, prompt = '', image_folder = midjourney_images_dir, token = TELEGRAM_BOT_TOKEN, user_parameters = {}, prompt_only = False):
-   
-    image_prompt = openai_gpt_chat(IMAGE_GENERATION_PROMPT, prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
+    
+    system_prompt = IMAGE_GENERATION_PROMPT if prompt != 'random image' else "Generate a random prompt for image generation."
+
+    image_prompt = openai_gpt_chat(system_prompt, prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
     
     if prompt_only: return callback_image_prompt_audio(chat_id, image_prompt, token, engine, user_parameters, '', image_model = '', suffix = '')
     else: callback_image_prompt_audio(chat_id, image_prompt, token, engine, user_parameters, '', image_model = 'Blackforest', suffix = '')
