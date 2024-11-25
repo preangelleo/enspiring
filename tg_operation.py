@@ -706,16 +706,21 @@ def handle_message(update, token, engine = engine):
             file_path = download_image(img_file_id, img_folder, photo_file_name, token=token)
             print(f"File path: {file_path}")
             if os.path.isfile(file_path): 
+                if caption and caption.lower() in ['mirror', 'flip', 'mirror image', 'flip image']:
+                    file_path = mirror_image(file_path)
+                    if os.path.isfile(file_path): send_image_from_file(chat_id, file_path, "Here is the mirrored image.", token)
+                    return
+
+                send_message(chat_id, "Image received, extracting text from the image now...", token)
+                message_id += 1
                 cleaned_text = extract_text_from_image(file_path)
                 if cleaned_text: 
-                    print(f"Cleaned text from image: {cleaned_text[:100]}")
+                    system_prompt = f"You are professional text editor, you will get text extracted by orc from the image, and you will reorganize, reparagraph the text to make it more human readable and understandable."
+                    cleaned_text = openai_gpt_chat(system_prompt, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
+                    send_message(chat_id, f"Text extracted from the image:\n\n{cleaned_text[:4000]}", token, message_id)
                     caption = caption if caption else update_message.get('caption')
-                    if caption: 
-                        if caption.lower() in ['mirror', 'flip', 'mirror image', 'flip image']:
-                            file_path = mirror_image(file_path)
-                            if os.path.isfile(file_path): return send_image_from_file(chat_id, file_path, "Here is the mirrored image.", token)
-                        
-                        elif caption.lower() in ['journal', 'creator_post_journal']: post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = True)
+                    if caption and caption.lower() in ['creator_post_journal', 'creator_post_story', 'creator_post_news', 'journal', 'story', 'news']:
+                        if caption.lower() in ['journal', 'creator_post_journal']: post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = True)
                         elif caption.lower() in ['story', 'creator_post_story']: post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = False)
                         elif caption.lower() in ['news', 'creator_post_news']: post_news_to_ghost_creator_front(cleaned_text, chat_id, engine, token, user_parameters)
                         
@@ -724,10 +729,22 @@ def handle_message(update, token, engine = engine):
                     elif not caption or caption.lower() in ['menu', 'dish', 'food', 'visualize', 'food menu', 'menu dish', 'menu food', 'food dish', 'dish menu', 'dish food']:
                         dish_list = openai_gpt_chat(SYSTEM_PROMPT_MENU_DISH_LIST, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
                         if dish_list: 
-                            prompt = f"A table of  dishes: {dish_list}"
-                            output_file = os.path.join(midjourney_images_dir, chat_id, f"{prompt[:100]}.jpg")
-                            output_file = generate_image_replicate(prompt, output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
-                            send_image_from_file(chat_id, output_file, prompt, token)
+                            dish_list = dish_list.split(';')
+                            length_dish_list = len(dish_list)
+                            if length_dish_list > 9: notification_msg = f"Found {length_dish_list} dishes in the menu, but only the first 9 dishes will be visualized."
+                            else: notification_msg = f"Found {length_dish_list} dishes in the menu, visualizing the dishes now..."
+                            send_message(chat_id, notification_msg, token)
+
+                            for dish in dish_list[:9]: 
+                                dish_name = dish.split(',')[0].strip().lower()
+                                output_file = os.path.join(dish_images_dir, f"{dish_name}.jpg")
+                                if not os.path.isfile(output_file): output_file = generate_image_replicate(dish, output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
+                                if os.path.isfile(output_file): 
+                                    mother_language = user_parameters.get('mother_language', 'English') or 'English'
+                                    if mother_language != 'English': 
+                                        dish_mother_language = openai_gpt_chat(f"Your are a professional multi-lingual chef, you will translate the given dish in any language to {mother_language}", dish, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
+                                        if dish_mother_language: dish = f"{dish}\n\n{dish_mother_language}"
+                                    send_image_from_file(chat_id, output_file, dish, token)
                         return
 
                     elif user_ranking >= 3: 

@@ -450,12 +450,12 @@ def hello_world(): print("Hello, Markdown!")
     3."A group of astronauts exploring a strange alien landscape, with massive bioluminescent plants towering over them. The alien setting is illuminated by a distant star casting a soft blue light, highlighting the towering flora and the unusual rock formations. The astronauts, each wearing sleek, advanced space suits with glowing visors, move cautiously across the uneven terrain. The camera angle is wide, capturing both the astronauts and the vast alien environment around them, emphasizing the sense of scale and discovery. Unique details include glowing spores floating in the air, and a small alien creature cautiously observing from behind a large glowing mushroom. The hyperrealistic style evokes awe and curiosity, combining vivid blues, greens, and purples to create an otherworldly, surreal landscape. The mood is adventurous, conveying the excitement and mystery of space exploration."
     """
 
-    SYSTEM_PROMPT_MENU_DISH_LIST = """You are a Menu Parser specialized in extracting and organizing dish names from restaurant menu text. Your role is to analyze OCR-extracted text from menu photos and create a clean, searchable list of dish names.
+    SYSTEM_PROMPT_MENU_DISH_LIST = """You are a Menu Parser specialized in extracting and organizing dish names from restaurant menu text. Your role is to analyze OCR-extracted text from menu photos and create a clean, searchable list of dish names. You will correct any errors made by ocr program and ensure that the list is accurate and well-structured. The output should be a list of dish names separated by semicolons and linebreaker (\n).
 
 Your tasks:
 1. Identify and list each unique dish
 2. Remove prices and descriptions
-3. Output a list of dishes, seperated by comma
+3. Output a list of dishes with discriptions, seperated by semicolon and linebreaker (\n);
 
 USER:
 The Canellioni            $14.50            Venetian Kebabs         $14.50
@@ -473,7 +473,12 @@ cheese, baked in tomato sauce and                 cheese, baked in tomato sauce 
 parmiggiano cheese                             parmiggiano cheese
 
 ASSISTANT:
-The Canellioni , Venetian Kebabs, Gabbriello Ravioli, Chicken Livers, Manicotti Parmigiano, Cavatelli Alla Crema
+The Canellioni, An egg noodle stuffed with beef, veal and chicken, baked with meat sauce and cream; 
+Venetian Kebabs, Charcoal grilled kebabs served over penne noodles in tomato sauce with sundried tomato pesto; 
+Gabbriello Ravioli, Handmade noodles stuffed with a blend of fresh beef and veal and prepared in our famous meat sauce; 
+Chicken Livers, Lightly seasoned cream sauce, fresh mushrooms and chicken livers with cabbage on the side; 
+Manicotti Parmigiano: An egg noodle stuffed with ricotta cheese, baked in tomato sauce and topped with parmiggiano cheese;
+Cavatelli Alla Crema: Small shell-like pasta served in a creamy sauce with ricotta and a touch of parmiggiano. 
 """
 
     
@@ -2546,6 +2551,7 @@ create_base_directories()
 if 'Checking & making folders':
     working_dir = os.path.join(current_folder, 'Tg_user_downloaded')
     midjourney_images_dir = os.path.join(working_dir, 'Midjourney_images')
+    dish_images_dir = os.path.join(current_folder, 'Dish_images')
     openai_image = os.path.join(working_dir, 'OpenAI_images')
     news_dir = os.path.join(working_dir, 'News')
     video_dir = os.path.join(current_folder, 'Video_downloaded')
