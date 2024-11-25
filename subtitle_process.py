@@ -340,7 +340,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
     elif msg_lower in ['word', 'random_word', 'random word']: return random_word(chat_id, token, engine, user_parameters)
     elif msg_lower in ['video_id', 'video id', 'video-id']: return send_message(chat_id, commands_dict.get("video_id"), token)
     elif msg_lower in ['activate', 'activation']: return send_message(chat_id, commands_dict.get("activate"), token)
-    elif msg_lower in ['quote', 'random_quote', 'random quote']: return random_quote(engine)
+    elif msg_lower in ['quote', 'random_quote', 'random quote']: return send_message(chat_id, random_quote(engine), token)
     elif msg_lower in ['random_image']: return from_gpt_to_replicate_image(chat_id, 'random image', midjourney_images_dir, token, user_parameters)
     elif msg_lower in ['UUID', 'uuid', 'unique_id', 'unique id', 'unique-id', 'random_id', 'random id']: return send_message_markdown(chat_id, f"Length 36:\n```{uuid.uuid4()}```\n\nLength 24:\n```{generate_user_id()}```", token)
     elif msg_lower in ['passwd', 'password', 'random_password', 'random password']: return send_message_markdown(chat_id, f"Without Special Characters (16):\n```{generate_password_without_special_character()}```\n\nWith Special Characters (16):\n```{generate_password()}```", token)
