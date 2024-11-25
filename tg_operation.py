@@ -93,10 +93,12 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
     elif callback_data.startswith('tweet_'):
         post_id = callback_data.split('_')[-1]
         if not post_id: return send_message(chat_id, "Failed to get the post ID, please try again later.", token)
-
         if callback_data.startswith('tweet_creator_page_'): table_name = 'creator_journals'
         elif callback_data.startswith('tweet_creator_auto_'): table_name = 'creator_auto_posts'
         elif callback_data.startswith('tweet_creator_post_'): table_name = 'creator_journals_repost'
+        elif callback_data.startswith('tweet_user_journals'): table_name = 'user_journals'
+        elif callback_data.startswith('tweet_user_stories_tailored'): table_name = 'user_stories_tailored'
+        elif callback_data.startswith('tweet_user_stories'): table_name = 'user_stories'
         else: table_name = 'image_midjourney'
             
         df = pd.read_sql(text(f"SELECT title, custom_excerpt, post_url FROM `{table_name}` WHERE post_id = :post_id;"), engine, params={"post_id": post_id})
@@ -108,7 +110,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if custom_excerpt: title = custom_excerpt
 
         tweet_result = handle_share_to_twitter_button(chat_id, title, url, token)
-        if tweet_result: 
+        if tweet_result and tweet_result.startswith('http'):
             reply = f"Click [HERE]({tweet_result}) to view the tweet."
             return send_message_markdown(chat_id, reply, token)
         else: return send_message(chat_id, "Failed to share the post to Twitter, please try again later.", token)
@@ -121,6 +123,9 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if callback_data.startswith('linkedin_creator_page_'): table_name = 'creator_journals'
         elif callback_data.startswith('linkedin_creator_auto_'): table_name = 'creator_auto_posts'
         elif callback_data.startswith('linkedin_creator_post_'): table_name = 'creator_journals_repost'
+        elif callback_data.startswith('linkedin_user_journals'): table_name = 'user_journals'
+        elif callback_data.startswith('linkedin_user_stories_tailored'): table_name = 'user_stories_tailored'
+        elif callback_data.startswith('linkedin_user_stories'): table_name = 'user_stories'
         else: table_name = 'image_midjourney'
             
         df = pd.read_sql(text(f"SELECT title, custom_excerpt, post_url, image_path, feature_image FROM `{table_name}` WHERE post_id = :post_id;"), engine, params={"post_id": post_id})

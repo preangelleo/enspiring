@@ -4067,15 +4067,15 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
     page_public_inline_keyboard_dict = {}
     
     # Toggle featured status
-    if featured == 0: page_public_inline_keyboard_dict['Set to Featured'] = f'creator_featured_{post_type}_{post_id}'
+    if featured == 0: page_public_inline_keyboard_dict['Featured'] = f'creator_featured_{post_type}_{post_id}'
     else: page_public_inline_keyboard_dict['Remove from Featured'] = f'creator_unfeatured_{post_type}_{post_id}'
         
     # Toggle visibility between public and paid
-    if visibility == 'public': page_public_inline_keyboard_dict['Set to Paid Member Only'] = f'creator_private_{post_type}_{post_id}'
-    else: page_public_inline_keyboard_dict['Set to Public'] = f'creator_public_{post_type}_{post_id}'
+    if visibility == 'public': page_public_inline_keyboard_dict['Paid Member Only'] = f'creator_private_{post_type}_{post_id}'
+    else: page_public_inline_keyboard_dict['Open to Public'] = f'creator_public_{post_type}_{post_id}'
 
     # Toggle publication status
-    if status == 'published': page_public_inline_keyboard_dict['Set to Draft (Unpublish)'] = f'creator_unpublish_{post_type}_{post_id}'
+    if status == 'published': page_public_inline_keyboard_dict['Unpublish'] = f'creator_unpublish_{post_type}_{post_id}'
     else: page_public_inline_keyboard_dict['Publish'] = f'creator_publish_{post_type}_{post_id}'
 
     if table_name == 'creator_journals_repost': 
@@ -4094,7 +4094,7 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, is_markdown=True)
 
 
-def callback_translate_page_to_post(chat_id, prompt, post_id, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+def callback_translate_page_to_post(chat_id, prompt, post_id, token = TELEGRAM_BOT_TOKEN, user_parameters = {}, message_id = '', is_markdown = True):
     page_public_inline_keyboard_dict = {'Publish in English': f'creator_page_to_post_{post_id}'}
     mother_language = user_parameters.get('mother_language', 'English') or 'English'
     if mother_language != 'English': page_public_inline_keyboard_dict.update({f'Publish in {mother_language}': f'creator_translate_to_post_{post_id}'})
@@ -4102,7 +4102,13 @@ def callback_translate_page_to_post(chat_id, prompt, post_id, token = TELEGRAM_B
     page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_page_{post_id}'
     page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
 
-    return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, message_id = '', is_markdown = True)
+    return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, message_id, is_markdown)
+
+
+def callback_social_sharing(chat_id, prompt, post_id, table_name, token = TELEGRAM_BOT_TOKEN, message_id = '', is_markdown = True):
+    social_sharing_keyboard_dict = {'Post to Linkedin': f'linkedin_{table_name}_{post_id}', 'Post to Twitter': f'tweet_{table_name}_{post_id}'}
+    button_per_list = 2
+    return send_or_edit_inline_keyboard(prompt, social_sharing_keyboard_dict, chat_id, button_per_list, token, message_id, is_markdown)
 
 
 def callback_generate_story(chat_id, prompt, token = TELEGRAM_BOT_TOKEN):
@@ -5109,7 +5115,6 @@ def markdown_to_plain_text(markdown_text: str) -> str:
 
 def generate_story_voice(prompt: str, chat_id: str, audio_file_path = story_audio, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}, language_name=''):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
-    prompt = markdown_to_plain_text(prompt)
     audio_file = None
 
     language_code = identify_language(prompt)
@@ -5119,19 +5124,13 @@ def generate_story_voice(prompt: str, chat_id: str, audio_file_path = story_audi
     if not language_name: language_name = language_name_detected
 
     if user_parameters.get('elevenlabs_api_key') and language_name not in ['chinese',  'others']:
-        print(f"1. Get elevenlabs_api_key and language not in chinese or others")
         if user_parameters.get('daily_story_voice') or user_parameters.get('default_clone_voice'):
-            print(f"2. Get daily_story_voice or default_clone_voice")
-            if user_parameters.get('elevenlabs_voice_id'): 
-                print(f"3. Get elevenlabs_voice_id")
-                audio_file = instant_clone_voice_audio_elevenlabs_with_voice_id(prompt, user_parameters.get('elevenlabs_voice_id'), audio_file_path, model="eleven_turbo_v2_5", chunk_characters = 5000, user_parameters = user_parameters)
-            elif user_parameters.get('voice_clone_sample'): 
-                print(f"4. Get voice_clone_sample")
-                audio_file = instant_clone_voice_audio_elevenlabs(prompt, chat_id, user_parameters.get('voice_clone_sample'), audio_file_path, model="eleven_turbo_v2_5", chunk_size = ELEVENLABS_CHUNK_SIZE, engine = engine, user_parameters = user_parameters)
+            if user_parameters.get('elevenlabs_voice_id'): audio_file = instant_clone_voice_audio_elevenlabs_with_voice_id(prompt, user_parameters.get('elevenlabs_voice_id'), audio_file_path, model="eleven_turbo_v2_5", chunk_characters = 5000, user_parameters = user_parameters)
+            elif user_parameters.get('voice_clone_sample'): audio_file = instant_clone_voice_audio_elevenlabs(prompt, chat_id, user_parameters.get('voice_clone_sample'), audio_file_path, model="eleven_turbo_v2_5", chunk_size = ELEVENLABS_CHUNK_SIZE, engine = engine, user_parameters = user_parameters)
+            
             if audio_file and os.path.isfile(audio_file): return audio_file
-    
-    print(f"5. Not using elevenlabs")
 
+    prompt = markdown_to_plain_text(prompt)
     default_audio_gender = user_parameters.get('default_audio_gender') or 'male'
 
     voice_name = SUPPORTED_LANGUAGE_AZURE_VOICE_DICT.get(language_name, {}).get(default_audio_gender, [AZURE_VOICE_MALE]) or [AZURE_VOICE_MALE]
