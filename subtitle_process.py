@@ -809,7 +809,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         user_prompt = msg.replace('generate_image_dalle', '').strip()
         if not user_prompt: return send_message(chat_id, commands_dict.get("generate_image_dalle"), token)
         file_path = openai_image_generation(user_prompt, chat_id, model="dall-e-3", size = "1792x1024", quality="standard", user_parameters = user_parameters)
-        if file_path and os.path.isfile(file_path): return send_image_from_file(chat_id, file_path, token)
+        if file_path and os.path.isfile(file_path): return send_image_from_file(chat_id, file_path, user_prompt, token)
         else: return send_message(chat_id, "Failed to generate image.", token)
 
     # if user_ranking >= 5 or openai_api_key:

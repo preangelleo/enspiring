@@ -711,9 +711,26 @@ def handle_message(update, token, engine = engine):
                 if caption: 
                     if caption.lower() in ['mirror', 'flip', 'mirror image', 'flip image']:
                         file_path = mirror_image(file_path)
-                        if os.path.isfile(file_path): 
-                            send_image_from_file(chat_id, file_path, token)
-                            reply = "Here is the mirrored image."
+                        if os.path.isfile(file_path): return send_image_from_file(chat_id, file_path, "Here is the mirrored image.", token)
+
+                    cleaned_text = extract_text_from_image(file_path)
+                    if cleaned_text: 
+                        if caption.lower() in ['menu', 'dish', 'food', 'visualize', 'food menu', 'menu dish', 'menu food', 'food dish', 'dish menu', 'dish food']:
+                            cleaned_text = extract_text_from_image(file_path)
+                            if cleaned_text: 
+                                dish_list = openai_gpt_chat(SYSTEM_PROMPT_MENU_DISH_LIST, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
+                                if dish_list: 
+                                    prompt = f"A table of  dishes: {dish_list}"
+                                    output_file = os.path.join(midjourney_images_dir, chat_id, f"{prompt[:100]}.jpg")
+                                    output_file = generate_image_replicate(prompt, output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
+                                    send_image_from_file(chat_id, output_file, prompt, token)
+
+                            print("no dish list")
+                            return
+                        
+                        elif caption.lower in ['journal', 'creator_post_journal']: return post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = True)
+                        elif caption.lower in ['story', 'creator_post_story']: return post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = False)
+                        elif caption.lower in ['news', 'creator_post_news']: return post_news_to_ghost_creator_front(cleaned_text, chat_id, engine, token, user_parameters)
 
                     elif user_ranking >= 3: 
                         slug = caption.replace(BLOG_BASE_URL, '').replace('/', '').strip()
@@ -891,7 +908,6 @@ def handle_message(update, token, engine = engine):
 
                 else: reply = f"Sorry, your inputed caption is not a supported language or code. The supported languages are:\n\n{SUPPORTED_LANGUAGE_STRING}\n\nYou can either put the language name or the language code in the caption box when you send the document file."
 
-    
     elif voice_file_id:  # If the message contains an audio file
         print(f"Voice file id: {voice_file_id}")
         if not user_ranking >= 2 and not openai_api_key: reply = f"Sorry, this function is only for /Silver or above users but your current /tier is /{tier}\n\n{commands_dict.get('get_premium')}"
@@ -1165,8 +1181,7 @@ def handle_message(update, token, engine = engine):
             if action == 'run_command': return dealing_tg_command(reply[1:], chat_id, user_parameters, token, engine, message_id)
             elif action == 'ask_gpt': reply = openai_gpt_chat(f"Try your best to assistant the user, follow user's prompt.", msg_text, chat_id, model = ASSISTANT_MAIN_MODEL, user_parameters = user_parameters, token = token) 
             return send_message(chat_id, reply, token)
-
-
+        
 
 def handle_update(update, token, engine = engine):
     callback_query = update.get("callback_query")

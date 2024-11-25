@@ -35,6 +35,8 @@ from googleapiclient.discovery import build
 from flask import Flask, request, jsonify
 import azure.cognitiveservices.speech as speechsdk
 import assemblyai as aai
+import pytesseract
+import cv2
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 load_dotenv()
@@ -447,6 +449,32 @@ def hello_world(): print("Hello, Markdown!")
 
     3."A group of astronauts exploring a strange alien landscape, with massive bioluminescent plants towering over them. The alien setting is illuminated by a distant star casting a soft blue light, highlighting the towering flora and the unusual rock formations. The astronauts, each wearing sleek, advanced space suits with glowing visors, move cautiously across the uneven terrain. The camera angle is wide, capturing both the astronauts and the vast alien environment around them, emphasizing the sense of scale and discovery. Unique details include glowing spores floating in the air, and a small alien creature cautiously observing from behind a large glowing mushroom. The hyperrealistic style evokes awe and curiosity, combining vivid blues, greens, and purples to create an otherworldly, surreal landscape. The mood is adventurous, conveying the excitement and mystery of space exploration."
     """
+
+    SYSTEM_PROMPT_MENU_DISH_LIST = """You are a Menu Parser specialized in extracting and organizing dish names from restaurant menu text. Your role is to analyze OCR-extracted text from menu photos and create a clean, searchable list of dish names.
+
+Your tasks:
+1. Identify and list each unique dish
+2. Remove prices and descriptions
+3. Output a list of dishes, seperated by comma
+
+USER:
+The Canellioni            $14.50            Venetian Kebabs         $14.50
+An egg noodle stuffed with beef,                   Charcoal grilled Kebabs served over
+veal and chicken, baked with meat                  penne noodles in tomato sauce with
+sauce and cream                                   sundried tomato pesto
+!
+Gabbriello Ravioli”      $14.50            Chicken Livers            $14.50
+*. Handmade noodles stuffed witha blend             Lightly seasoned cream sauce, fresh
+of fresh beef and veal and prepared in              mushrooms and chicken livers with
+our Famous meat sauce                              cabbage on the side
+Manicotti Parmigiano $10.50             Cavatelli Alla Crema      $10.50
+An egg noodle stuffed with ricotta                  An egg noodle stuffed with ricotta
+cheese, baked in tomato sauce and                 cheese, baked in tomato sauce and
+parmiggiano cheese                             parmiggiano cheese
+
+ASSISTANT:
+The Canellioni , Venetian Kebabs, Gabbriello Ravioli, Chicken Livers, Manicotti Parmigiano, Cavatelli Alla Crema
+"""
 
     
     SYSTEM_PROMPT_GHOST_MARKDOWN_CREATOR = f'''As a content creator and editor, your role is to generate high-quality blog posts, stories, articles, or report analyses in _Language_Placeholder_ based on the user's prompt. Aim to produce a comprehensive, well-structured, engaging, and informative article of approximately _words_length_placeholder_ words. The article should capture the reader's attention, providing valuable insights or analysis. 
@@ -2532,6 +2560,7 @@ if 'Checking & making folders':
 def create_chat_directories(chat_id, working_dir = working_dir, base_dir=current_folder):
     # Define the list of primary directories with chat_id subfolders
     primary_directories = [
+        os.path.join(base_dir, 'Tg_user_downloaded', chat_id),
         os.path.join(base_dir, 'Tg_user_downloaded', 'Midjourney_images', chat_id),
         os.path.join(base_dir, 'Tg_user_downloaded', 'OpenAI_images', chat_id),
         os.path.join(base_dir, 'Tg_user_downloaded', 'News', chat_id),
@@ -2857,15 +2886,16 @@ def load_users_parameters(engine = engine):
     return {}
 
 
-def send_image_from_file(chat_id, image_path, token):
+def send_image_from_file(chat_id, image_path, caption, token):
     url = f"https://api.telegram.org/bot{token}/sendPhoto"
     # Open the image file
     with open(image_path, 'rb') as image_file:
         # Prepare the payload for the request
         files = {'photo': image_file}
-        data = {'chat_id': chat_id}
+        data = {'chat_id': chat_id, 'caption': caption}
         # Send the request to Telegram's API
-        response = requests.post(url, data=data, files=files)
+        try: requests.post(url, data=data, files=files)
+        except Exception as e: print(f"Error sending image: {e}")
     return 'DONE'
 
 
@@ -2874,7 +2904,7 @@ def send_img_to_everyone(quote_pnp: str, token: str, engine):
         query = text("SELECT chat_id FROM chat_id_parameters WHERE chat_id IS NOT NULL")
         df = pd.read_sql(query, connection)
         chat_ids = df['chat_id'].tolist()
-        for chat_id in chat_ids: send_image_from_file(chat_id, quote_pnp, token)
+        for chat_id in chat_ids: send_image_from_file(chat_id, quote_pnp, '', token)
     return
 
 
@@ -6451,7 +6481,7 @@ def crop_image(img_file: str, crop_to_width=1600, crop_to_height=900, vertical_c
     return img_file
 
 
-def search_and_download_image_for_user(prompt: str, save_dir: str = 'Image_downloaded', min_width=1080, crop_to_width=1600, crop_to_height=900):
+def search_and_download_image_for_user(prompt: str, save_dir: str = 'Image_downloaded', min_width=1080, crop_to_width=1600, crop_to_height=900, img_count = 3):
     reply_dict = {'Status': False, 'Reason': 'Can not download image for certain reason.', 'Image_path': []}
     logging.info(f"正在搜索关键词：{prompt}")
     headers = {
@@ -6503,7 +6533,7 @@ def search_and_download_image_for_user(prompt: str, save_dir: str = 'Image_downl
                         index_image_filename = crop_image(index_image_filename, crop_to_width, crop_to_height)
                         reply_dict['Status'] = True
                         reply_dict['Image_path'].append(index_image_filename)
-                        if len(reply_dict['Image_path']) >= 3: return reply_dict
+                        if len(reply_dict['Image_path']) >= img_count: return reply_dict
                     except: continue
         except: continue
     return reply_dict
@@ -6516,7 +6546,8 @@ def search_keywords_get_img_send_to_user(prompt: str, chat_id, token=TELEGRAM_BO
     reply_dict = search_and_download_image_for_user(prompt)
     if not reply_dict.get('Status'): return reply_dict.get('Reason')
     if not reply_dict.get('Image_path'): return "Can't find image for given prompt."
-    for img_path in reply_dict['Image_path']: send_image_from_file(chat_id, img_path, token)
+    for img_path in reply_dict['Image_path']: send_image_from_file(chat_id, img_path, prompt, token)
+    
     return "DONE"
 
 
@@ -9404,7 +9435,7 @@ def handle_share_to_linkedin_button(chat_id, title, post_excerpt, article_url, i
     if not access_token:
         # No valid token found, start authentication process
         auth_url = start_linkedin_auth(chat_id)
-        markdown_msg = f"Please click [here]({auth_url}) to authenticate your Linkedin account."
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Linkedin account."
         return send_message_markdown(chat_id, markdown_msg, token)
     
     # If we have token, proceed with sharing
@@ -9852,12 +9883,77 @@ def handle_share_to_twitter_button(chat_id, title, article_url, token=TELEGRAM_B
     if not access_token:
         # Start authentication process
         auth_url = start_twitter_auth(chat_id)
-        markdown_msg = f"Please click [here]({auth_url}) to authenticate your Twitter account."
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Twitter account."
         return send_message_markdown(chat_id, markdown_msg, token)
     
     # Share the post
     tweet_result = share_post_to_twitter(access_token, title, article_url)
     if tweet_result and tweet_result.startswith('http'): return tweet_result
+
+
+def extract_text_from_image(image_path):
+    """
+    Extract text from image with Mac-optimized preprocessing.
+    
+    Args:
+        image_path (str): Path to the image file
+    
+    Returns:
+        str: Cleaned extracted text
+    """
+    pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+
+    try:
+        # Read image
+        image = cv2.imread(image_path)
+        if image is None:
+            raise ValueError("Could not read image file")
+        
+        # Convert to RGB (OpenCV uses BGR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # Resize image (2x)
+        scale_percent = 200
+        width = int(image.shape[1] * scale_percent / 100)
+        height = int(image.shape[0] * scale_percent / 100)
+        image = cv2.resize(image, (width, height), interpolation=cv2.INTER_CUBIC)
+        
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        
+        # Apply bilateral filter to preserve edges while reducing noise
+        denoised = cv2.bilateralFilter(gray, 9, 75, 75)
+        
+        # Apply adaptive thresholding
+        thresh = cv2.adaptiveThreshold(
+            denoised, 255, 
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY, 11, 2
+        )
+        
+        # Dilate to connect text components
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
+        dilated = cv2.dilate(thresh, kernel, iterations=1)
+        
+        # Save preprocessed image as PIL Image
+        pil_image = Image.fromarray(dilated)
+        
+        # OCR Configuration
+        custom_config = '--oem 3 --psm 6 -c preserve_interword_spaces=1'
+        
+        # Extract text
+        text = pytesseract.image_to_string(
+            pil_image,
+            config=custom_config,
+            lang='eng'
+        )
+        
+        # Clean up text
+        cleaned_text = '\n'.join(line.strip() for line in text.splitlines() if line.strip())
+        
+        return cleaned_text
+    
+    except Exception as e: return None
 
 
 
