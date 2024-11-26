@@ -5,11 +5,20 @@ DEFAULT_PROMPT_DOCUMENT = "Please summarize the key points of the DOCUMENT."
 DEFAULT_PROMPT_HTML = "First, answers the question, what's the title of this article in the latest given file_id. Then please summarize the content in English in one sentence, what's the essence the author trying to deliver. Lastly, summarize with the key writing style of the content."
 DEFAULT_CONTENT_MESSAGE_CREATION = "I have uploaded the DOCUMENT for you. I want you to help me to dive into the content of the DOCUMENT."
 
+
 def commands_correction(prompt, chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
     response = openai_gpt_chat(SYSTEM_PROMPT_COMMAND_CORRECTION, prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
     if response.startswith('/'): return {'response': response, 'action': 'run_command', 'prefix': '/'}
     elif response  == 'no': return {'response': prompt, 'action': 'ask_gpt'}
     return {'response': response, 'action': 'send_response'}
+
+
+def post_journal_blog(prompt: str, chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+    date_today = str(datetime.now().date())
+    df = pd.DataFrame({'user_prompt': [prompt], 'chat_id': [chat_id], 'job_status': ['pending'], 'job_type': ['journal'], 'date': [date_today]})
+    df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
+    webhook_push_table_name('user_news_jobs', chat_id)
+    return send_message(chat_id, f"Your request to post the journal has been received. It will be processed soon. You will be notified once it's done.")
 
 
 available_functions = {
@@ -18,7 +27,8 @@ available_functions = {
     "Audio_Generation": function_call_audio_generation,
     "Answer_Questions_about_the_Platform": platform_questions_and_answers_helper,
     "Calculate_with_Wolframalpha": calculate_with_wolframalpha,
-    "Commands_Correction": commands_correction
+    "Commands_Correction": commands_correction,
+    "Post_Journal": post_journal_blog
 } 
 
 functions_with_audio_output = ['Vocabulary_Dictionary']
@@ -34,6 +44,19 @@ FUNCTIONS_TOOLS = [
                 "type": "object",
                 "properties": {
                     "prompt": {"type": "string", "description": "The user's input words or expressions to check in the dictionary"},
+                },
+                "required": ["prompt"]
+            }
+        }
+    }, {
+        "type": "function",
+        "function": {
+            "name": "Post_Journal",
+            "description": "Post a journal at user's ghost blog platform.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string", "description": "The user's input prompt about the journal."},
                 },
                 "required": ["prompt"]
             }

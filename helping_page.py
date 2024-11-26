@@ -460,10 +460,18 @@ def hello_world(): print("Hello, Markdown!")
 
 Your tasks:
 1. Identify and list each unique dish, no matter in what language the dish name is.
-2. Remove prices but keep dish name and descritpions in English or translate to English.
+2. Translate the description to English if the original language is not English.
 3. Add a standard description in English if the original menu doesn't have a description for the dish.
 3. Remove the unnecessary symbols and characters in the names, for example, *, !, /, (), etc.
-4. Output a list of dishes with discriptions in English or translate to English if the original language is not English, one line for one dish (with description), seperating each dish line by semicolon;
+4. Output structure: Dish Name in English : Original Language with Price - Description in English;
+5. Output one line for one dish, seperating each dish line end by period.;
+
+Output Example:
+Spicy Tofu : 麻辣豆腐 18元 - A flavorful and spicy tofu dish with Sichuan peppers.
+Sweet and Sour Pork : 糖醋里脊 25元 - Classic pork dish with a tangy sweet and sour sauce.
+Fried Rice : 炒饭 12元 - Stir-fried rice with vegetables, egg, and soy sauce.
+
+USECASE EXAMPLE:
 
 USER:
 The Canellioni            $14.50            Venetian Kebabs         $14.50
@@ -481,12 +489,12 @@ cheese, baked in tomato sauce and                 cheese, baked in tomato sauce 
 parmiggiano cheese                             parmiggiano cheese
 
 ASSISTANT:
-The Canellioni, An egg noodle stuffed with beef, veal and chicken, baked with meat sauce and cream; 
-Venetian Kebabs, Charcoal grilled kebabs served over penne noodles in tomato sauce with sundried tomato pesto; 
-Gabbriello Ravioli, Handmade noodles stuffed with a blend of fresh beef and veal and prepared in our famous meat sauce; 
-Chicken Livers, Lightly seasoned cream sauce, fresh mushrooms and chicken livers with cabbage on the side; 
-Manicotti Parmigiano: An egg noodle stuffed with ricotta cheese, baked in tomato sauce and topped with parmiggiano cheese;
-Cavatelli Alla Crema: Small shell-like pasta served in a creamy sauce with ricotta and a touch of parmiggiano. 
+Cannelloni : The Canellioni $14.50 - An egg noodle stuffed with beef, veal and chicken, baked with meat sauce and cream.
+Venetian Kebabs : Venetian Kebabs $14.50 - Charcoal grilled kebabs served over penne noodles in tomato sauce with sundried tomato pesto.
+Gabriello Ravioli : Gabbriello Ravioli $14.50 - Handmade noodles stuffed with a blend of fresh beef and veal prepared in house meat sauce.
+Chicken Livers : Chicken Livers $14.50 - Sautéed chicken livers in a lightly seasoned cream sauce with fresh mushrooms, served with cabbage on the side.
+Manicotti Parmigiano : Manicotti Parmigiano $10.50 - An egg noodle stuffed with ricotta cheese, baked in tomato sauce and Parmigiano cheese.
+Cavatelli Alla Crema : Cavatelli Alla Crema $10.50 - An egg noodle dish baked with ricotta cheese in tomato sauce, topped with Parmigiano cheese.
 
 USER:
 ランチメニュー
@@ -516,18 +524,17 @@ USER:
 ただし 1000 円まで、プラスアルファーでおすきなランチを
 
 ASSISTANT:
-Special Beef Tongue Stew, A rich and hearty stew made with tender beef tongue;
-Special Beef Stew, A savory and flavorful beef stew;
-Japanese-Style Beef Steak, Grilled beef steak with a Japanese-style soy-based sauce;
-Hamburg Steak, A juicy grilled hamburger steak served with sauce;
-Fried Chicken with Spring Onion Sauce, Crispy fried chicken topped with a tangy spring onion sauce;
-Grilled Pork Loin with Japanese Pepper Sauce, Tender pork loin grilled with a Japanese-style pepper sauce;
-Shrimp Macaroni Gratin, Baked macaroni and shrimp in a creamy white sauce;
-Shrimp Doria, Baked rice with shrimp in a creamy sauce;
-Jumbo Fried Shrimp, Large crispy fried shrimp served with dipping sauce;
-Pork Ginger Set Meal, Sliced pork stir-fried with ginger, served as a set meal;
-Sashimi Set Meal, Fresh slices of raw fish served with rice and sides.
-
+Beef Tongue Stew Special : 特製ビーフタンシチュー 1500円 - Rich and tender beef tongue slowly cooked in a savory stew sauce.
+Beef Stew Special : 特製ビーフシチュー 1300円 - Traditional beef stew cooked in a rich demi-glace sauce.
+Japanese-style Beef Steak : 和風ビーフステーキ 1200円 - Grilled beef steak served with Japanese ponzu sauce.
+Hamburg Steak : ハンバーグステーキ 800円 - Japanese-style hamburger steak served with demi-glace sauce.
+Fried Chicken with Green Onion Sauce : 鶏の唐揚げねぎソース 800円 - Crispy fried chicken topped with savory green onion sauce.
+Japanese-style Peppered Pork Loin : 豚ロースの和風胡椒焼 800円 - Grilled pork loin with Japanese black pepper sauce.
+Shrimp Macaroni Gratin : 小海老のマカロニグラタン 800円 - Baked macaroni with shrimp in creamy white sauce.
+Shrimp Doria : 小海老のドリア 800円 - Rice gratin with shrimp in white sauce topped with melted cheese.
+Jumbo Fried Shrimp : ジャンボ海老フライ 1300円 - Large breaded and deep-fried shrimp served with tartar sauce.
+Ginger Pork Set : 豚の生姜焼き定食 800円 - Sliced pork sautéed with ginger sauce served as a set meal.
+Sashimi Set : 刺身定食 800円 - Assorted fresh raw fish served as a set meal.
 """
 
     
@@ -6081,7 +6088,8 @@ def from_vocabulary_new_get_explanation(word, chat_id, engine = engine, token=TE
         except: pass
 
 
-def check_word_in_vocabulary(words_to_check: str, chat_id: str = None, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+def check_word_in_vocabulary(prompt: str, chat_id: str = None, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+    words_to_check = prompt
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
 
     word = words_to_check.lower()
@@ -6478,7 +6486,8 @@ def fetch_recent_pending_tasks(chat_id, engine=engine):
 
 
 
-def youtube_id_download(video_id: str, chat_id: str=None, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+def youtube_id_download(prompt: str, chat_id: str=None, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+    video_id = prompt
     youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
     reply_dict = video_id_is_in_table(youtube_url, chat_id, engine)
@@ -8267,7 +8276,7 @@ def change_phonetic(word, new_phonetic, engine = engine):
 
 def generate_image_replicate(prompt, output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN):
     # Set the Replicate API token if provided
-    if api_token: os.environ["REPLICATE_API_TOKEN"] = api_token
+    os.environ["REPLICATE_API_TOKEN"] = api_token
     
     # Prepare the input for the model
     input_data = {
@@ -8278,21 +8287,17 @@ def generate_image_replicate(prompt, output_file, model = "black-forest-labs/flu
     }
 
     # Run the model to get the output (usually a URL)
-    output = replicate.run(
-        model,
-        input=input_data
-    )
+    output = replicate.run(model,input=input_data)
     
     # Check if output is a valid URL
-    if not output:
-        raise ValueError("The model output is None. Please check the input or the API configuration.")
-
-    # Assuming the output is a URL, download the image and save it locally
-    response = requests.get(output)
-    if response.status_code == 200:
-        with open(output_file, "wb") as file: file.write(response.content)
-        return output_file
-    else: raise ''
+    if output:
+        # Assuming the output is a URL, download the image and save it locally
+        response = requests.get(output)
+        if response.status_code == 200:
+            with open(output_file, "wb") as file: file.write(response.content)
+            return output_file
+        
+    return
 
 
 def from_gpt_to_replicate_image(chat_id, prompt = '', image_folder = midjourney_images_dir, token = TELEGRAM_BOT_TOKEN, user_parameters = {}, prompt_only = False):

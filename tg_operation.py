@@ -716,7 +716,7 @@ def handle_message(update, token, engine = engine):
                 if cleaned_text: 
                     system_prompt = f"You are professional text editor, you will get text extracted by orc from the image, and you will reorganize, reparagraph the text to make it more human readable and understandable."
                     cleaned_text = openai_gpt_chat(system_prompt, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
-                    send_message(chat_id, f"Text extracted from the image:\n\n{cleaned_text[:4000]}", token, message_id)
+                    send_message_markdown(chat_id, f"Text extracted from the image:\n\n{cleaned_text[:4000]}", token, message_id)
                     caption = caption if caption else update_message.get('caption')
                     if caption and caption.lower() in ['creator_post_journal', 'creator_post_story', 'creator_post_news', 'journal', 'story', 'news']:
                         if caption.lower() in ['journal', 'creator_post_journal']: post_journal_to_ghost_creator_front(cleaned_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = True)
@@ -728,23 +728,33 @@ def handle_message(update, token, engine = engine):
                     elif not caption or caption.lower() in ['menu', 'dish', 'food', 'visualize', 'food menu', 'menu dish', 'menu food', 'food dish', 'dish menu', 'dish food']:
                         dish_list = openai_gpt_chat(SYSTEM_PROMPT_MENU_DISH_LIST, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
                         if dish_list: 
-                            dish_list = dish_list.split(';')
+                            dish_list = dish_list.split('\n')
+                            dish_list = [dish.strip('\n').strip() for dish in dish_list if dish.strip('\n').strip()]
                             length_dish_list = len(dish_list)
                             if length_dish_list > 9: notification_msg = f"Found {length_dish_list} dishes in the menu, but only the first 9 dishes will be visualized."
                             else: notification_msg = f"Found {length_dish_list} dishes in the menu, visualizing the dishes now..."
                             send_message(chat_id, notification_msg, token)
-
+                            
                             for index, dish in enumerate(dish_list):
                                 if index >= 9: break
-                                dish_name = dish.split(',')[0].strip().lower()
+
+                                dish_description_list = dish.split(':')
+
+                                dish_name = dish_description_list[0].strip().lower()
                                 if not dish_name: continue
+
+                                dish_description = dish_description_list[-1].strip()
 
                                 dish_name = dish_name.replace(' ', '_').replace('\\', '_').replace('/', '_')
                                 output_file = os.path.join(dish_images_dir, f"{dish_name}.jpg")
+
+                                dish_name_with_price = dish_name + ' ' + dish_description
+
                                 if not os.path.isfile(output_file): 
                                     try: output_file = generate_image_replicate(f"A Dish of {dish}", output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
                                     except Exception as e: print(f"Error in generating image for dish: {e}")
-                                if os.path.isfile(output_file): send_image_from_file(chat_id, output_file, f"{index + 1}/{length_dish_list}. /{dish_name}", token)
+                                
+                                if os.path.isfile(output_file): send_image_from_file(chat_id, output_file, f"{index + 1}/{length_dish_list}. /{dish_name_with_price}", token)
                         return
 
                     elif user_ranking >= 3: 
