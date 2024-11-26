@@ -712,9 +712,9 @@ def handle_message(update, token, engine = engine):
 
                 send_message(chat_id, "Image received, extracting text from the image now...", token)
                 message_id += 1
-                cleaned_text = extract_text_from_image(file_path)
+                cleaned_text = azure_cognitive_ai_extract_text(file_path)
                 if cleaned_text: 
-                    system_prompt = f"You are professional text editor, you will get text extracted by orc from the image, and you will reorganize, reparagraph the text to make it more human readable and understandable. Translate the text to English if it's not in English."
+                    system_prompt = f"You are professional text editor, you will get text extracted by orc from the image, and you will reorganize, reparagraph the text to make it more human readable and understandable."
                     cleaned_text = openai_gpt_chat(system_prompt, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
                     send_message(chat_id, f"Text extracted from the image:\n\n{cleaned_text[:4000]}", token, message_id)
                     caption = caption if caption else update_message.get('caption')

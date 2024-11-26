@@ -37,6 +37,8 @@ import azure.cognitiveservices.speech as speechsdk
 import assemblyai as aai
 import pytesseract
 import cv2
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+from msrest.authentication import CognitiveServicesCredentials
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 load_dotenv()
@@ -58,8 +60,12 @@ if 'Making variables':
     LINKEDIN_CLIENT_SECRET = os.getenv('LINKEDIN_CLIENT_SECRET')
     LINKEDIN_REDIRECT_URI = f"{BLOG_BASE_URL}/callback/linkedin"
 
-    
-    
+    AZURE_AI_API_KEY_1 = os.getenv('AZURE_AI_API_KEY_1')
+    AZURE_AI_API_KEY_2 = os.getenv('AZURE_AI_API_KEY_2')
+    AZURE_AI_API_REGION = os.getenv('AZURE_AI_API_REGION')
+    AZURE_AI_API_ENDPOINT = os.getenv('AZURE_AI_API_ENDPOINT')
+    AZURE_AI_COMPUTER_VISION = os.getenv('AZURE_AI_COMPUTER_VISION')
+
     # Database connection parameters
     DB_HOST_AWS = os.getenv('DB_HOST_AWS')
 
@@ -454,9 +460,10 @@ def hello_world(): print("Hello, Markdown!")
 
 Your tasks:
 1. Identify and list each unique dish, no matter in what language the dish name is.
-2. Remove prices but keep dish name and discritpions in English or translate to English.
+2. Remove prices but keep dish name and descritpions in English or translate to English.
+3. Add a standard description in English if the original menu doesn't have a description for the dish.
 3. Remove the unnecessary symbols and characters in the names, for example, *, !, /, (), etc.
-4. Output a list of dishes with discriptions in English or translate to English if the original language is not English, seperated by semicolon and linebreaker (\n);
+4. Output a list of dishes with discriptions in English or translate to English if the original language is not English, one line for one dish (with description), seperating each dish line by semicolon;
 
 USER:
 The Canellioni            $14.50            Venetian Kebabs         $14.50
@@ -480,6 +487,47 @@ Gabbriello Ravioli, Handmade noodles stuffed with a blend of fresh beef and veal
 Chicken Livers, Lightly seasoned cream sauce, fresh mushrooms and chicken livers with cabbage on the side; 
 Manicotti Parmigiano: An egg noodle stuffed with ricotta cheese, baked in tomato sauce and topped with parmiggiano cheese;
 Cavatelli Alla Crema: Small shell-like pasta served in a creamy sauce with ricotta and a touch of parmiggiano. 
+
+USER:
+ランチメニュー
+特製ビーフタンシチュー
+¥1500
+特製ビーフシチュー
+¥1300
+和風ビーフステーキ
+¥1200
+ハンバーグステーキ
+¥800
+鶏の唐揚げねぎソース
+¥ 800
+豚ロースの和風胡椒焼
+¥800
+小海老のマカロニグラタン¥ 800
+小海老のドリア
+¥800
+ジャンボ海老フライ
+¥1300
+豚の生姜焼き定食
+¥800
+刺身定食
+¥800
+(全品ライス·味噌汁·コーヒー付き)
+ポイントカード20 ポイントで1回のランチをサービス
+ただし 1000 円まで、プラスアルファーでおすきなランチを
+
+ASSISTANT:
+Special Beef Tongue Stew, A rich and hearty stew made with tender beef tongue;
+Special Beef Stew, A savory and flavorful beef stew;
+Japanese-Style Beef Steak, Grilled beef steak with a Japanese-style soy-based sauce;
+Hamburg Steak, A juicy grilled hamburger steak served with sauce;
+Fried Chicken with Spring Onion Sauce, Crispy fried chicken topped with a tangy spring onion sauce;
+Grilled Pork Loin with Japanese Pepper Sauce, Tender pork loin grilled with a Japanese-style pepper sauce;
+Shrimp Macaroni Gratin, Baked macaroni and shrimp in a creamy white sauce;
+Shrimp Doria, Baked rice with shrimp in a creamy sauce;
+Jumbo Fried Shrimp, Large crispy fried shrimp served with dipping sauce;
+Pork Ginger Set Meal, Sliced pork stir-fried with ginger, served as a set meal;
+Sashimi Set Meal, Fresh slices of raw fish served with rice and sides.
+
 """
 
     
@@ -9995,21 +10043,51 @@ def extract_text_from_image(image_path):
     except Exception as e: return None
 
 
+def azure_cognitive_ai_extract_text(image_path_or_url, subscription_key = AZURE_AI_API_KEY_1, endpoint = AZURE_AI_COMPUTER_VISION):
+    """
+    Extract text from an image using Azure AI Vision OCR.
+    Works with both local image paths and image URLs.
+    
+    Args:
+        image_path_or_url (str): Local path or URL of the image
+        subscription_key (str): Azure Vision API key
+        endpoint (str): Azure Vision API endpoint
+    
+    Returns:
+        str: Extracted text as a single string
+    """
+    # Initialize the client
+    client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(subscription_key))
+    
+    # Determine if input is URL or local path
+    is_url = image_path_or_url.startswith(('http://', 'https://'))
+    
+    # Call the API
+    if is_url: response = client.read(image_path_or_url, raw=True)
+    else:
+        with open(image_path_or_url, 'rb') as image_file: response = client.read_in_stream(image_file, raw=True)
+    
+    # Get operation location from response headers
+    operation_location = response.headers["Operation-Location"]
+    operation_id = operation_location.split("/")[-1]
+    
+    # Wait for the operation to complete
+    while True:
+        result = client.get_read_result(operation_id)
+        if result.status not in ['notStarted', 'running']: break
+        time.sleep(1)
+    
+    # Extract and combine all text
+    if result.status == "succeeded":
+        text = []
+        for text_result in result.analyze_result.read_results:
+            for line in text_result.lines:
+                text.append(line.text)
+        return '\n'.join(text)
+    
+    else: return 
+
+
 
 if __name__ == '__main__':
     print("Helping page constants")
-    # insert_or_update_system_prompts("SYSTEM_PROMPT_PROOF_READING_GHOST", SYSTEM_PROMPT_PROOF_READING_GHOST, OWNER_CHAT_ID, engine)
-    # r = read_prompt_by_name('SYSTEM_PROMPT_PROOF_READING_GHOST', engine)
-    # print(r)
-    # msg_ghost_blog()
-    # Usage example:
-
-    chat_id = LAOGEGE_CHAT_ID
-    token = TELEGRAM_BOT_TOKEN
-    dir = '/home/ubuntu/enspiring/Dish_images'
-    # get all image files in the directory
-    image_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f)) and f.endswith(('.jpg', '.jpeg', '.png'))]
-    # get basenames of the image files as captions
-    captions = [os.path.splitext(f)[0].replace('_', ' ') for f in image_files]
-    image_path = [os.path.join(dir, f) for f in image_files]
-    send_images_batch(chat_id, image_path, captions, token)
