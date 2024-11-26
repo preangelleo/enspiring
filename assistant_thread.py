@@ -23,12 +23,12 @@ def post_journal_blog(prompt: str, chat_id: str, engine = engine, token = TELEGR
 
 available_functions = {
     "Vocabulary_Dictionary": check_word_in_vocabulary,
-    "Post_Youtube_as_a_Blog_Post": youtube_id_download,
-    "Audio_Generation": function_call_audio_generation,
+    "Youtube_Repost": youtube_id_download,
     "Answer_Questions_about_the_Platform": platform_questions_and_answers_helper,
     "Calculate_with_Wolframalpha": calculate_with_wolframalpha,
-    "Commands_Correction": commands_correction,
-    "Post_Journal": post_journal_blog
+    "Generate_Journal": post_journal_blog,
+    "Generate_Image": generate_image_front,
+    "Generate_Audio": function_call_audio_generation,
 } 
 
 functions_with_audio_output = ['Vocabulary_Dictionary']
@@ -51,8 +51,8 @@ FUNCTIONS_TOOLS = [
     }, {
         "type": "function",
         "function": {
-            "name": "Post_Journal",
-            "description": "Post a journal at user's ghost blog platform.",
+            "name": "Generate_Journal",
+            "description": "Generate a journal article and post it to the blog platform.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -61,24 +61,23 @@ FUNCTIONS_TOOLS = [
                 "required": ["prompt"]
             }
         }
-    }, {
+    },  {
         "type": "function",
         "function": {
-            "name": "Commands_Correction",
-            "description": "This function will correct the user's incorrect commands to the right one. If the user's intent is clear from the prompt and there's indeed a command for this purpose.",
+            "name": "Generate_Image",
+            "description": "Generate an image based on the user's input prompt.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "prompt": {"type": "string", "description": "The user's input prompt which looks like a command for the bot but the reason you see this message is that the command is not correct or it's not a command."},
+                    "prompt": {"type": "string", "description": "The user's input prompt to generate the image."},
                 },
                 "required": ["prompt"]
             }
         }
-    }, 
-    {
+    }, {
         "type": "function",
         "function": {
-            "name": "Post_Youtube_as_a_Blog_Post",
+            "name": "Youtube_Repost",
             "description": "Take a youtube video ID as prompt, then this function with check the database and send back the transcript blog post if it exists, if not, then ask the user to confirm the video link.",
             "parameters": {
                 "type": "object",
@@ -91,8 +90,8 @@ FUNCTIONS_TOOLS = [
     }, {
         "type": "function",
         "function": {
-            "name": "Audio_Generation",
-            "description": "Generate audio with a female's voice from the user's input text (prompt).",
+            "name": "Generate_Audio",
+            "description": "Generate audio from the user's input text (prompt).",
             "parameters": {
                 "type": "object",
                 "properties": {

@@ -392,6 +392,7 @@ def check_user_news_jobs(chat_id, engine = engine, token = os.getenv("TELEGRAM_B
 
         with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': 'processing', 'chat_id': chat_id})
 
+
         if job_type == 'today_news':
             search_response = get_news_results(user_prompt)
             system_prompt = SYSTEM_PROMPT_SEARCH_RESULTS_POLISH.replace('_user_prompt_placeholder_', user_prompt)
@@ -401,18 +402,25 @@ def check_user_news_jobs(chat_id, engine = engine, token = os.getenv("TELEGRAM_B
             callback_markdown_audio(chat_id, formatted_response, token, engine, is_session=False, user_parameters=user_parameters)
             with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': 'completed', 'chat_id': chat_id})
             continue
+
+
+        elif job_type == 'journal':
+            with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': 'completed', 'chat_id': chat_id})
+            return post_journal_to_ghost_creator_front(user_prompt, chat_id, engine, token, ASSISTANT_MAIN_MODEL, '', user_parameters, is_journal = True)
+
         
         if admin_api_key and ghost_url and chat_id != OWNER_CHAT_ID: 
             try: post_news_to_ghost_creator(user_prompt, chat_id, engine, token, model=ASSISTANT_DOCUMENT_MODEL, message_id = '', user_parameters = user_parameters)
             except Exception as e: send_debug_to_laogege(f"Error in check_user_news_jobs() >> /chat_{chat_id} >> user_prompt: {user_prompt}\n\n{e}")
             continue
 
-        response_dict = post_news_to_ghost(user_prompt, chat_id, admin_api_key = BLOG_POST_ADMIN_API_KEY, ghost_url = BLOG_POST_API_URL, engine = engine, token = token, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = user_parameters)
-        status = 'failed' if not response_dict.get('status') else 'completed'
-        
-        with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': status, 'chat_id': chat_id})
-        
-        if response_dict.get('title_url'): twitter_post(response_dict.get('title_url'), **twitter_enspiring)
+
+        if job_type == 'news':
+            response_dict = post_news_to_ghost(user_prompt, chat_id, admin_api_key = BLOG_POST_ADMIN_API_KEY, ghost_url = BLOG_POST_API_URL, engine = engine, token = token, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = user_parameters)
+            status = 'failed' if not response_dict.get('status') else 'completed'
+            
+            with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': status, 'chat_id': chat_id})
+            if response_dict.get('title_url'): twitter_post(response_dict.get('title_url'), **twitter_enspiring)
 
     return
 

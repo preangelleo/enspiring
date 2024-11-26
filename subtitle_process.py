@@ -371,7 +371,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         else:
             current_youtube_playlist = user_parameters.get('youtube_playlist', '')
             prefix_msg = f"Your current YouTube playlist is:\n`{current_youtube_playlist[:10]}......{current_youtube_playlist[-11:]}`\nYou can always overwrite the playlist by sending a new playlist URL (in full-length)."
-            notification_msg = f"Please provide the full-length YouTube playlist URL. I will check and process the videos, generate content, and post them online for you. Once posted, a private shared link will be sent to you. \n\nBased on your /tier : /{tier}, up to {int(ranking)} videos will be processed and posted. "
+            notification_msg = f"Please provide the full-length YouTube playlist URL. I will check and process the videos, generate content, and post them online for you. Once posted, a private shared link will be sent to you. \n\nBased on your /tier : /{tier}, up to {int(user_ranking)} videos will be processed and posted. "
             if current_youtube_playlist: notification_msg = prefix_msg + '\n\n' + notification_msg
             suffix_msg = f"\n\nA full-length YouTube playlist URL should look like this:\n\n{FULL_LENGTH_PLAYLIST_URL}"
             notification_msg = notification_msg + suffix_msg

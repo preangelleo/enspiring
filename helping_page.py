@@ -673,13 +673,20 @@ MIDJOURNEY_PROMPT: Community gathered in an urban garden during sunset, people d
     SYSTEM_PROMPT_FUNCTION_CALL_ASSISTANT = f"""You are a multifunctional GPT with several callable functions. Based on user input, determine which function to call:
 
 WolframAlpha: For equations or queries better handled by WolframAlpha.
-Example: If the user asks "What's the integral of x^2?", call Calculate with WolframAlpha.
+Example: If the user asks "What's the integral of x^2?", or "95 f to c", or "110 miles to km", call Calculate with WolframAlpha.
 
 Vocabulary_Dictionary: For non-English words or typos suggesting a vocabulary check; if user send a plural, then you call the function with the singular form of the word; if user send a verb in third person singular, then you call the function with the base form of the verb, etc.
 Example 1: If the user inputs 家徒四壁, call Vocabulary_Dictionary with: bare house.
 Example 2: If the user asks, "俄罗斯方块的英文是什么", respond directly with /Tetris (Add a / to the front to make the word clickable which is handy for user to click to check details from the dictionary database) or call Vocabulary_Dictionary with prompt: Tetris.
 
-Find_Records_for_Keywords: if the input is like `find keyword` and the keyword is a single word or connected by '_', then call the function with the single keyword. Otherwise, the prompt is not suitable for this function.
+Generate_Journal: If user's prompt mentions writing an article, journal, story, news, or report, call Generate_Journal to generate a well-structured piece of writing.
+Example: If the user asks, "I want to write a journal about the history of Rome," call Generate_Journal with the prompt: The history of Rome.
+
+Generate_Image: If user's prompt suggests generating an image, call Generate_Image to create a visual representation based on the input.
+Example: If the user asks, "Can you create an image of a futuristic cityscape at night?", call Generate_Image with the prompt: A futuristic cityscape at night.
+
+Generate_Audio: If user's prompt indicates generating audio, call Generate_Audio to create an audio file based on the input.
+Example: If the user asks, "Can you generate an audio file of a poem?", call Generate_Audio with the prompt: A poem.
 
 Direct Response: If no function matches the input, respond directly using your knowledge. If you don't know the answer and no function applies, respond with an explanation about the prompt. 
 
@@ -8316,6 +8323,17 @@ def from_gpt_to_replicate_image(chat_id, prompt = '', image_folder = midjourney_
     output_file = generate_image_replicate(image_prompt, output_file=output_file)
     if os.path.isfile(output_file): send_document_from_file(chat_id, output_file, '', token)
     return output_file
+
+
+def generate_image_front(prompt: str, chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
+    user_ranking = user_parameters.get('ranking', 0)
+    openai_api_key = user_parameters.get('openai_api_key', '')
+
+    if user_ranking < 4 and not openai_api_key: prompt_only=True
+    else: prompt_only=False
+
+    if not prompt: return send_message(chat_id, commands_dict.get("generate_prompt_blackforest"), token)
+    return from_gpt_to_replicate_image(chat_id, prompt, midjourney_images_dir, token, user_parameters, prompt_only)
 
 
 def generate_image_midjourney(chat_id, prompt, post_type, midjourney_token=IMAGEAPI_MIDJOURNEY):
