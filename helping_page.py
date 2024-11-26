@@ -8322,7 +8322,7 @@ def from_gpt_to_replicate_image(chat_id, prompt = '', image_folder = midjourney_
 
     output_file = generate_image_replicate(image_prompt, output_file=output_file)
     if os.path.isfile(output_file): send_document_from_file(chat_id, output_file, '', token)
-    return output_file
+    return 'DONE'
 
 
 def generate_image_front(prompt: str, chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
