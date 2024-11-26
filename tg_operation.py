@@ -648,7 +648,6 @@ def handle_message(update, token, engine = engine):
         if quoted_msg: msg_text = f"{msg_text}\n\n----------------\n\nQuoted previous message:\n\n{quoted_msg}"
 
     if msg_text:
-
         if chat_id == OWNER_CHAT_ID and msg_text.startswith('/simulate '):
             user_chat_id_msg = msg_text.replace('/simulate ', '').strip()
             if ' ' in user_chat_id_msg: 
@@ -676,7 +675,7 @@ def handle_message(update, token, engine = engine):
         elif msg_text.startswith("/"): return dealing_tg_command(msg_text[1:], chat_id, user_parameters, token, engine, message_id)
         elif msg_text.lower().startswith("http"): return dealing_tg_command_http(msg_text.split()[0], chat_id, user_parameters, token, engine, message_id)
         
-        elif len(msg_text) <= 20 and msg_text.lower() not in GREETINGS_OR_ANSWERS and msg_text.lower() in WORDS_SET: return check_word_in_vocabulary(msg_text, chat_id, engine, token, user_parameters)
+        elif msg_text.lower() not in GREETINGS_OR_ANSWERS and msg_text.lower() in WORDS_SET: return check_word_in_vocabulary(msg_text, chat_id, engine, token, user_parameters)
 
         session_name = user_parameters.get('session_name', '')
         if session_name: 
@@ -715,7 +714,7 @@ def handle_message(update, token, engine = engine):
                 message_id += 1
                 cleaned_text = extract_text_from_image(file_path)
                 if cleaned_text: 
-                    system_prompt = f"You are professional text editor, you will get text extracted by orc from the image, and you will reorganize, reparagraph the text to make it more human readable and understandable."
+                    system_prompt = f"You are professional text editor, you will get text extracted by orc from the image, and you will reorganize, reparagraph the text to make it more human readable and understandable. Translate the text to English if it's not in English."
                     cleaned_text = openai_gpt_chat(system_prompt, cleaned_text, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
                     send_message(chat_id, f"Text extracted from the image:\n\n{cleaned_text[:4000]}", token, message_id)
                     caption = caption if caption else update_message.get('caption')
@@ -735,16 +734,17 @@ def handle_message(update, token, engine = engine):
                             else: notification_msg = f"Found {length_dish_list} dishes in the menu, visualizing the dishes now..."
                             send_message(chat_id, notification_msg, token)
 
-                            for dish in dish_list[:9]: 
+                            for index, dish in enumerate(dish_list):
+                                if index >= 9: break
                                 dish_name = dish.split(',')[0].strip().lower()
+                                if not dish_name: continue
+
+                                dish_name = dish_name.replace(' ', '_').replace('\\', '_').replace('/', '_')
                                 output_file = os.path.join(dish_images_dir, f"{dish_name}.jpg")
-                                if not os.path.isfile(output_file): output_file = generate_image_replicate(dish, output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
-                                if os.path.isfile(output_file): 
-                                    mother_language = user_parameters.get('mother_language', 'English') or 'English'
-                                    if mother_language != 'English': 
-                                        dish_mother_language = openai_gpt_chat(f"Your are a professional multi-lingual chef, you will translate the given dish in any language to {mother_language}", dish, chat_id, ASSISTANT_MAIN_MODEL, user_parameters)
-                                        if dish_mother_language: dish = f"{dish}\n\n{dish_mother_language}"
-                                    send_image_from_file(chat_id, output_file, dish, token)
+                                if not os.path.isfile(output_file): 
+                                    try: output_file = generate_image_replicate(f"A Dish of {dish}", output_file, model = "black-forest-labs/flux-pro", width = 1024, height = 720, api_token = REPLICATE_API_TOKEN)
+                                    except Exception as e: print(f"Error in generating image for dish: {e}")
+                                if os.path.isfile(output_file): send_image_from_file(chat_id, output_file, f"{index + 1}/{length_dish_list}. /{dish_name}", token)
                         return
 
                     elif user_ranking >= 3: 

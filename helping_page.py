@@ -453,9 +453,10 @@ def hello_world(): print("Hello, Markdown!")
     SYSTEM_PROMPT_MENU_DISH_LIST = """You are a Menu Parser specialized in extracting and organizing dish names from restaurant menu text. Your role is to analyze OCR-extracted text from menu photos and create a clean, searchable list of dish names. You will correct any errors made by ocr program and ensure that the list is accurate and well-structured. The output should be a list of dish names separated by semicolons and linebreaker (\n).
 
 Your tasks:
-1. Identify and list each unique dish
-2. Remove prices and descriptions
-3. Output a list of dishes with discriptions, seperated by semicolon and linebreaker (\n);
+1. Identify and list each unique dish, no matter in what language the dish name is.
+2. Remove prices but keep dish name and discritpions in English or translate to English.
+3. Remove the unnecessary symbols and characters in the names, for example, *, !, /, (), etc.
+4. Output a list of dishes with discriptions in English or translate to English if the original language is not English, seperated by semicolon and linebreaker (\n);
 
 USER:
 The Canellioni            $14.50            Venetian Kebabs         $14.50
@@ -2913,6 +2914,35 @@ def send_img_to_everyone(quote_pnp: str, token: str, engine):
         chat_ids = df['chat_id'].tolist()
         for chat_id in chat_ids: send_image_from_file(chat_id, quote_pnp, '', token)
     return
+
+
+def send_images_batch(chat_id, image_paths, captions, token):
+    # Split into groups of 10
+    for i in range(0, len(image_paths), 10):
+        batch_paths = image_paths[i:i+10]
+        batch_captions = captions[i:i+10]
+        
+        url = f"https://api.telegram.org/bot{token}/sendMediaGroup"
+        media = []
+        files = {}
+        
+        for j, (path, caption) in enumerate(zip(batch_paths, batch_captions)):
+            media.append({
+                'type': 'photo',
+                'media': f'attach://image{j}',
+                'caption': caption
+            })
+            files[f'image{j}'] = open(path, 'rb')
+        
+        try:
+            requests.post(url, data={'chat_id': chat_id, 'media': json.dumps(media)}, files=files)
+
+        finally:
+            for file in files.values():
+                file.close()
+                
+    return 'DONE'
+
 
 
 def create_text_image_with_logo(quote_of_the_day: str, quote_author: str):
@@ -9972,3 +10002,14 @@ if __name__ == '__main__':
     # r = read_prompt_by_name('SYSTEM_PROMPT_PROOF_READING_GHOST', engine)
     # print(r)
     # msg_ghost_blog()
+    # Usage example:
+
+    chat_id = LAOGEGE_CHAT_ID
+    token = TELEGRAM_BOT_TOKEN
+    dir = '/home/ubuntu/enspiring/Dish_images'
+    # get all image files in the directory
+    image_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f)) and f.endswith(('.jpg', '.jpeg', '.png'))]
+    # get basenames of the image files as captions
+    captions = [os.path.splitext(f)[0].replace('_', ' ') for f in image_files]
+    image_path = [os.path.join(dir, f) for f in image_files]
+    send_images_batch(chat_id, image_path, captions, token)
