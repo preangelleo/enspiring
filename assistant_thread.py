@@ -95,7 +95,7 @@ FUNCTIONS_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "prompt": {"type": "string", "description": "The user's input prompt to generate audio."}
+                    "prompt": {"type": "string", "description": "The user's input prompt to generate an audio clip."}
                 },
                 "required": ["prompt"]
             }
@@ -209,7 +209,6 @@ def openai_gpt_function(prompt: str, chat_id: str, tools = FUNCTIONS_TOOLS, mode
     if ai_response and ai_response != "DONE":
         if function_name in functions_with_audio_output: pass
         elif function_name in functions_with_dict_output:
-            if function_name == 'Commands_Correction': return ai_response
             if ai_response.get('URL'):
                 url = ai_response.get('URL')
                 words_list = ai_response.get('words_list') or ''
@@ -247,6 +246,13 @@ def openai_gpt_function(prompt: str, chat_id: str, tools = FUNCTIONS_TOOLS, mode
 
         # 将助手的回复加入到用户的聊天历史中
         message_with_response_dict = {"role": "assistant", "content": ai_response}
+        user_history.append(message_with_response_dict)
+        # 更新用户的聊天历史
+        USER_MESSAGE_HISTORY[chat_id] = user_history
+
+    else:
+        # 将助手的回复加入到用户的聊天历史中
+        message_with_response_dict = {"role": "assistant", "content": f"Successfully executed the function: {function_name}"}
         user_history.append(message_with_response_dict)
         # 更新用户的聊天历史
         USER_MESSAGE_HISTORY[chat_id] = user_history
