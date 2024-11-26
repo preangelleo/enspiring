@@ -857,16 +857,16 @@ def post_words_story_to_ghost(words_list: list, chat_id: str, admin_api_key = BL
             'prompt': [generated_story],
             'image_path': [image_path],
             'feature_image': [feature_image],
+            'post_type': [post_type],
             'hash_md5': [slug],
             'date_today': [date_today]
         }
+        
         df = pd.DataFrame(data_dict)
         df.to_sql(table_name, con=engine, if_exists='append', index=False)
         webhook_push_table_name(table_name, chat_id)
 
         if not cartoon_style_default: callback_cartoon_style_setup(chat_id, token)
-        # if image_id:
-        #     with engine.begin() as conn: conn.execute(text(f"UPDATE image_midjourney SET post_id = :post_id, title = :title, slug = :slug, post_url = :url WHERE image_id = :image_id"), {'post_id': post_id, 'image_id': image_id, 'title': title, 'slug': returned_slug, 'url': url})
 
         title = title.replace('-', ' ')
         email_subject = f"STORY OF THE DAY: {title}"
@@ -1024,6 +1024,7 @@ def create_story_and_post_to_ghost(user_prompt: str, chat_id: str, admin_api_key
             'hash_md5': [slug],
             'feature_image': [feature_image],
             'image_path': [image_path],
+            'post_type': [post_type],
             'date_today': [date_today]
         }
         df = pd.DataFrame(data_dict)
@@ -1194,6 +1195,7 @@ def post_journal_to_ghost(prompt: str, chat_id: str, img_url: str = '', admin_ap
             'post_url': [url],
             'feature_image': [img_url],
             'image_path': [image_path],
+            'post_type': [post_type],
             'date_today': [date_today]
         }
 
@@ -1695,6 +1697,7 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
             'date_today': [date_today],
             'updated_time': [datetime.now()],
             'visibility': [visibility],
+            'post_type': [post_type],
             'status': [publish_status],
             'image_path': [image_path],
             'featured': [0]
@@ -1870,6 +1873,7 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
             'date_today': [date_today],
             'updated_time': [datetime.now()],
             'visibility': [visibility],
+            'post_type': [post_type],
             'status': [publish_status],
             'image_path': [image_path],
             'featured': [0]
@@ -2084,6 +2088,7 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
             'date_today': [date_today],
             'updated_time': [datetime.now()],
             'visibility': [visibility],
+            'post_type': [post_type],
             'status': [publish_status],
             'image_path': [image_path],
             'featured': [0]
@@ -2748,6 +2753,92 @@ If you can't open the link above, please copy and paste below url into your brow
 
     else: return send_message(chat_id, f"Failed to create proof reading review page: {response.status_code} {response.text}", token, message_id)
     return
+
+
+def change_cover_image_by_url(chat_id: str, slug: str, png_file_path: str, user_parameters = {}):
+    if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
+    api_url = user_parameters['ghost_api_url']
+    api_key = user_parameters['ghost_admin_api_key']
+
+    reply_dict = {'Statue': False, 'Message': 'Failed to change the cover image.'}
+
+    if not all([api_key, api_url]): 
+        reply_dict['Message'] = NO_BLOG_ADMIN_API_KEY_NOTIFICATION
+        return reply_dict
+    
+    slug = slug.strip().strip('/')
+    given_post_url = f"{api_url}/{slug}/"
+
+    query = text("""
+    SELECT 
+        post_id, 
+        post_type
+    FROM (
+        SELECT 
+            cj.post_id, 
+            cj.post_type
+        FROM 
+            creator_journals cj
+        WHERE 
+            cj.post_url = :given_post_url
+        
+        UNION
+        SELECT 
+            cap.post_id, 
+            cap.post_type
+        FROM 
+            creator_auto_posts cap
+        WHERE 
+            cap.post_url = :given_post_url
+        
+        UNION
+        SELECT 
+            cjr.post_id, 
+            cjr.post_type
+        FROM 
+            creator_journals_repost cjr
+        WHERE 
+            cjr.post_url = :given_post_url
+        
+        UNION
+        SELECT 
+            uj.post_id, 
+            uj.post_type
+        FROM 
+            user_journals uj
+        WHERE 
+            uj.post_url = :given_post_url
+
+        UNION
+        SELECT 
+            us.post_id, 
+            us.post_type
+        FROM 
+            user_stories us
+        WHERE 
+            us.post_url = :given_post_url
+
+        UNION
+        SELECT 
+            ust.post_id, 
+            ust.post_type
+        FROM 
+            user_stories_tailored ust
+        WHERE 
+            ust.post_url = :given_post_url
+    ) AS combined_results;
+    """)
+
+    with engine.begin() as conn:
+        result = conn.execute(query, {'given_post_url': given_post_url}).fetchone()
+        if result:
+            post_id = result[0]
+            post_type = result[1]
+
+            image_url = upload_image_to_ghost(png_file_path, api_key, api_url)
+            return update_story_cover_image_to_ghost(post_id, image_url, post_type, api_key, api_url)
+
+    return reply_dict
 
 
 def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), model=ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}):

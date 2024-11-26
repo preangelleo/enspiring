@@ -1115,6 +1115,8 @@ def is_all_english_letters(input_string: str) -> bool:
 def dealing_tg_command_http(msg: str, chat_id: str, user_parameters, token=TELEGRAM_BOT_TOKEN, engine=engine, message_id=0):
     user_ranking = user_parameters.get('ranking') or 0
     openai_api_key = user_parameters.get('openai_api_key', '')
+    api_key = user_parameters['ghost_admin_api_key']
+    api_url = user_parameters['ghost_api_url']
     user_ranking = user_parameters.get('ranking') or 0
 
     msg_lower = msg.lower()
@@ -1172,6 +1174,7 @@ def dealing_tg_command_http(msg: str, chat_id: str, user_parameters, token=TELEG
                 
         return send_message_markdown(chat_id, response_dict.get('Reason'), token)
     
+
     elif BLOG_BASE_URL in msg_lower:
         if not msg.endswith('/'): msg += '/'
         df = pd.read_sql(text(f"SELECT words_list FROM `{VIDEO_ID_AND_POST_ID_AND_URL_TABLE_NAME}` WHERE URL = :url"), engine, params={'url': msg})
@@ -1186,11 +1189,14 @@ def dealing_tg_command_http(msg: str, chat_id: str, user_parameters, token=TELEG
             
         return send_message(chat_id, f"Sorry, no words list found for this link.", token)
     
-    is_url = find_url(msg_lower)
-    if is_url: return handle_url_input(is_url, chat_id, ASSISTANT_MAIN_MODEL_BEST, user_parameters, token)
-    else: return send_message(chat_id, "Sorry, I can't process your link. Please provide a valid YouTube Playlist URL or a YouTube video URL, or a Google Sheet URL.", token)
+    if api_key and api_url:
+        is_url = find_url(msg_lower)
+        
+        if is_url: return handle_url_input(is_url, chat_id, ASSISTANT_MAIN_MODEL_BEST, user_parameters, token)
+        else: return send_message(chat_id, "Sorry, I can't process your link.", token)
 
-    
+    return
+
 
 # From given Title, search a cover image from Bing and make a blackblock image with logo and title, and put it to the search result image, creating a new cover image
 def dealing_tg_photo(cover_png_file_path: str, video_title: str, chat_id: str, engine=engine, token=TELEGRAM_BOT_TOKEN):

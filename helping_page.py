@@ -8309,6 +8309,8 @@ def from_gpt_to_replicate_image(chat_id, prompt = '', image_folder = midjourney_
 
     hash_image_prompt = hashlib.md5(image_prompt.encode()).hexdigest()
     user_image_folder = os.path.join(image_folder, chat_id)
+    if not os.path.exists(user_image_folder): os.makedirs(user_image_folder)
+    
     output_file = os.path.join(user_image_folder, f"image_{hash_image_prompt}.png")
 
     output_file = generate_image_replicate(image_prompt, output_file=output_file)
@@ -10100,6 +10102,7 @@ def azure_cognitive_ai_extract_text(image_path_or_url, subscription_key = AZURE_
         return '\n'.join(text)
     
     else: return 
+
 
 
 

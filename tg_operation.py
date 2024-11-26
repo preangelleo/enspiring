@@ -709,6 +709,14 @@ def handle_message(update, token, engine = engine):
                     file_path = mirror_image(file_path)
                     if os.path.isfile(file_path): send_image_from_file(chat_id, file_path, "Here is the mirrored image.", token)
                     return
+                
+                elif caption and caption.startswith('cover'):
+                    slug = caption.replace('cover', '').strip()
+                    if not slug: return send_message(chat_id, "You need to provide a slug for the cover image.", token)
+
+                    reply_dict = change_cover_image_by_url(chat_id, slug, file_path, user_parameters)
+                    if reply_dict['Status']:  reply_dict['Message'] = f"Cover image updated successfully:\n{reply_dict['Message']}"
+                    return send_message(chat_id, reply_dict['Message'], token)
 
                 send_message(chat_id, "Image received, extracting text from the image now...", token)
                 message_id += 1
