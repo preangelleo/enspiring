@@ -472,7 +472,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
                 if image_model == 'midjourney': 
                     if not "--ar 16:9" in user_prompt: user_prompt += " --ar 16:9"
                     image_id = generate_image_midjourney(chat_id, user_prompt, 'user', midjourney_token = IMAGEAPI_MIDJOURNEY)
-                    if image_id: send_message(chat_id, f"Your image generation request has been submitted to Midjourney bot. The image ID is: \n\n`{image_id}`\n\nYou will get 4 images once the results are retrieved. If you are not satisfied with the results, you can send \n/generate_prompt_midjourney plus your own prompt to me, and I can refine your prompt and re-generate 4 new images for you.", token)
+                    if image_id: send_message_markdown(chat_id, f"Your image generation request has been submitted to Midjourney bot. The image ID is: `{image_id[:6]}...{image_id[-6:]}`. All four images will be send to you once generated. Click [HERE](https://docs.midjourney.com/docs/prompts) to learn more about how to create a better `Midjourney Prompt`", token)
                 elif image_model == 'blackforest':
                     user_image_folder = os.path.join(midjourney_images_dir, chat_id)
                     output_file = os.path.join(user_image_folder, f"{hash_md5}.png")
