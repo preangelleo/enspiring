@@ -809,7 +809,7 @@ def post_words_story_to_ghost(words_list: list, chat_id: str, admin_api_key = BL
     user_name = user_parameters.get('name') or 'User'
 
     feature_image = ''
-    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     try: feature_image = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
     except: send_message(chat_id, "Failed to generate image for the story, maybe you can try out /generate_image_blackforest or /generate_image_midjourney commands.", token)
     if not feature_image: feature_image = "https://enspiring.ai/content/images/size/w1000/2024/10/The-limits-of-my-language-mean-the-limits-of-my-world.---Ludwig-Wittgenstein-1600-1.png"
@@ -929,7 +929,7 @@ def create_story_and_post_to_ghost(user_prompt: str, chat_id: str, admin_api_key
 
     slug = generate_youtube_slug(length=11)
 
-    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     feature_image = ''
     try: feature_image = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
     except Exception as e: send_debug_to_laogege(f"ERROR: create_story_and_post_to_ghost() e: >>> {e}")
@@ -1100,7 +1100,7 @@ def post_journal_to_ghost(prompt: str, chat_id: str, img_url: str = '', admin_ap
 
     # callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', '', suffix='The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
 
-    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     if img_url:
         if 'enspiring.ai' not in img_url: 
             output_dir = os.path.join(working_dir, chat_id)
@@ -1224,7 +1224,7 @@ def retrieve_all_upscaled_images_crontab(midjourney_images_dir = midjourney_imag
     for _, row in df.iterrows():
         image_id = row['image_id']
         chat_id = row['chat_id']
-        working_folder = os.path.join(midjourney_images_dir, chat_id)
+        working_folder = os.path.join(midjourney_images_dir)
         upscaled_filepath = retrieve_all_upscaled_images(image_id, working_folder, midjourney_token)
         if upscaled_filepath and len(upscaled_filepath) >= 1: 
             with engine.begin() as conn: 
@@ -1453,7 +1453,7 @@ def post_news_to_ghost(prompt: str, chat_id: str, admin_api_key = BLOG_POST_ADMI
 
     # Generate feature image using OpenAI image generation
     feature_image = ''
-    output_file = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    output_file = os.path.join(midjourney_images_dir, f"{slug}.png")
     try: feature_image = first_cover_image_blackforest(midjourney_prompt, output_file, admin_api_key, ghost_url)
     except: send_message(chat_id, f"Failed to generate image for you, may be you can try /generate_image_blackforest or /generate_midjourney_image command to generate the image.", token)
 
@@ -1593,7 +1593,7 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
     slug = generate_youtube_slug(length=11)
 
 
-    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     image_id, img_url = '', ''
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
@@ -1768,7 +1768,7 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
     callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', '', suffix='The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
 
     slug = generate_youtube_slug(length=11)
-    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     image_id, img_url = '', ''
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
@@ -1982,7 +1982,7 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
     callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', '', suffix='The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
 
     slug = video_id
-    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     image_id, img_url = '', ''
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
@@ -2929,7 +2929,7 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
     else: slug = generate_youtube_slug(length=11)
 
     image_id, img_url = '', ''
-    image_path = os.path.join(midjourney_images_dir, chat_id, f"{slug}.png")
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     if default_image_model == 'Midjourney': 
         if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
         image_id = generate_image_midjourney(chat_id, midjourney_prompt, post_type, IMAGEAPI_MIDJOURNEY)
