@@ -798,6 +798,7 @@ def post_words_story_to_ghost(words_list: list, chat_id: str, admin_api_key = BL
     html_content = html_story_content + midjourney_prompt_html + tags_html
 
     user_story_audio_dir = os.path.join(story_audio, chat_id)
+    if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
 
     audio_file_path = generate_story_voice(generated_story, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = 'english')
     if audio_file_path and os.path.isfile(audio_file_path): 
@@ -971,6 +972,7 @@ def create_story_and_post_to_ghost(user_prompt: str, chat_id: str, admin_api_key
     html_content = html_story_content + midjourney_prompt_html + user_prompt_html
 
     user_story_audio_dir = os.path.join(story_audio, chat_id)
+    if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
 
     audio_file_path = generate_story_voice(generated_story, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = 'english')
     if audio_file_path and os.path.isfile(audio_file_path): 
@@ -1480,6 +1482,7 @@ def post_news_to_ghost(prompt: str, chat_id: str, admin_api_key = BLOG_POST_ADMI
     html_content = html_story_content
 
     user_story_audio_dir = os.path.join(story_audio, chat_id)
+    if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
 
     voice_gender = user_parameters.get('audio_play_default') or 'nova'
     voince_gender = AZURE_VOICE_FEMALE if voice_gender == 'nova' else AZURE_VOICE_MALE
@@ -1617,6 +1620,8 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
     audio_url = ''
     if audio_switch == 'on':
         user_story_audio_dir = os.path.join(story_audio, chat_id)
+        if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
+
         audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
         if audio_file_path and os.path.isfile(audio_file_path): 
             upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
@@ -1801,6 +1806,8 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
     audio_url = ''
     if audio_switch == 'on':
         user_story_audio_dir = os.path.join(story_audio, chat_id)
+        if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
+
         audio_file_path = generate_story_voice(generated_news, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
         if audio_file_path and os.path.isfile(audio_file_path): 
             upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
@@ -2006,6 +2013,8 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
     audio_url = ''
     if audio_switch == 'on':
         user_story_audio_dir = os.path.join(story_audio, chat_id)
+        if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
+
         audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
         if audio_file_path and os.path.isfile(audio_file_path): 
             upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
@@ -2387,6 +2396,8 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
                 if audio_url: html_content = embed_audio_to_html(audio_url, title) + html_content
         if not audio_url:
             user_story_audio_dir = os.path.join(story_audio, chat_id)
+            if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
+
             audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
             if audio_file_path and os.path.isfile(audio_file_path): 
                 upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
@@ -2503,7 +2514,7 @@ def post_journal_to_ghost_creator_front(prompt, chat_id, engine, token, model = 
     openai_api_key = user_parameters.get('openai_api_key')
     tier = user_parameters.get('tier') or 'Free'
 
-    if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a {tier} tier user, you don't have permission to use this feature. You need to upgrade to /Diamond or higher tier to use this feature.", token)
+    if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a {tier} tier user, you don't have permission to use this feature. You need to upgrade to /Diamond or higher tier to use this feature.\n\nOr you can setup your own /openai_api_key to unlock this feature.", token)
 
     prompt = prompt.replace('creator_post_journal', '').strip()
     prompt = prompt.replace('post_journal', '').strip()
@@ -2536,7 +2547,7 @@ def post_news_to_ghost_creator_front(user_prompt, chat_id, engine, token, user_p
     openai_api_key = user_parameters.get('openai_api_key')
     tier = user_parameters.get('tier') or 'Free'
 
-    if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a {tier} tier user, you don't have permission to use this feature. You need to upgrade to /Diamond or higher tier to use this feature.", token)
+    if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a {tier} tier user, you don't have permission to use this feature. You need to upgrade to /Diamond or higher tier to use this feature.\n\nOr you can setup your own /openai_api_key to unlock this feature.", token)
 
     user_prompt = user_prompt.replace('creator_post_news', '').strip()
     user_prompt = user_prompt.replace('post_news', '').strip()
@@ -2952,6 +2963,8 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
     audio_url = ''
 
     user_story_audio_dir = os.path.join(story_audio, chat_id)
+    if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
+    
     audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
     if audio_file_path and os.path.isfile(audio_file_path): 
         upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
