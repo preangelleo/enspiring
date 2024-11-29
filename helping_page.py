@@ -2574,7 +2574,7 @@ The goal is to be educational while keeping the user entertained. Adapt your sty
     '''
 
 
-    SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH = "Your goal is to polish the user input query into a search engine friendly search query, succinct and concise. Your output will be useed directly by a search engine call function. Ouput only the polished search query in plain text format, nothing else as prefix or suffix."
+    SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH = "Your goal is to polish the user input query into a search engine friendly search query, succinct and concise. Your output will be useed directly by a search engine call function. Ouput only the polished search query in Enlgish, in plain text format, nothing else as prefix or suffix."
 
 
     SYSTEM_PROMPT_SEARCH_RESULTS_POLISH = """Your task is to transform search results into a well-organized response that directly addresses the user's prompt.
