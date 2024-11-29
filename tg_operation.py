@@ -152,7 +152,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if share_asset and share_asset.startswith('urn:li:share:'):
             reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
             return send_message_markdown(chat_id, reply, token)
-        else: return send_message(chat_id, "Failed to share the post to LinkedIn, please try again later.", token)
+        return
 
 
     elif callback_data.startswith('creator_unfeatured_') or callback_data.startswith('creator_featured_') or callback_data.startswith('creator_public_') or callback_data.startswith('creator_private_') or callback_data.startswith('creator_publish_') or callback_data.startswith('creator_unpublish_'):

@@ -9568,7 +9568,7 @@ def handle_share_to_linkedin_button(chat_id, title, post_excerpt, article_url, i
     if not access_token:
         # No valid token found, start authentication process
         auth_url = start_linkedin_auth(chat_id)
-        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Linkedin account."
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Linkedin account. Once done, click the button again to share the post."
         return send_message_markdown(chat_id, markdown_msg, token)
     
     # If we have token, proceed with sharing
@@ -10016,7 +10016,7 @@ def handle_share_to_twitter_button(chat_id, title, article_url, token=TELEGRAM_B
     if not access_token:
         # Start authentication process
         auth_url = start_twitter_auth(chat_id)
-        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Twitter account."
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Twitter account. Once done, click the button again to share the post."
         return send_message_markdown(chat_id, markdown_msg, token)
     
     # Share the post
