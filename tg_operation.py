@@ -89,6 +89,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
     elif callback_data == 'creator_ghost_blog_api_key': callback_creator_ghost_blog_api_key(chat_id, token, message_id)
     elif callback_data == 'creator_ghost_blog_url': callback_creator_ghost_blog_url(chat_id, token, message_id)
     elif callback_data == 'creator_default_image_model': callback_creator_default_image_model(chat_id, token, message_id)
+    elif callback_data == 'creator_slug_style': callback_creator_slug_style(chat_id, token, message_id)
 
     elif callback_data.startswith('tweet_'):
         post_id = callback_data.split('_')[-1]
@@ -224,6 +225,12 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         default_audio_switch = set_default_audio_switch_for_chat_id(chat_id, default_audio_switch, engine)
         if default_audio_switch: send_message(chat_id, f"Default audio switch set to `{default_audio_switch}` successfully.", token)
         else: send_message(chat_id, "Failed to set default audio switch, please try again.", token)
+
+    elif callback_data.startswith('creator_slug_style_'):
+        slug_style = callback_data.replace('creator_slug_style_', '').strip()
+        slug_style = set_slug_style_for_chat_id(chat_id, slug_style, engine)
+        if slug_style == 'on': send_message(chat_id, f"Slug style set to `Generated from Title` successfully.", token)
+        else: send_message(chat_id, "Slug style set to `Short Slug` successfully.", token)
 
     elif callback_data.startswith('creator_writing_style'): return set_creator_writing_style_information(user_parameters, chat_id, token, engine, message_id)
 

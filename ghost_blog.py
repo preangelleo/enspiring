@@ -396,6 +396,21 @@ def openai_gpt_structured_output_translate(prompt: str, system_prompt: str, chat
     return event_dict
 
 
+def tags_list_to_html(tags_list: list, prefix = f'{BLOG_POST_API_URL}/tag/'):
+    tag_links = []
+    for tag in tags_list:
+        if not tag: continue
+        tag = str(tag)
+        tag_name = tag.lower().replace(' ', '-')
+        tag_url = f'{prefix}{tag_name}'
+        tag_capitalized = tag.upper()
+        tag_link = f'<a href="{tag_url}">{tag_capitalized}</a>'
+        tag_links.append(tag_link)
+
+    tags_html = "<p>" + ', '.join(tag_links) + "</p>"
+    return tags_html
+
+
 def send_blog_post_from_dict(content_dict: dict, api_key=GHOST_ADMIN_API_KEY, api_url=GHOST_API_URL, engine=engine, user_parameters={}):
     current_folder = content_dict.get('current_folder', video_dir)
 
@@ -483,15 +498,7 @@ def send_blog_post_from_dict(content_dict: dict, api_key=GHOST_ADMIN_API_KEY, ap
 
     if not tags: return f"Can't find the tags for video_id: {video_id}, neither from content_dict nor from the transcript"
 
-    tag_links = []
-    for tag in tags:
-        tag_name = tag.lower().replace(' ', '-')
-        tag_url = f'https://enspiring.ai/tag/{tag_name}'
-        tag_capitalized = tag.title()
-        tag_link = f'<a href="{tag_url}">{tag_capitalized}</a>'
-        tag_links.append(tag_link)
-
-    tags_html = "<p>" + ', '.join(tag_links) + "</p>"
+    tags_html = tags_list_to_html(tags, prefix='https://enspiring.ai/tag/')
 
     id, secret = api_key.split(':')
     iat = datetime.now(tz=timezone.utc)
@@ -760,6 +767,8 @@ def post_words_story_to_ghost(words_list: list, chat_id: str, admin_api_key = BL
         tag_link = f'<a href="{tag_url}">{tag_capitalized}</a>'
         tag_links.append(tag_link)
     tags_html = "<p>" + ', '.join(tag_links) + "</p>"
+
+    tags_html = tags_list_to_html(words_list, prefix=f'{ghost_url}/tag/')
 
     key_id, secret = admin_api_key.split(':')
     iat = int(time.time())
@@ -1141,15 +1150,6 @@ def post_journal_to_ghost(prompt: str, chat_id: str, img_url: str = '', admin_ap
 
     md = MarkdownIt()
     html_content = md.render(content)
-
-    # user_story_audio_dir = os.path.join(story_audio, chat_id)
-
-    # audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = 'english')
-    # if audio_file_path and os.path.isfile(audio_file_path): 
-    #     upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
-    #     if upload_result['Status']: html_content = embed_audio_to_html(upload_result['URL'], title) + html_content
-    #     else: send_debug_to_laogege(f"post_journal_to_ghost() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {content[:200]}......")
-    # else: send_debug_to_laogege(f"post_journal_to_ghost() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {content[:200]}......")
 
     midjourney_prompt = f"Prompt for the cover image generation: \n{midjourney_prompt}"
     midjourney_prompt_html = f"<blockquote>{midjourney_prompt}</blockquote>"
@@ -1593,8 +1593,9 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
 
     callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', default_image_model, suffix = f'The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
 
-    slug = generate_youtube_slug(length=11)
-
+    slug_style = user_parameters.get('slug_style') or 'none'
+    if slug_style == 'on': slug = generate_youtube_slug(length=11)
+    else: slug = create_slug(title)
 
     image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     image_id, img_url = '', ''
@@ -1642,6 +1643,9 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
         tags += tags_from_article.split(',')
         tags = [tag.strip() for tag in tags]
         tags = list(set(tags))
+    
+    tags_html = tags_list_to_html(tags, prefix=f"{ghost_url}/tag/")
+    html_content += tags_html
 
     post_type_key = f"{post_type}s"
     post_content_dict = {
@@ -1772,7 +1776,19 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
 
     callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', '', suffix='The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
 
-    slug = generate_youtube_slug(length=11)
+    lines = generated_news.split('\n')
+    title = lines[0].strip()
+    if not title: return send_debug_to_laogege(f"post_news_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to get the title from the generated story.")
+    
+    title = title.replace('#', '').strip()
+    title = title.replace('*', '').strip()
+    
+    content = '\n'.join(lines[1:])
+
+    slug_style = user_parameters.get('slug_style') or 'none'
+    if slug_style == 'on': slug = generate_youtube_slug(length=11)
+    else: slug = create_slug(title)
+
     image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     image_id, img_url = '', ''
     if default_image_model == 'Midjourney': 
@@ -1790,15 +1806,6 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
     }
     ghost_token = jwt.encode(payload, bytes.fromhex(secret), algorithm='HS256', headers=header)
     headers = {'Authorization': f'Ghost {ghost_token}','Content-Type': 'application/json'}
-
-    lines = generated_news.split('\n')
-    title = lines[0].strip()
-    if not title: return send_debug_to_laogege(f"post_news_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to get the title from the generated story.")
-    
-    title = title.replace('#', '').strip()
-    title = title.replace('*', '').strip()
-    
-    content = '\n'.join(lines[1:])
 
     md = MarkdownIt()
     html_content = md.render(content)
@@ -2037,6 +2044,9 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
     tags = [tag.strip() for tag in tags]
     tags = list(set(tags))
 
+    tags_html = tags_list_to_html(tags, prefix=f"{ghost_url}/tag/")
+    html_content += tags_html
+
     post_type_key = f"{post_type}s"
     post_content_dict = {
         "title": title,
@@ -2154,7 +2164,11 @@ def create_stories_list_html_post_to_ghost(chat_id: str, admin_api_key=BLOG_POST
 
     headers = {'Authorization': f'Ghost {ghost_token}','Content-Type': 'application/json'}
 
-    new_slug = generate_youtube_slug(length=11)
+    title = f"{user_name.title()}'s Story Archive"
+
+    slug_style = user_parameters.get('slug_style') or 'none'
+    if slug_style == 'on': new_slug = generate_youtube_slug(length=11)
+    else: new_slug = create_slug(title)
 
     # Get the last update date to set as a threshold
     df_last_post = pd.read_sql(text("""SELECT updated_time FROM user_stories_list WHERE chat_id = :chat_id ORDER BY updated_time DESC LIMIT 1"""), engine, params={'chat_id': chat_id})
@@ -2271,7 +2285,7 @@ def create_stories_list_html_post_to_ghost(chat_id: str, admin_api_key=BLOG_POST
 
     html_content = "\n".join(html_bookmarks)
     feature_image = "https://enspiring.ai/content/images/size/w1200/2024/10/stories_list.png"
-    title = f"{user_name.title()}'s Story Archive"
+    
 
     post_content_dict = {
         "title": title,
@@ -2381,7 +2395,9 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
     ghost_token = jwt.encode(payload, bytes.fromhex(secret), algorithm='HS256', headers=header)
     headers = {'Authorization': f'Ghost {ghost_token}','Content-Type': 'application/json'}
 
-    slug = generate_youtube_slug(length=11)
+    slug_style = user_parameters.get('slug_style') or 'none'
+    if slug_style == 'on': slug = generate_youtube_slug(length=11)
+    else: slug = create_slug(title)
 
     md = MarkdownIt()
     html_content = md.render(generated_journal)
@@ -2419,6 +2435,9 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
         tags = [tag.strip() for tag in tags]
         tags = list(set(tags))
     else: tags = ['Journal']
+
+    tags_html = tags_list_to_html(tags, prefix=f"{ghost_url}/tag/")
+    html_content += tags_html
 
     post_type_key = f"{post_type}s"
     post_content_dict = {
@@ -2899,7 +2918,10 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
     if chat_id == DOLLARPLUS_CHAT_ID and series_name == 'The Eternal Drift': 
         if 'day ' not in title.lower() or ':' not in title: title = f"Day {day_count}: {title}"
         slug = f"day_{day_count}"
-    else: slug = generate_youtube_slug(length=11)
+    else: 
+        slug_style = user_parameters.get('slug_style') or 'none'
+        if slug_style == 'on': slug = generate_youtube_slug(length=11)
+        else: slug = create_slug(title)
 
     image_id, img_url = '', ''
     image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
@@ -2948,6 +2970,8 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
         tags = list(set(tags))
     else: tags = ['Journal']
 
+    tags_html = tags_list_to_html(tags, prefix=f"{ghost_url}/tag/")
+    html_content += tags_html
 
     post_type_key = f"{post_type}s"
     post_content_dict = {
