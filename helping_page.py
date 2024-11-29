@@ -1021,6 +1021,17 @@ For detailed information, visit {PAGE_PREMIUM}
 
     Fore detailed information, visit {ENSPIRING_ACTIVATE_PAGE}
 
+    About Ghost Blog Hosting and Admin API Key:
+
+    How to self host ghost blog?
+    Visit: https://ghost.org/docs/install/
+
+    How to get my ghost admin api key?
+    Visit: https://ghost.org/docs/admin-api/
+
+    How to install ghost in docker?
+    Visit: https://ghost.org/docs/install/docker/
+
     """
 
 

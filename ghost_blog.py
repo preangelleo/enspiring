@@ -2542,44 +2542,6 @@ def post_journal_to_ghost_creator_front(prompt, chat_id, engine, token, model = 
         return post_journal_to_ghost_creator(prompt, chat_id, engine, token, model, message_id, user_parameters, is_journal)
 
 
-def post_news_to_ghost_creator_front(user_prompt, chat_id, engine, token, user_parameters):
-    user_ranking = user_parameters.get('ranking') or 0
-    openai_api_key = user_parameters.get('openai_api_key')
-    tier = user_parameters.get('tier') or 'Free'
-
-    if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a {tier} tier user, you don't have permission to use this feature. You need to upgrade to /Diamond or higher tier to use this feature.\n\nOr you can setup your own /openai_api_key to unlock this feature.", token)
-
-    user_prompt = user_prompt.replace('creator_post_news', '').strip()
-    user_prompt = user_prompt.replace('post_news', '').strip()
-    if not user_prompt: return send_message(chat_id, commands_dict.get("creator_post_news"), token)
-
-    admin_api_key = user_parameters.get('ghost_admin_api_key', '')
-    ghost_url = user_parameters.get('ghost_api_url', '')
-
-    if not all([admin_api_key, ghost_url]): 
-        date_today = str(datetime.now().date())
-        white_list_chat_ids = get_white_listed_chat_ids(engine)
-        
-        if chat_id not in white_list_chat_ids:
-            df = pd.read_sql(text(f"SELECT user_prompt, job_status FROM user_news_jobs WHERE chat_id = :chat_id AND date = :date AND job_status != 'failed'"), engine, params={'chat_id': chat_id, 'date': date_today})
-            if not df.empty: return send_message(chat_id, f"You already have a task with prompt: {df['user_prompt'].values[0]} and status: {df['job_status'].values[0]}. You can only have one news post task per day.", token)
-
-        # Make a df.to_sql() to save the youtube_url jobs to the database, include chat_id
-        df = pd.DataFrame({'user_prompt': [user_prompt], 'chat_id': [chat_id], 'job_status': ['pending'], 'job_type': ['news'], 'date': [date_today]})
-        df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
-        webhook_push_table_name('user_news_jobs', chat_id)
-        return send_message(chat_id, f"Your request to post the news has been received. It will be processed soon. You will be notified once it's done.")
-    else:
-        mother_language = user_parameters.get('mother_language') or 'English'
-        date_today = str(datetime.now().date())
-        df = pd.DataFrame({'user_prompt': [user_prompt], 'chat_id': [chat_id], 'job_status': ['pending'], 'job_type': ['news'], 'date': [date_today]})
-        df.to_sql('user_news_jobs', engine, if_exists='append', index=False)
-        webhook_push_table_name('user_news_jobs', chat_id)
-        suffix = ''
-        if mother_language == 'English': suffix = f"\n\nYour /mother_language is set to default value -- `English`. Meaning you won't have a `Publish to Post in Mother Language` button in your notification once your article is generated. If you want to have a translated version of your generated article, please click /mother_language to set your mother language."
-        return send_message(chat_id, f"Your request to post the news to your own website has been received. It will be processed soon. You will be notified once it's done.{suffix}", token)
-
-
 def handle_url_input(url: str, chat_id: str = OWNER_CHAT_ID, model = ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}, token = TELEGRAM_BOT_TOKEN):
     ranking = user_parameters.get('ranking') or 0
     if ranking < 5: return send_message(chat_id, "Sorry, you don't have permission to use this `url to post` feature. \n/get_premium", token)
