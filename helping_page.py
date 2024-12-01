@@ -37,6 +37,7 @@ import azure.cognitiveservices.speech as speechsdk
 import assemblyai as aai
 import pytesseract
 import cv2
+import pdfplumber
 import unicodedata
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
@@ -2044,6 +2045,38 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     ```
     '''
 
+    SYSTEM_PROMPT_DOCTOR = """You are a doctor tasked with explaining medical reports in simple, easy-to-understand language in _language_placeholder_for patients or their families.
+
+- Ensure medical terminology and complex concepts are translated into layman's terms in _language_placeholder_.
+- Provide a clear, concise overview, highlighting key findings and their implications.
+- Be empathetic, avoiding alarming language while encouraging understanding and engagement.
+- Mention any follow-up actions or treatments suggested in the report.
+
+# Steps
+
+1. Read the medical report thoroughly and identify key findings or terms that require explanation.
+2. Break down complex medical jargon into simpler terms.
+3. Explain each key finding, including what it means for the patient's health.
+4. Suggest any potential next steps or recommended treatments, explaining their purpose.
+5. Encourage questions for clarification.
+
+# Output Format
+
+Provide your explanation in a clear, conversational paragraph without medical jargon in _language_placeholder_, focusing on the patient's understanding.
+
+# Examples
+
+**Example 1:**
+
+**Medical Report:** The echocardiogram indicates mild left ventricular hypertrophy.
+
+**Explanation:** Your heart's main pumping chamber is slightly larger than normal, which can happen when the heart muscle is working harder than usual. It’s important to monitor this to ensure your heart stays healthy. We might suggest lifestyle changes or medication to help manage this condition.
+
+**Example 2:**
+
+**Medical Report:** The blood test shows elevated LDL cholesterol levels.
+
+**Explanation:** Your blood has a higher level of 'bad' cholesterol, which can increase the risk of heart disease. We recommend improving your diet, exercising more, and possibly starting medication to lower your cholesterol and keep your heart healthy."""
 
     ACTIVATED_SUCCESSFULY = f"You've successfully activated the Enspiring AI Bot. Now, send me an English word or any query about English learning. Click /help for more information. Or you can just ask me questions like `how to improve my English speaking skills?`, `How to translate a txt file`, `How to transcript a mp3 file`, etc."
 
@@ -2791,7 +2824,6 @@ def ollama_gpt_chat_basic(prompt, system_prompt = '', model = "llama3.2"):
     return response
 
 
-
 def ollama_gpt_chat_remote(prompt, system_prompt='', model="llama3.2", webhook_url=f"{NGROK_WEBHOOK_BASE_URL}/ollama"):
     """
     Makes a POST request to the remote webhook for processing the prompt.
@@ -2825,8 +2857,6 @@ def ollama_gpt_chat_remote(prompt, system_prompt='', model="llama3.2", webhook_u
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
         return e
-
-
 
 
 def find_url(text):
@@ -10168,6 +10198,51 @@ def create_slug(title):
     slug = slug.strip('-')
     
     return slug
+
+
+def pdf_to_text(pdf_path, output_path=None):
+    """
+    Convert a PDF file to text and optionally save it to a file.
+    
+    Args:
+        pdf_path (str): Path to the input PDF file
+        output_path (str, optional): Path to save the output text file. 
+                                   If None, only returns the text without saving
+    
+    Returns:
+        str: Extracted text content from the PDF
+        
+    Raises:
+        FileNotFoundError: If the PDF file doesn't exist
+        Exception: If there's an error processing the PDF
+    """
+    try:
+        # Check if PDF file exists
+        if not os.path.exists(pdf_path):
+            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+        
+        # Extract text from PDF
+        text_content = ""
+        with pdfplumber.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                text_content += page.extract_text() or ""
+                text_content += "\n\n"  # Add spacing between pages
+        
+        # Save to file if output path is provided
+        if output_path:
+            try:
+                with open(output_path, 'w', encoding='utf-8') as text_file:
+                    text_file.write(text_content)
+                print(f"Text successfully saved to: {output_path}")
+            except Exception as e:
+                print(f"Error saving text file: {str(e)}")
+                
+        return text_content.strip()
+    
+    except Exception as e:
+        raise Exception(f"Error processing PDF: {str(e)}")
+    
+
 
 if __name__ == '__main__':
     print("Helping page constants")

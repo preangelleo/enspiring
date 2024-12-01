@@ -856,19 +856,18 @@ def _get_primary_ssh_client() -> paramiko.SSHClient:
 
 if __name__ == "__main__":
     print("Creating Ghost blog...")
-    chat_id = '2118900665'
  
-    # try:
-    #     success = migrate_ghost_domain(
-    #         subdomain='leo',
-    #         new_domain='laogege.org'
-    #     )
+    try:
+        success = migrate_ghost_domain(
+            subdomain='leo',
+            new_domain='laogege.org'
+        )
         
-    #     if success: print("域名迁移成功！现在可以通过两个域名访问博客。")
-    #     else: print("域名迁移失败，请检查以下错误信息：")
+        if success: print("域名迁移成功！现在可以通过两个域名访问博客。")
+        else: print("域名迁移失败，请检查以下错误信息：")
 
-    # except Exception as e:
-    #     print(f"发生错误: {str(e)}")
-    #     # 打印完整的堆栈跟踪
-    #     import traceback
-    #     print(traceback.format_exc())
+    except Exception as e:
+        print(f"发生错误: {str(e)}")
+        # 打印完整的堆栈跟踪
+        import traceback
+        print(traceback.format_exc())

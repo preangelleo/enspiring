@@ -1,5 +1,5 @@
 from ghost_blog import *
-from ghost_deployment_manager import *
+from ghost_deployment import *
 
 def get_video_dimensions(video_file):
     probe = ffmpeg.probe(video_file)

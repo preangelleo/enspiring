@@ -878,6 +878,14 @@ def handle_message(update, token, engine = engine):
                     if audio_file and os.path.isfile(audio_file): return send_audio_from_file(chat_id, audio_file, token)
                     else: return send_message(chat_id, "Failed to generate the audio, please try again later.", token)
 
+            # elif doc_name in ['medical_report.pdf']:
+            #     send_message(chat_id, "Medical report file received, the AI assistant is analyzing the content, please wait 1~2 minutes...", token)
+            #     text_content = pdf_to_text(file_path, output_path=None)
+            #     layman_text = openai_gpt_chat(SYSTEM_PROMPT_DOCTOR, chat_id, text_content, ASSISTANT_MAIN_MODEL, user_parameters, token)
+            #     if layman_text: 
+            #         print(f"Layman text: {layman_text}")
+            #         return send_message(chat_id, layman_text, token, message_id + 1)
+            #     else: return send_message(chat_id, "Failed to analyze the medical report, please try again later.", token)
 
             elif file_extension in ASSISTANT_FILE_SEARCH_SUPPORTED_FILES: 
                 if user_ranking < 4: return send_message(chat_id, f"Sorry, this function is only for /Platinum or above users, and your /tier is /{tier}\n\n{commands_dict.get('get_premium')}", token)
@@ -890,7 +898,10 @@ def handle_message(update, token, engine = engine):
                     send_message_markdown(chat_id, f"You just entered in `{session_name}` session. Now the AI assistant is summarizing the key points of this DOCUMENT:\n\n`{doc_name}`", token)
                     user_parameters['session_document_id'] = doc_id
                     user_parameters['message_id'] += 1
-                    return session_conversation(chat_id, DEFAULT_PROMPT_DOCUMENT, session_name, token, engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = user_parameters)
+                    mother_language = user_parameters.get('mother_language', 'English') or 'English'
+                    if doc_name.lower() in ['medical_report.pdf']: system_prompt = SYSTEM_PROMPT_DOCTOR.replace("_language_placeholder_", mother_language)
+                    else: system_prompt = DEFAULT_PROMPT_DOCUMENT
+                    return session_conversation(chat_id, system_prompt, session_name, token, engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = user_parameters)
 
             elif file_extension not in TELEGRAM_SUPPORTED_FILES: return send_message(chat_id, f"Sorry, the file format is not supported so far. Talk to {OWNER_HANDLE} if you want to add this feature. Supported file types: \n\n{TOTAL_SUPPORTED_FILES_STRING}", token)
 
