@@ -48,6 +48,9 @@ load_dotenv()
 
 if 'Making variables':
 
+    DOMAIN_NAME_USERNAME = os.getenv("DOMAIN_NAME_USERNAME")
+    DOMAIN_NAME_TOKEN = os.getenv("DOMAIN_NAME_TOKEN")
+    
     AUTO_BLOG_BASE_URL = 'enspiring.org'
     ENSPIRING_DOT_AI = os.getenv("ENSPIRING_DOT_AI")
 
@@ -4236,10 +4239,6 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
     if visibility == 'public': page_public_inline_keyboard_dict['Paid Member Only'] = f'creator_private_{post_type}_{post_id}'
     else: page_public_inline_keyboard_dict['Open to Public'] = f'creator_public_{post_type}_{post_id}'
 
-    # Toggle publication status
-    if status == 'published': page_public_inline_keyboard_dict['Unpublish'] = f'creator_unpublish_{post_type}_{post_id}'
-    else: page_public_inline_keyboard_dict['Publish'] = f'creator_publish_{post_type}_{post_id}'
-
     if table_name == 'creator_journals_repost': 
         page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_post_{post_id}'
         page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_post_{post_id}'
@@ -4251,6 +4250,10 @@ def callback_update_post_status(chat_id, prompt, post_id, token = TELEGRAM_BOT_T
     elif table_name == 'creator_journals': 
         page_public_inline_keyboard_dict['Post to Linkedin'] = f'linkedin_creator_page_{post_id}'
         page_public_inline_keyboard_dict['Post to Twitter'] = f'tweet_creator_page_{post_id}'
+
+    # Toggle publication status
+    if status == 'published': page_public_inline_keyboard_dict['Unpublish'] = f'creator_unpublish_{post_type}_{post_id}'
+    else: page_public_inline_keyboard_dict['Publish'] = f'creator_publish_{post_type}_{post_id}'
 
     button_per_list = 2
     return send_or_edit_inline_keyboard(prompt, page_public_inline_keyboard_dict, chat_id, button_per_list, token, is_markdown=True)
@@ -7151,6 +7154,7 @@ def set_ghost_blog_url(chat_id, ghost_api_url, token, engine, message_id=0):
     if message_id: delete_message(chat_id, message_id, token)
     send_message(OWNER_CHAT_ID, f"/chat_{chat_id} just updated Ghost blog URL to \n{ghost_api_url}.", token)
     return send_message(chat_id, "Ghost blog URL has been updated successfully.", token)
+    
     
 def get_name_by_chat_id(chat_id, engine = engine):
     df = pd.read_sql(text("SELECT name FROM chat_id_parameters WHERE chat_id = :chat_id"), engine, params={"chat_id": chat_id})
