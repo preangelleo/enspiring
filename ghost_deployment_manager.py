@@ -1,17 +1,16 @@
-import os
+from helping_page import *
 import boto3
 import paramiko
-import json
-import pandas as pd
-from sqlalchemy import create_engine, text
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Tuple
-from helping_page import *
+from scp import SCPClient
+import traceback
 from dotenv import load_dotenv
 load_dotenv()
 
 # Global Configuration
 BASE_URL = AUTO_BLOG_BASE_URL
+
 SNAPSHOT_IMAGE = "ghost-0-backup"
 PRIMARY_INSTANCE = "54.190.4.4"
 DOCKER_FLEET_REGION = "us-west-2"
@@ -20,8 +19,10 @@ SSH_PEM = 'Logos/rsa/docker_ghost.pem'
 USER_DATA_BASE_DIR = '/home/ubuntu/ghost_user_data'
 NGINX_SITES_AVAILABLE = '/etc/nginx/sites-available'
 NGINX_SITES_ENABLED = '/etc/nginx/sites-enabled'
-SSL_CERT_PATH = '/etc/letsencrypt/live/enspiring.org/fullchain.pem'
-SSL_KEY_PATH = '/etc/letsencrypt/live/enspiring.org/privkey.pem'
+
+SSL_CERT_PATH = f'/etc/letsencrypt/live/{BASE_URL}/fullchain.pem'
+SSL_KEY_PATH = f'/etc/letsencrypt/live/{BASE_URL}/privkey.pem'
+
 EMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS_ADMIN")
 EMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD_ADMIN")
 MAX_INSTANCES_PER_SERVER = 5
@@ -491,10 +492,11 @@ def remove_ghost_user(chat_id):
         bool: True if successful, False otherwise
     """
 
-    df = pd.read_sql(text("SELECT Docker_internal_ip, Sub_domain_name FROM chat_id_parameters WHERE chat_id = :chat_id"), engine,params={'chat_id': chat_id})
-    if not df.empty: return send_message(OWNER_CHAT_ID, f"Can't find the user's blog subdomain with chat_id: {chat_id}")
+    df = pd.read_sql(text("SELECT Docker_internal_ip, Docker_public_ip, Sub_domain_name FROM chat_id_parameters WHERE chat_id = :chat_id"), engine, params={'chat_id': chat_id})
+    if df.empty: return send_message(OWNER_CHAT_ID, f"Can't find the user's blog subdomain with chat_id: {chat_id}")
 
     private_ip = df['Docker_internal_ip'].values[0]
+    public_ip = df['Docker_public_ip'].values[0]
     username = df['Sub_domain_name'].values[0]
 
     try:
@@ -513,7 +515,7 @@ def remove_ghost_user(chat_id):
             "ssh",
             "-i", SSH_PEM,
             "-o", "StrictHostKeyChecking=no",
-            f"{SSH_USER}@{private_ip}",
+            f"{SSH_USER}@{public_ip}",
             "chmod +x /home/ubuntu/ghost_user_data/remove_user.sh"
         ]
 
@@ -581,7 +583,292 @@ def remove_ghost_user(chat_id):
         return False
 
 
+def migrate_ghost_domain(subdomain: str, new_domain: str, engine=engine) -> bool:
+    """
+    Migrate a Ghost blog from subdomain to new primary domain while keeping both accessible.
+    """
+    print("\n=== 开始域名迁移过程 ===")
+    print(f"输入参数 - 子域名: {subdomain}")
+    print(f"输入参数 - 新域名: {new_domain}")
+    
+    try:
+        # 处理子域名格式
+        if '.' in subdomain:
+            original_subdomain = subdomain
+            subdomain = subdomain.split('.')[0]
+            print(f"处理子域名: {original_subdomain} -> {subdomain}")
+        
+        print("\n1. 查询数据库中的实例信息...")
+        query = text("""
+            SELECT Docker_internal_ip, Docker_public_ip, Sub_domain_name 
+            FROM chat_id_parameters 
+            WHERE Sub_domain_name = :subdomain
+        """)
+        print(f"执行SQL查询: {query}")
+        print(f"查询参数: subdomain = {subdomain}")
+        
+        df = pd.read_sql(query, engine, params={'subdomain': subdomain})
+        print(f"查询结果行数: {len(df)}")
+        
+        if df.empty:
+            raise ValueError(f"错误: 未在数据库中找到子域名 {subdomain} 的记录")
+            
+        instance_ip = df['Docker_internal_ip'].values[0]
+        public_ip = df['Docker_public_ip'].values[0]
+        print(f"获取到实例IP: {instance_ip} (公共IP: {public_ip})")
+        
+        print("\n2. 开始获取SSL证书...")
+        ssl_result = _get_ssl_certificate(new_domain)
+        if not ssl_result:
+            raise Exception("SSL证书获取失败")
+        print("SSL证书获取成功")
+            
+        print("\n3. 更新Nginx配置...")
+        nginx_success = _update_nginx_config(
+            subdomain=subdomain,
+            new_domain=new_domain,
+            instance_ip=instance_ip
+        )
+        if not nginx_success:
+            raise Exception("Nginx配置更新失败")
+        print("Nginx配置更新成功")
+            
+        print("\n4. 更新Ghost配置...")
+        ghost_success = _update_ghost_config(
+            subdomain=subdomain,
+            new_domain=new_domain,
+            instance_ip=public_ip
+        )
+        if not ghost_success:
+            raise Exception("Ghost配置更新失败")
+        print("Ghost配置更新成功")
+            
+        print("\n=== 域名迁移完成 ===")
+        return True
+        
+    except Exception as e:
+        print(f"\n!!! 迁移过程中发生错误 !!!")
+        print(f"错误信息: {str(e)}")
+        import traceback
+        print("\n详细错误堆栈:")
+        print(traceback.format_exc())
+        return False
+
+
+def _get_ssl_certificate(domain: str) -> bool:
+    """Get SSL certificate for new domain using Let's Encrypt"""
+    print(f"\n开始为 {domain} 获取SSL证书...")
+    try:
+        print("建立SSH连接到主服务器...")
+        ssh = _get_primary_ssh_client()
+        print("SSH连接成功")
+        
+        certbot_cmd = f"sudo certbot certonly --nginx -d {domain} --non-interactive --agree-tos --email {EMAIL_ADDRESS}"
+        print(f"执行certbot命令: {certbot_cmd}")
+        
+        stdin, stdout, stderr = ssh.exec_command(certbot_cmd)
+        exit_status = stdout.channel.recv_exit_status()
+        
+        if exit_status != 0:
+            error = stderr.read().decode().strip()
+            print(f"Certbot命令执行失败，退出状态码: {exit_status}")
+            print(f"错误输出: {error}")
+            raise Exception(f"Certbot失败: {error}")
+            
+        print("SSL证书获取成功")
+        return True
+        
+    except Exception as e:
+        print(f"SSL证书获取失败: {str(e)}")
+        return False
+        
+    finally:
+        print("关闭SSH连接")
+        ssh.close()
+
+
+def _update_nginx_config(subdomain: str, new_domain: str, instance_ip: str) -> bool:
+   ssh = None
+   try:
+       ssh = _get_primary_ssh_client()
+       
+       # 检查并删除已存在的软链接
+       rm_link_cmd = f"sudo rm -f /etc/nginx/sites-enabled/{new_domain}.conf"
+       ssh.exec_command(rm_link_cmd)
+       
+       # 查找端口
+       stdin, stdout, stderr = ssh.exec_command(f"ls {NGINX_SITES_AVAILABLE}")
+       configs = stdout.read().decode().strip().split('\n')
+       
+       port = None
+       print(f"正在从Docker检查容器端口...")
+       docker_port_cmd = f"ssh ubuntu@{instance_ip} 'docker ps | grep {subdomain} | grep -oP \":\\K\\d+->2368\"'"
+       stdin, stdout, stderr = ssh.exec_command(docker_port_cmd)
+       port = stdout.read().decode().strip()
+
+       if not port:
+           print(f"未从Docker获取到端口，检查 {subdomain}.{BASE_URL}.conf...")
+           port_cmd = f"grep -oP 'proxy_pass http://{instance_ip}:\\K\\d+' {NGINX_SITES_AVAILABLE}/{subdomain}.{BASE_URL}.conf"
+           stdin, stdout, stderr = ssh.exec_command(port_cmd)
+           port = stdout.read().decode().strip()
+               
+       if not port:
+           raise Exception("无法找到Ghost实例端口")
+           
+       # 创建新配置文件
+       config = f"""
+server {{
+   listen 80;
+   server_name {new_domain};
+   return 301 https://$server_name$request_uri;
+}}
+
+server {{
+   listen 443 ssl;
+   server_name {new_domain};
+   
+   ssl_certificate /etc/letsencrypt/live/{new_domain}/fullchain.pem;
+   ssl_certificate_key /etc/letsencrypt/live/{new_domain}/privkey.pem;
+   ssl_protocols TLSv1.2 TLSv1.3;
+   ssl_ciphers HIGH:!aNULL:!MD5;
+   client_max_body_size 100M;
+
+   location / {{
+       proxy_pass http://{instance_ip}:{port};
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+   }}
+}}
+"""
+       config_path = f"/tmp/nginx_{new_domain}.conf"
+       with open(config_path, 'w') as f:
+           f.write(config)
+           
+       with SCPClient(ssh.get_transport()) as scp:
+           scp.put(config_path, config_path)
+       
+       commands = [
+           f"sudo mv {config_path} {NGINX_SITES_AVAILABLE}/{new_domain}.conf",
+           f"sudo ln -s {NGINX_SITES_AVAILABLE}/{new_domain}.conf {NGINX_SITES_ENABLED}/",
+           "sudo nginx -t",
+           "sudo systemctl reload nginx"
+       ]
+       
+       for cmd in commands:
+           stdin, stdout, stderr = ssh.exec_command(cmd)
+           if stdout.channel.recv_exit_status() != 0:
+               raise Exception(f"命令失败: {stderr.read().decode().strip()}")
+               
+       return True
+       
+   except Exception as e:
+       print(f"Nginx配置更新失败: {str(e)}")
+       return False
+       
+   finally:
+       if ssh:
+           ssh.close()
+
+
+def _update_ghost_config(subdomain: str, new_domain: str, instance_ip: str) -> bool:
+   ssh = None
+   try:
+       ssh = _get_instance_ssh_client(instance_ip)
+       username = subdomain.split('.')[0]
+       config_path = f"{USER_DATA_BASE_DIR}/{username}/config/config.production.json"
+       
+       stdin, stdout, stderr = ssh.exec_command(f"cat {config_path}")
+       config_content = stdout.read().decode().strip()
+       config = json.loads(config_content)
+       
+       config['url'] = f"https://{new_domain}"
+       new_config = json.dumps(config, indent=2)
+       
+       update_cmd = f"echo '{new_config}' > {config_path}"
+       stdin, stdout, stderr = ssh.exec_command(update_cmd)
+       if stdout.channel.recv_exit_status() != 0:
+           raise Exception(stderr.read().decode().strip())
+       
+       restart_cmd = f'docker restart {username}'
+       stdin, stdout, stderr = ssh.exec_command(restart_cmd)
+       if stdout.channel.recv_exit_status() != 0:
+           raise Exception(stderr.read().decode().strip())
+           
+       return True
+   except Exception as e:
+       print(f"Ghost配置更新失败: {str(e)}")
+       return False
+   finally:
+       if ssh:
+           ssh.close()
+
+
+def _get_instance_ssh_client(instance_ip: str) -> paramiko.SSHClient:
+   """Get SSH client for Ghost instance"""
+   print(f"创建到 {instance_ip} 的SSH连接...")
+   
+   ssh = paramiko.SSHClient()
+   ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+   
+   key_path = os.path.join(os.getcwd(), SSH_PEM)
+   print(f"使用密钥: {key_path}")
+   
+   try:
+       ssh.connect(
+           hostname=instance_ip,
+           username='ubuntu',
+           key_filename=key_path,
+           timeout=10
+       )
+       print("SSH连接成功")
+       return ssh
+       
+   except Exception as e:
+       print(f"SSH连接失败: {str(e)}")
+       raise
+
+
+def _get_primary_ssh_client() -> paramiko.SSHClient:
+   """Get SSH client for primary Nginx server"""
+   print(f"连接主Nginx服务器 {PRIMARY_INSTANCE}...")
+   
+   ssh = paramiko.SSHClient()
+   ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+   key_path = os.path.join(os.getcwd(), SSH_PEM)
+   
+   try:
+       ssh.connect(
+           hostname=PRIMARY_INSTANCE,
+           username='ubuntu',
+           key_filename=key_path,
+           timeout=10
+       )
+       print("主服务器SSH连接成功")
+       return ssh
+       
+   except Exception as e:
+       print(f"主服务器SSH连接失败: {str(e)}")
+       raise
+  
+
 
 if __name__ == "__main__":
     print("Creating Ghost blog...")
-    create_ghost_blog('elvis', '5504365532')
+    chat_id = '2118900665'
+ 
+    # try:
+    #     success = migrate_ghost_domain(
+    #         subdomain='leo',
+    #         new_domain='laogege.org'
+    #     )
+        
+    #     if success: print("域名迁移成功！现在可以通过两个域名访问博客。")
+    #     else: print("域名迁移失败，请检查以下错误信息：")
+
+    # except Exception as e:
+    #     print(f"发生错误: {str(e)}")
+    #     # 打印完整的堆栈跟踪
+    #     import traceback
+    #     print(traceback.format_exc())

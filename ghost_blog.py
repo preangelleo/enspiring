@@ -2486,7 +2486,7 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
 
         title = title.replace('-', ' ')
         email_subject = f"POST: {title}"
-        markdown_text = f"""message = f"**Hi {user_name.title()},**\n\nYour latest post has just been published!\n\n# [{title}]({url})\n\nIf you're unable to open the link above, please copy and paste the following URL into your browser:\n{url}\n\n**Article Content (Raw Text):**\n{generated_journal}"""
+        markdown_text = f"""**Hi {user_name.title()},**\n\nYour latest post has just been published!\n\n# [{title}]({url})\n\nIf you're unable to open the link above, please copy and paste the following URL into your browser:\n{url}\n\n**Article Content (Raw Text):**\n{generated_journal}"""
         return send_notifition_to_email(email_subject, markdown_text, user_parameters)
     else: return send_debug_to_laogege(f"post_news_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to create news: \n{response.status_code} {response.text}")
 

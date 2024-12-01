@@ -114,7 +114,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         if tweet_result and tweet_result.startswith('http'):
             reply = f"Click [HERE]({tweet_result}) to view the tweet."
             return send_message_markdown(chat_id, reply, token)
-        else: return send_message(chat_id, "Failed to share the post to Twitter, please try again later.", token)
+        return
     
 
     elif callback_data.startswith('linkedin_'):
