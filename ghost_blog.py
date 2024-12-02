@@ -3171,7 +3171,7 @@ def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engin
 
     post_type_key = f"{post_type}s"
     post_content_dict = {
-        "title": title,
+        "title": f"Good Morning {date_today}",
         "slug": slug,
         "tags": tags,
         "html": html_content,

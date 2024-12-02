@@ -85,7 +85,6 @@ def webhook():
     return jsonify({"status": "success"}), 200
 
 
-
 @app.route('/ollama', methods=['POST'])
 def ollama():
     # Handle the POST request and process the data
