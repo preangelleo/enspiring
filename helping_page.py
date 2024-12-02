@@ -37,6 +37,7 @@ import azure.cognitiveservices.speech as speechsdk
 import assemblyai as aai
 import pytesseract
 import cv2
+import tiktoken
 import pdfplumber
 import unicodedata
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
@@ -2140,6 +2141,15 @@ Provide your explanation in a clear, conversational paragraph without medical ja
                             'whisper-1': 0.0001,
                             'tts-1': 0.000015,
                             'assemblyai': 0.000102777777778}
+    
+    OPENAI_MODEL_MAXIMUM = {
+        "gpt-4o-mini": {"max_input": 128000 - 16384, "max_output": 16384},
+        "gpt-4o": {"max_input": 128000 - 16384, "max_output": 16384},
+        "o1-preview": {"max_input": 128000 - 32768, "max_output": 32768},
+        "o1-preview-2024-09-12": {"max_input": 128000 - 32768, "max_output": 32768},
+        "o1-mini": {"max_input": 128000 - 65536, "max_output": 65536},
+    }
+
 
     TWITTER_API_KEY = os.getenv("TWITTER_API_KEY")
     TWITTER_API_KEY_SECRET = os.getenv("TWITTER_API_KEY_SECRET")
@@ -3854,6 +3864,42 @@ def download_file(file_id, output_dir, document_name:str, token=TELEGRAM_BOT_TOK
     print_debug(f"download_file() save file to file_name = {file_name}")
 
     return file_name
+
+
+def calculate_token(input_string):
+    # Get encoding
+    encoding = tiktoken.get_encoding("cl100k_base")
+    # Tokenize the string
+    token_list = encoding.encode(input_string)
+    return len(token_list)
+
+
+def calculate_token_and_cut_input_string(input_string, model_name):
+    # Get encoding
+    encoding = tiktoken.get_encoding("cl100k_base")
+    
+    # Tokenize the string
+    token_list = encoding.encode(input_string)
+    token_count = len(token_list)
+    
+    # Define max input and output tokens for the model
+    max_input = OPENAI_MODEL_MAXIMUM.get(model_name, {}).get('max_input', 4096)
+    max_input -= 10000
+    
+    # Calculate token percentage
+    tokens_percentage = round((token_count / max_input) * 100, 2)
+    print(f"Number of tokens: {token_count}")
+    print(f"tokens_percentage: {tokens_percentage}%")
+    
+    # Check if the token count exceeds the limit
+    if token_count > max_input:
+        # Return the truncated string to fit within max_input tokens
+        truncated_token_list = token_list[-max_input:]
+        truncated_string = encoding.decode(truncated_token_list)
+        return truncated_string
+    
+    # Return the original string if within the limit
+    return input_string
 
 
 def markdown_to_html_box(markdown_text: str, logo_url = "https://enspiring.ai/content/images/2024/10/Enspiring_grey.png") -> str:
