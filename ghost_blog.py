@@ -2852,12 +2852,12 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
     series_name = user_parameters.get('auto_post_series_name') or ''
     if not series_name: return send_message(chat_id, f"Sorry, you haven't set the series name for auto post. Please set it first.", token)
 
-    titles_list_string = 'TITLES OF ALL PREVIOUS ENTRIES:\n'
-    try: df = pd.read_sql(text(f"SELECT title FROM creator_auto_posts WHERE chat_id = :chat_id AND series_name = :series_name ORDER BY updated_time DESC LIMIT 365"), engine, params={'chat_id': chat_id, 'series_name': series_name})
+    titles_list_string = 'TITLES AND EXCERPTS OF ALL PREVIOUS ENTRIES:\n'
+    try: df = pd.read_sql(text(f"SELECT title, custom_excerpt FROM creator_auto_posts WHERE chat_id = :chat_id AND series_name = :series_name ORDER BY updated_time DESC LIMIT 365"), engine, params={'chat_id': chat_id, 'series_name': series_name})
     except: df = pd.DataFrame()
     if not df.empty: 
         yestoday_title = df['title'].values[0]
-        titles_list_string += '\n'.join(df['title'].tolist())
+        titles_list_string += "\n".join([f"- {row['title']}: {row['custom_excerpt']}" for _, row in df.iterrows()])
     else: 
         yestoday_title = ''
         titles_list_string += 'There is no previous entries. You are generating the first entry.'
