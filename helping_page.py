@@ -2628,22 +2628,25 @@ The goal is to be educational while keeping the user entertained. Adapt your sty
     _user_prompt_placeholder_
     """
 
-    DISCORD_SUMMARY_SYSTEM_PROMPT = """Based on given discord community discussions create a blog journal for community members, focusing on the key points and important information relevant to the _project_name_placeholder_ project.
+    DISCORD_SUMMARY_SYSTEM_PROMPT_STRUCTURED_OUTPUT = f"""
+    Based on given discord community discussions create a blog journal for community members, focusing on the key points and important information relevant to the _project_name_placeholder_ project. Ensure the journal is clear and will-structured, regardless of the conversation's language in which it occurs. Output the article in _Language_Placeholder_.
 
-Ensure the journal is clear and concise, regardless of the conversation's length or the language in which it occurs. Output the summary into English.
+    # Instructions:
 
-# Steps
+    1. Identify and discard irrelevant or off-topic messages from the discord discussions.
+    2. Extract key points and important information that align with the project community members' interests.
+    3. Output the extracted information into _Language_Placeholder_ with markdown formatting.
+    4. Use as many markdown style as possible to make the journal more readable and engaging.
+    5. **Length and Detail**: Provide a thorough analysis, retaining all significant details and output around _words_length_placeholder_ words.
+    6. **Content Assignment**:
+       - title: A compelling title reflecting the article's essence in _Language_Placeholder_. 
+       - article: Develop the article with clear sections, ensuring readability and logical flow; no embeded youtube url needed, purely article in markdown format. 
+       - excerpt: Create a succinct, one-sentence excerpt of less than 30 words, capturing the core of the article. No markdown format is required for the excerpt. Just plain text.
+       - tags: 6 ~ 10 Tags for this article that best categorize the content, plain string separated by commas, output in _Language_Placeholder_.
+       - midjourney_prompt: Create a Midjourney prompt for cover image generation. The image should be an abstract illustration, not a realistic photo. The prompt should specify _cartoon_style_place_holder_ and adhere to Midjourney's guidelines.
+       - Midjourney Guidelines:
+        ```{IMAGE_GENERATION_PROMPT}```"""
 
-1. Identify and discard irrelevant or off-topic messages from the discord discussions.
-2. Extract key points and important information that align with the project community members' interests.
-3. Output the extracted information into English with markdown formatting.
-4. Use as many markdown style as possible to make the journal more readable and engaging.
-
-# Notes
-
-- Understand what is deemed important by the project community members based on your training.
-- If the discussions contain technical terms without a direct translation, use recognized equivalents or describe them briefly in English.
-"""
 
     with open("Logos/my_writing_style.txt", "r") as f: MY_WRITING_STYLE_AND_FORMATTING_STYLE_DEFAULT = f.read()
 

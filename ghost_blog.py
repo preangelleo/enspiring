@@ -3079,5 +3079,190 @@ AI generated {journal_or_story} in raw text:
     else: return send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to create post: \n{response.status_code} {response.text}")
 
 
+def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, model=ASSISTANT_MAIN_MODEL, message_id = '', user_parameters = {}, project_name:str = ''):
+    if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
+
+    admin_api_key = user_parameters.get('ghost_admin_api_key', '')
+    ghost_url = user_parameters.get('ghost_api_url', '')
+    if not all([admin_api_key, ghost_url]): return send_message(chat_id, NO_BLOG_ADMIN_API_KEY_NOTIFICATION, token, message_id)
+
+    post_language = user_parameters.get('default_post_language') or 'English'
+    post_type = user_parameters.get('default_post_type') or 'page'
+    visibility = user_parameters.get('default_post_visibility') or 'public'
+    audio_switch = user_parameters.get('default_audio_switch') or 'off'
+    publish_status = user_parameters.get('default_publish_status') or 'published'
+    cartoon_style = user_parameters.get('cartoon_style') or 'Pixar Style'
+    default_image_model = user_parameters.get('default_image_model') or 'Blackforest'
+    user_name = user_parameters.get('name') or 'User'
+
+    starting_time = time.time()
+    date_today = str(datetime.now().date())
+
+    system_prompt_creator = DISCORD_SUMMARY_SYSTEM_PROMPT_STRUCTURED_OUTPUT.replace('_project_name_placeholder_', project_name).replace('_words_length_placeholder_', '3000 ~ 6000').replace('_Language_Placeholder_', post_language).replace('_cartoon_style_place_holder_', cartoon_style)
+
+    event_dict = openai_gpt_structured_output(prompt, system_prompt_creator, chat_id, model, engine, user_parameters)
+    if not event_dict: return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the youtube link you provided.")
+
+    title = event_dict.get('title', '')
+    custom_excerpt = event_dict.get('excerpt', '') or ''
+    generated_journal = event_dict.get('article', '')
+    midjourney_prompt = event_dict.get('midjourney_prompt', '')
+
+    if not all([title, generated_journal, midjourney_prompt]): return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the youtube link you provided.")
+
+    if title in generated_journal: generated_journal = '\n'.join(generated_journal.split('\n')[1:]).strip()
+    if midjourney_prompt in generated_journal: generated_journal = generated_journal.replace(midjourney_prompt, '').strip()
+
+    title = title.replace('#', '').replace('*', '').strip()
+    midjourney_prompt = midjourney_prompt.replace('*', '').replace('#', '').strip()
+
+    callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', default_image_model, suffix = f'The is the prompt for your cover image generation, please wait for the image to generated and the article to be published.')
+
+    slug_style = user_parameters.get('slug_style') or 'none'
+    if slug_style != 'on': slug = generate_youtube_slug(length=11)
+    else: slug = create_slug(title)
+
+    image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
+    image_id, img_url = '', ''
+    if default_image_model == 'Midjourney': 
+        if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
+        image_id = generate_image_midjourney(chat_id, midjourney_prompt, post_type, IMAGEAPI_MIDJOURNEY)
+    else: img_url = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
+
+    key_id, secret = admin_api_key.split(':')
+    iat = int(time.time())
+    header = {'alg': 'HS256', 'kid': key_id}
+    payload = {
+        'iat': iat,
+        'exp': iat + 5 * 60,  # Token expires in 5 minutes
+        'aud': '/v5/admin/'
+    }
+    ghost_token = jwt.encode(payload, bytes.fromhex(secret), algorithm='HS256', headers=header)
+    headers = {'Authorization': f'Ghost {ghost_token}','Content-Type': 'application/json'}
+
+    md = MarkdownIt()
+    html_content = md.render(generated_journal)
+
+    audio_url = ''
+    if audio_switch == 'on':
+        user_story_audio_dir = os.path.join(story_audio, chat_id)
+        if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
+
+        audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
+        if audio_file_path and os.path.isfile(audio_file_path): 
+            upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
+            if upload_result['Status']: 
+                audio_url = upload_result['URL']
+                html_content = embed_audio_to_html(audio_url, title) + html_content
+            else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
+        else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
+
+    if not custom_excerpt: custom_excerpt = f"Generated on {date_today} by {model}"
+
+    tags = ['Discord', project_name]
+    tags_from_article = event_dict.get('tags', '')
+    if tags_from_article: 
+        tags += tags_from_article.split(',')
+        tags = [tag.strip() for tag in tags]
+        tags = list(set(tags))
+    
+    tags_html = tags_list_to_html(tags, prefix=f"{ghost_url}/tag/")
+    html_content += tags_html
+
+    post_type_key = f"{post_type}s"
+    post_content_dict = {
+        "title": title,
+        "slug": slug,
+        "tags": tags,
+        "html": html_content,
+        "status": publish_status,
+        "custom_excerpt": custom_excerpt,
+        "visibility": visibility,
+        "type": post_type
+    }
+
+    if img_url: post_content_dict['feature_image'] = img_url
+
+    post_data = {post_type_key: [post_content_dict]}
+    api_url = f'{ghost_url}/ghost/api/admin/{post_type_key}/?source=html'
+
+    response = requests.post(api_url, headers=headers, data=json.dumps(post_data))
+    if response.status_code in [200, 201]:
+        url = response.json()[post_type_key][0]['url']
+        post_id = response.json()[post_type_key][0]['id']
+        consumed_seconds = int(time.time() - starting_time)
+        journal_or_story = 'Discord Summary'
+
+        url_markdown = f"HERE's YOUR {journal_or_story.upper()}:\n[{title}]({url})\nGenerated in {consumed_seconds} seconds by {model}"
+
+        if img_url:
+            edit_url = f"{ghost_url}/ghost/#/editor/{post_type}/{post_id}/"
+            edit_url_markdown = f"[HERE]({edit_url})"
+            url_markdown += f"\n\nIf you are satisfied with everything, please choose one of the following option; if you are not satisfied, please click {edit_url_markdown} to edit the {post_type}."
+
+            if post_type == 'page': callback_translate_page_to_post(chat_id, url_markdown, post_id, token, user_parameters)
+
+        elif image_id: 
+            url_markdown += "\n\nThe cover image of your journal will be updated soon once the image is generated by Midjourney AI."
+            send_message_markdown(chat_id, url_markdown, token)
+
+        if not os.path.isfile(image_path): image_path = ''
+
+        data_dict = {
+            'chat_id': [chat_id],
+            'title': [title],
+            'slug': [slug],
+            'post_id': [post_id],
+            'image_id': [image_id],
+            'post_url': [url],
+            'tags': [', '.join(tags)],
+            'feature_image': [img_url],
+            'audio_url': [audio_url],
+            'user_prompt': [prompt[:60000]],
+            'custom_excerpt': [custom_excerpt[:255]],
+            'generated_journal': [generated_journal],
+            'midjourney_prompt': [midjourney_prompt],
+            'date_today': [date_today],
+            'updated_time': [datetime.now()],
+            'visibility': [visibility],
+            'post_type': [post_type],
+            'status': [publish_status],
+            'image_path': [image_path],
+            'featured': [0]
+        }
+
+        df = pd.DataFrame(data_dict)
+        df.to_sql('creator_journals', engine, if_exists='append', index=False)
+
+        if img_url and post_type == 'post': callback_update_post_status(chat_id, url_markdown, post_id, token, user_parameters, 'creator_journals')
+
+        if image_id:
+            with engine.begin() as conn: conn.execute(text(f"UPDATE image_midjourney SET post_id = :post_id, title = :title, slug = :slug, post_url = :url WHERE image_id = :image_id"), {'post_id': post_id, 'image_id': image_id, 'title': title, 'slug': slug, 'url': url})
+
+        title = title.replace('-', ' ')
+        email_subject = f"{journal_or_story.upper()}: {title}"
+        markdown_text = f"""**Hi {user_name.title()}**,
+
+Here's your {journal_or_story} based on the prompt you sent. As your default setting, the type of this article is `{post_type}`, the visibility is `{visibility}`, cartoon style is `{cartoon_style}`, the audio embeded switch is `{audio_switch}`, the language is `{post_language}` and the image modle is `{default_image_model}`.
+
+# [{title}]({url})
+
+If you can't open the link above, please copy and paste below url into your browser:
+{url}
+
+Midjourney prompt generated by AI:
+{midjourney_prompt}
+
+Prompt you sent:
+{prompt}
+
+AI generated {journal_or_story} in raw text:
+{generated_journal}"""
+        
+        return send_notifition_to_email(email_subject, markdown_text, user_parameters)
+
+    else: return send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to create post: \n{response.status_code} {response.text}")
+
+
 if __name__ == "__main__":
     print("Testing GHOST blog post!")

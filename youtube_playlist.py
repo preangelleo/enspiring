@@ -407,7 +407,13 @@ def check_user_news_jobs(chat_id, engine = engine, token = os.getenv("TELEGRAM_B
         elif job_type == 'journal':
             with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': 'completed', 'chat_id': chat_id})
             return post_journal_to_ghost_creator_front(user_prompt, chat_id, engine, token, ASSISTANT_MAIN_MODEL, '', user_parameters, is_journal = True)
+        
 
+        elif job_type == 'discord':
+            project_name = row['project_name']
+            with engine.begin() as conn: conn.execute(text("UPDATE user_news_jobs SET job_status = :status WHERE user_prompt = :user_prompt AND chat_id = :chat_id"), {'user_prompt': user_prompt, 'status': 'completed', 'chat_id': chat_id})
+            return post_discord_conversation_to_ghost(user_prompt, chat_id, engine, token, ASSISTANT_MAIN_MODEL, '', user_parameters, project_name)
+        
         
         if admin_api_key and ghost_url and chat_id != OWNER_CHAT_ID: 
             try: post_news_to_ghost_creator(user_prompt, chat_id, engine, token, model=ASSISTANT_DOCUMENT_MODEL, message_id = '', user_parameters = user_parameters)
