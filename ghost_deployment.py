@@ -859,8 +859,8 @@ if __name__ == "__main__":
  
     try:
         success = migrate_ghost_domain(
-            subdomain='leo',
-            new_domain='laogege.org'
+            subdomain='ora',
+            new_domain='gm.ora.io'
         )
         
         if success: print("域名迁移成功！现在可以通过两个域名访问博客。")
