@@ -1876,6 +1876,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     6. **Question to Answer**: Craft a detailed response to address the provided question.
     7. **News or Blog Article**: Rephrase and enhance the given content with examples or logic analysis.
     8. **Story Continuation**: Write a full, engaging story based on the provided storyline.
+    9. **Discord channel discussion**: Analyze the conversation, discard irrelevant or off-topic messages and provide a detailed report to the community members based on the conversation history.
     9. **Other Prompts**: Produce an article based on the general prompt.
 
     ### Instructions:
@@ -2626,6 +2627,23 @@ The goal is to be educational while keeping the user entertained. Adapt your sty
 
     _user_prompt_placeholder_
     """
+
+    DISCORD_SUMMARY_SYSTEM_PROMPT = """Based on given discord community discussions create a blog journal for community members, focusing on the key points and important information relevant to the _project_name_placeholder_ project.
+
+Ensure the journal is clear and concise, regardless of the conversation's length or the language in which it occurs. Output the summary into English.
+
+# Steps
+
+1. Identify and discard irrelevant or off-topic messages from the discord discussions.
+2. Extract key points and important information that align with the project community members' interests.
+3. Output the extracted information into English with markdown formatting.
+4. Use as many markdown style as possible to make the journal more readable and engaging.
+
+# Notes
+
+- Understand what is deemed important by the project community members based on your training.
+- If the discussions contain technical terms without a direct translation, use recognized equivalents or describe them briefly in English.
+"""
 
     with open("Logos/my_writing_style.txt", "r") as f: MY_WRITING_STYLE_AND_FORMATTING_STYLE_DEFAULT = f.read()
 

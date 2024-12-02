@@ -3079,6 +3079,5 @@ AI generated {journal_or_story} in raw text:
     else: return send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to create post: \n{response.status_code} {response.text}")
 
 
-
 if __name__ == "__main__":
     print("Testing GHOST blog post!")
