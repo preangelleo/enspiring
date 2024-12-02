@@ -322,9 +322,80 @@ def record_domain_purchase(chat_id: int, domain_name: str, purchase_result: dict
         print(f"\n保存域名购买记录失败: {str(e)}")
 
 
+def setup_domain_verification(api: NameComAPI, domain_name: str, txt_name: str, txt_value: str) -> bool:
+    """
+    Set up domain verification by adding a TXT record
+    
+    Args:
+        api: Initialized NameComAPI instance
+        domain_name: Domain name to verify
+        txt_name: Name/host of TXT record (e.g., "@" or specific subdomain)
+        txt_value: Value for TXT record (verification string provided by Google)
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Create TXT record
+        record_result = api.create_record(
+            domain_name=domain_name,
+            record_type="TXT",
+            host=txt_name,  # Usually "@" for root domain
+            answer=txt_value,
+            ttl=3600  # 1 hour TTL is usually sufficient for verification
+        )
+        
+        print(f"\nTXT record created successfully:")
+        print(f"Domain: {domain_name}")
+        print(f"Name/Host: {txt_name}")
+        print(f"Value: {txt_value}")
+        print("\nPlease note:")
+        print("1. DNS changes may take up to 48 hours to propagate")
+        print("2. For Google Search Console, you can attempt verification after a few minutes")
+        print("3. The TXT record will remain unless manually removed")
+        
+        return f"TXT record created successfully for domain {domain_name}"
+        
+    except Exception as e: return e
+
+# Example usage
+def verify_google_search_console(api: NameComAPI, domain_name: str, verification_string: str) -> bool:
+    """
+    Specific function for Google Search Console verification
+    
+    Args:
+        api: Initialized NameComAPI instance
+        domain_name: Domain to verify
+        verification_string: Google's verification string
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    # For Google Search Console, we typically use "@" as the host
+    return setup_domain_verification(
+        api=api,
+        domain_name=domain_name,
+        txt_name="@",
+        txt_value=verification_string
+    )
+
+
+# Interactive usage example
+def domain_verification(domain_name:str, verification_string:str, username: str=DOMAIN_NAME_USERNAME, token: str=DOMAIN_NAME_TOKEN):
+    """Interactive function for domain verification"""
+    try: api = NameComAPI(username=username, token=token)
+    except Exception as e: return f"API initialization failed: {str(e)}"
+
+    return verify_google_search_console(api, domain_name, verification_string)
+
+
+
 if __name__ == "__main__":
     chat_id = OWNER_CHAT_ID
     username = DOMAIN_NAME_USERNAME
     token = DOMAIN_NAME_TOKEN
     telegram_token = TELEGRAM_BOT_TOKEN
-    interactive_domain_purchase(username, token, engine, chat_id, telegram_token)
+    # interactive_domain_purchase(username, token, engine, chat_id, telegram_token)
+    # domain_name = input("\nEnter your domain name (e.g., example.com): ").strip().lower()
+    # verification_string = input("Enter the verification string from Google Search Console: ").strip()
+    # domain_verification(domain_name, verification_string, username, token)

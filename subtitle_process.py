@@ -1,5 +1,6 @@
 from ghost_blog import *
 from ghost_deployment import *
+from domain_name import *
 
 def get_video_dimensions(video_file):
     probe = ffmpeg.probe(video_file)
@@ -940,6 +941,26 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
                 send_message(chat_id, '\n'.join(chat_id_consumption_list), token)
             else: send_message(chat_id, f"No consumption data found for month {this_month}", token)
             return
+
+        elif msg_lower.startswith('domain_verification'):
+            '''/domain_verification domain_name'''
+            domain_name_verification_string = msg.replace('domain_verification', '').strip()
+            if not domain_name_verification_string: return send_message(chat_id, "Please provide the domain name after the command. Example: /domain_verification your_domain_name", token)
+            domain_name_verification_string_list = domain_name_verification_string.split(' ')
+            if len(domain_name_verification_string_list) < 2: return send_message(chat_id, "Please provide the domain name and the verification string after the command. Example: /domain_verification your_domain_name your_verification_string", token)
+            verification_string = domain_name_verification_string_list[-1].strip()
+            domain_name = domain_name_verification_string_list[0].strip()
+            reply = domain_verification(domain_name, verification_string)
+            return send_message(chat_id, reply, token)
+        
+        elif msg_lower.startswith('google-site-verification='):
+            domain_name_verification_string_list = msg.split(' ')
+            if len(domain_name_verification_string_list) < 2: return send_message(chat_id, "Please provide the domain name and the verification string after the command. Example: google-site-verification=your_verification_string your_domain_name", token)
+            verification_string = domain_name_verification_string_list[0].strip()
+            domain_name = domain_name_verification_string_list[-1].strip()
+            reply = domain_verification(domain_name, verification_string)
+            return send_message(chat_id, reply, token)
+
 
         elif msg_lower.startswith('create_ghost_blog'):
             sub_domain_name_with_user_chat_id = msg.replace('create_ghost_blog', '').strip()
