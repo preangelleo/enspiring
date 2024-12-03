@@ -2830,7 +2830,7 @@ def change_cover_image_by_url(chat_id: str, slug: str, png_file_path: str, user_
     return reply_dict
 
 
-def text_auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), model=ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}):
+def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), model=ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
 
     admin_api_key = user_parameters.get('ghost_admin_api_key', '')
