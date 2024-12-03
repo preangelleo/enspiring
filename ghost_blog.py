@@ -2887,7 +2887,7 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
     first_response = openai_gpt_chat(system_prompt_auto_post, auto_prompt, chat_id, model, user_parameters, token)
     # model = "claude-3-5-sonnet-20241022"
     # first_response = cloude_basic(auto_prompt, system_prompt = system_prompt_auto_post, model = model, api_key = CLOUDE_API_KEY)
-    print(f"first_response: {first_response}")
+    # print(f"first_response: {first_response}")
 
     my_writing_style = user_parameters.get('writing_style_sample') if user_parameters.get('writing_style_sample') else MY_WRITING_STYLE_AND_FORMATTING_STYLE_DEFAULT
     system_prompt_creator = SYSTEM_PROMPT_AUTO_POST_STRUCTURED_OUTPUT.replace('_Language_Placeholder_', post_language).replace('_cartoon_style_place_holder_', cartoon_style).replace('_my_writing_style_placeholder_', my_writing_style)
@@ -2896,10 +2896,10 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
     if not event_dict: return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the youtube link you provided.")
 
     title = event_dict.get('title', '')
-    print(f"title: {title}")
+
     custom_excerpt = event_dict.get('excerpt', '') or ''
     generated_journal = event_dict.get('article', '')
-    print(f"generated_journal: {generated_journal}")
+
     midjourney_prompt = event_dict.get('midjourney_prompt', '')
     tags = event_dict.get('tags', '')
 
