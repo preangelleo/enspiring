@@ -3085,7 +3085,7 @@ def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engin
 
     admin_api_key = user_parameters.get('ghost_admin_api_key', '')
     ghost_url = user_parameters.get('ghost_api_url', '')
-    if not all([admin_api_key, ghost_url]): return send_message(chat_id, NO_BLOG_ADMIN_API_KEY_NOTIFICATION, token, message_id)
+    if not all([admin_api_key, ghost_url]): return 
 
     post_language = user_parameters.get('default_post_language') or 'English'
     post_type = user_parameters.get('default_post_type') or 'page'
