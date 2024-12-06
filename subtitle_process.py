@@ -962,6 +962,23 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             return send_message(chat_id, reply, token)
 
 
+        elif msg_lower.startswith('point_subdomain'):
+            '''/point_subdomain sub.domainname new_ip'''
+            domain_name_subdomain_new_ip = msg.replace('point_subdomain', '').strip()
+            if not domain_name_subdomain_new_ip: return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain your_domain_name your_subdomain your_new_ip", token)
+            subdomain_name_new_ip_list = domain_name_subdomain_new_ip.split(' ')
+            if len(subdomain_name_new_ip_list) < 2: return send_message(chat_id, "Please provide subdomain and the new IP address after the command. Example: /point_subdomain api.sumatman.ai your_new_ip", token)
+            domain_name = subdomain_name_new_ip_list[0].strip()
+            ip_address = subdomain_name_new_ip_list[-1].strip()
+            # from get subdomain and domain name
+            subdomain = domain_name.split('.', 1)[0]
+            domain_name = domain_name.replace(f"{subdomain}.", '')
+            if not all([domain_name, subdomain, ip_address]): return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain your_domain_name your_subdomain your_new_ip", token)
+            api = NameComAPI(DOMAIN_NAME_USERNAME, DOMAIN_NAME_TOKEN)
+            result = update_subdomain_a_record(api, domain_name, subdomain, ip_address)
+            return send_message(chat_id, f"Result: {result['message']}", token)
+        
+
         elif msg_lower.startswith('create_ghost_blog'):
             sub_domain_name_with_user_chat_id = msg.replace('create_ghost_blog', '').strip()
             if not sub_domain_name_with_user_chat_id: return send_message(chat_id, "Please provide the domain name and user chat_id after the command. Example: /create_ghost_blog sub_domain_name user_chat_id", token)

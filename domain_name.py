@@ -388,14 +388,79 @@ def domain_verification(domain_name:str, verification_string:str, username: str=
 
     return verify_google_search_console(api, domain_name, verification_string)
 
+def update_subdomain_a_record(api: NameComAPI, domain_name: str, subdomain: str, new_ip: str, ttl: int = 300) -> Dict[str, Any]:
+    """
+    更新域名的二级域名 A 记录
+
+    Args:
+        api (NameComAPI): 已初始化的 NameComAPI 客户端
+        domain_name (str): 主域名，例如 "example.com"
+        subdomain (str): 二级域名，例如 "www" 或 "blog"
+        new_ip (str): 新的 IP 地址
+        ttl (int, optional): TTL 值（默认 300 秒）
+
+    Returns:
+        Dict[str, Any]: 返回更新结果
+    """
+    if not validate_ip(new_ip):
+        return {"success": False, "message": "无效的 IP 地址"}
+
+    try:
+        print(f"正在更新 {domain_name} 的二级域名 {subdomain} 的 A 记录，指向 IP: {new_ip}")
+
+        # 查询现有 DNS 记录
+        records_response = api.session.get(f"{api.api_url}/domains/{domain_name}/records")
+        records_response.raise_for_status()
+        records = records_response.json().get("records", [])
+
+        print("现有 DNS 记录:", json.dumps(records, indent=2))
+
+
+        # 查找现有记录（确保字段存在）
+        existing_record = next(
+            (
+                record
+                for record in records
+                if record.get("type") == "A" and record.get("host") == subdomain
+            ),
+            None,
+        )
+
+        if existing_record:
+            # 更新现有记录
+            record_id = existing_record["id"]
+            update_response = api.session.put(
+                f"{api.api_url}/domains/{domain_name}/records/{record_id}",
+                json={"type": "A", "host": subdomain, "answer": new_ip, "ttl": ttl},
+            )
+            update_response.raise_for_status()
+            return {"success": True, "message": f"二级域名 {subdomain}.{domain_name} 的 A 记录已更新为 {new_ip}"}
+        else:
+            # 创建新记录
+            create_response = api.create_record(
+                domain_name=domain_name,
+                record_type="A",
+                host=subdomain,
+                answer=new_ip,
+                ttl=ttl,
+            )
+            return {"success": True, "message": f"二级域名 {subdomain}.{domain_name} 的 A 记录已创建，指向 {new_ip}"}
+    except requests.exceptions.RequestException as e:
+        error_msg = f"操作失败: {str(e)}"
+        print(error_msg)
+        if hasattr(e, "response") and e.response is not None:
+            print(f"错误响应: {e.response.text}")
+        return {"success": False, "message": error_msg}
 
 
 if __name__ == "__main__":
-    chat_id = OWNER_CHAT_ID
-    username = DOMAIN_NAME_USERNAME
-    token = DOMAIN_NAME_TOKEN
-    telegram_token = TELEGRAM_BOT_TOKEN
-    # interactive_domain_purchase(username, token, engine, chat_id, telegram_token)
-    # domain_name = input("\nEnter your domain name (e.g., example.com): ").strip().lower()
-    # verification_string = input("Enter the verification string from Google Search Console: ").strip()
-    # domain_verification(domain_name, verification_string, username, token)
+    username = DOMAIN_NAME_USERNAME  # 替换为你的 Name.com 用户名
+    token = DOMAIN_NAME_TOKEN        # 替换为你的 API Token
+    # api = NameComAPI(username, token)
+
+    # domain_name = input("请输入主域名（例如 example.com）: ").strip()
+    # subdomain = input("请输入需要更新的二级域名（例如 www 或 blog）: ").strip()
+    # new_ip = input("请输入新的 IP 地址: ").strip()
+
+    # result = update_subdomain_a_record(api, domain_name, subdomain, new_ip)
+    # print(f"结果: {result['message']}")
