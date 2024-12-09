@@ -708,6 +708,8 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "set_voice_clone_sample": "Click to set the voice clone sample.",
         "set_youtube_playlist": "Click to set your YouTube playlist.",
         "set_default_audio_gender": "Click to set the default audio gender for your generated audio.",
+        "creator_linkedin_authen": "Click to authenticate your LinkedIn account for the creator mode.",
+        "creator_twitter_authen": "Click to authenticate your Twitter account for the creator mode.",
     }
 
     settings_shortcuts_keys_string = '\n'.join([f"/{key}" for key in settings_shortcuts.keys()])
