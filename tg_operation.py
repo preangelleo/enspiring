@@ -90,6 +90,14 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
     elif callback_data == 'creator_ghost_blog_url': callback_creator_ghost_blog_url(chat_id, token, message_id)
     elif callback_data == 'creator_default_image_model': callback_creator_default_image_model(chat_id, token, message_id)
     elif callback_data == 'creator_slug_style': callback_creator_slug_style(chat_id, token, message_id)
+    elif callback_data == 'creator_twitter_authentication': 
+        auth_url = start_twitter_auth(chat_id)
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Twitter account."
+        return send_message_markdown(chat_id, markdown_msg, token)
+    elif callback_data == 'creator_linkedin_authentication':
+        auth_url = start_linkedin_auth(chat_id)
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Linkedin account."
+        return send_message_markdown(chat_id, markdown_msg, token)
 
     elif callback_data.startswith('tweet_'):
         post_id = callback_data.split('_')[-1]

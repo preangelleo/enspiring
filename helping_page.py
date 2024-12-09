@@ -7194,6 +7194,8 @@ def creator_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = 0):
     creator_menu_inline_keyboard_dict = {
         'Ghost API Key *': 'creator_ghost_blog_api_key',
         'Ghost Blog URL *': 'creator_ghost_blog_url',
+        'Twitter Auth': 'creator_twitter_authentication',
+        'Linkedin Auth': 'creator_linkedin_authentication',
         'Post Language': 'creator_default_post_language',
         'Post Type': 'creator_default_post_type',
         'Post Visibility': 'creator_default_post_visibility',

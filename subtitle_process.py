@@ -815,6 +815,18 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
 
     # if user_ranking >= 5 or openai_api_key:
 
+    elif msg_lower.startswith('creator_twitter_auth'): 
+        auth_url = start_twitter_auth(chat_id)
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Twitter account."
+        return send_message_markdown(chat_id, markdown_msg, token)
+    
+
+    elif msg_lower.startswith('creator_linkedin_auth'):
+        auth_url = start_linkedin_auth(chat_id)
+        markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Linkedin account."
+        return send_message_markdown(chat_id, markdown_msg, token)
+
+
     elif msg_lower.startswith('creator_post_youtube'):
         if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Gold or higher tier to use this function.\n\n/get_premium", token)
 
@@ -963,8 +975,9 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
 
 
         elif msg_lower.startswith('point_subdomain'):
+            print(f"point_subdomain command...")
             '''/point_subdomain sub.domainname new_ip'''
-            domain_name_subdomain_new_ip = msg.replace('point_subdomain', '').strip()
+            domain_name_subdomain_new_ip = msg_lower.replace('point_subdomain', '').strip()
             if not domain_name_subdomain_new_ip: return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain your_domain_name your_subdomain your_new_ip", token)
             subdomain_name_new_ip_list = domain_name_subdomain_new_ip.split(' ')
             if len(subdomain_name_new_ip_list) < 2: return send_message(chat_id, "Please provide subdomain and the new IP address after the command. Example: /point_subdomain api.sumatman.ai your_new_ip", token)
@@ -972,7 +985,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             ip_address = subdomain_name_new_ip_list[-1].strip()
             # from get subdomain and domain name
             subdomain = domain_name.split('.', 1)[0]
-            domain_name = domain_name.replace(f"{subdomain}.", '')
+            domain_name = domain_name.replace(f"{subdomain}.", '').strip()
             if not all([domain_name, subdomain, ip_address]): return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain your_domain_name your_subdomain your_new_ip", token)
             api = NameComAPI(DOMAIN_NAME_USERNAME, DOMAIN_NAME_TOKEN)
             result = update_subdomain_a_record(api, domain_name, subdomain, ip_address)
@@ -1104,7 +1117,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             group_message = msg.replace('group_message', '').strip()
             return group_tg_message(group_message, token, engine)
 
-        elif msg_lower in ['set_menu', 'set menu', 'setmenu']: return set_telegram_menu(token, chat_id)
+        elif msg_lower in ['', 'set menu', 'setmenu']: return set_telegram_menu(token, chat_id)
 
         elif msg_lower in ['current_online_users', 'current_online']: 
             df = pd.read_sql(text("SELECT count(*) FROM chat_id_parameters WHERE chat_id IS NOT NULL"), engine)
