@@ -1,6 +1,7 @@
 from helping_page import *
 from queue import Queue
 from flask import Flask, redirect, jsonify, request
+from tg_operation import *
 
 app = Flask(__name__)
 
@@ -397,6 +398,25 @@ def linkedin_callback():
         return redirect("https://enspiring.ai/linkedin-connect-failed")
     
 
+
+@app.route('/telegram', methods=['POST'])
+def telegram_webhook():
+    try:
+        update = request.get_json()
+        
+        if update:
+            # 使用线程池处理每个更新
+            threading.Thread(
+                target=handle_update,
+                args=(update, TELEGRAM_BOT_TOKEN, engine)
+            ).start()
+            
+        return jsonify({"ok": True}), 200
+    
+    except Exception as e:
+        send_error_message(f"Telegram webhook error: {str(e)}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8686)
