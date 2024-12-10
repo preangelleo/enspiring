@@ -3273,7 +3273,3 @@ AI generated {journal_or_story} in raw text:
 
 if __name__ == "__main__":
     print("Testing GHOST blog post!")
-    chat_id = LAOGEGE_CHAT_ID
-    url = 'https://bsky.app/profile/codexodyssey.bsky.social/post/3lcwwsewoks2a'
-    title = 'Day 28: The Fabric of Human Relationships: Bonds that Bind and Shape'
-    button_url(chat_id, f"New article posted on bluesky: `{title}`", 'View on Bluesky', url, token=TELEGRAM_BOT_TOKEN)

@@ -8901,7 +8901,8 @@ def button_url(chat_id, prompt, button_name, url, token=TELEGRAM_BOT_TOKEN):
         "reply_markup": keyboard
     }
 
-    return requests.post(url, json=payload)
+    response = requests.post(url, json=payload)
+    return response.json()
 
 
 def post_to_bluesky(title:str, excerpt:str, post_url:str, img_filepath:str, chat_id:str, user_parameters = {}):
@@ -8936,7 +8937,7 @@ def post_to_bluesky(title:str, excerpt:str, post_url:str, img_filepath:str, chat
     post = client.send_post(title, embed=embed)
     post_id = post.uri.split('/')[-1]
     url = f"{BLUESKY_POST_BASE_URL}/{bluesky_identifier}/post/{post_id}"
-    button_url(chat_id, f"New article posted on bluesky: `{title}", 'View on Bluesky', url, token=TELEGRAM_BOT_TOKEN)
+    button_url(chat_id, f"New article posted on bluesky: \n\n`{title}`", 'View on Bluesky', url, token=TELEGRAM_BOT_TOKEN)
     return url
 
 
