@@ -1,2 +1,1 @@
-from ghost_blog import *
-
+print(len('Exploring the fundamental role of human relationships in shaping individuals and societies.'))

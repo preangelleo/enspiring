@@ -8884,7 +8884,27 @@ def create_activation_webhook_button(email_address, chat_id, user_name, token, e
     return send_message(chat_id, f"An activation email has been sent to {email_address}. Please check your inbox and click the activation link to complete the process.", token)
 
 
-def post_to_bluesky(title, excerpt, post_url, img_filepath, chat_id, user_parameters = {}):
+def button_url(chat_id, prompt, button_name, url, token=TELEGRAM_BOT_TOKEN):
+    keyboard = {
+        "inline_keyboard": [[
+            {"text": button_name, "url": url}
+        ]]
+    }
+
+    # Send message with inline keyboard
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": prompt,
+        "disable_web_page_preview": True,
+        "parse_mode": "Markdown",
+        "reply_markup": keyboard
+    }
+
+    return requests.post(url, json=payload)
+
+
+def post_to_bluesky(title:str, excerpt:str, post_url:str, img_filepath:str, chat_id:str, user_parameters = {}):
     client = Client()
 
     bluesky_identifier = user_parameters.get('bluesky_identifier', '')
@@ -8892,6 +8912,15 @@ def post_to_bluesky(title, excerpt, post_url, img_filepath, chat_id, user_parame
     if not all ([bluesky_identifier, bluesky_api_key]): return
 
     client.login(bluesky_identifier, bluesky_api_key)
+
+    excerpt = f"{excerpt[:150]}..." if len(excerpt) > 153 else excerpt
+
+    if img_filepath.startswith('http'): 
+        response = requests.get(img_filepath)
+        if response.status_code == 200:
+            img_filepath = os.path.join(midjourney_images_dir, f"temp_bluesky.jpg")
+            with open(img_filepath, "wb") as file: file.write(response.content)
+        else: return
     
     with open(img_filepath, 'rb') as f: img_data = f.read()
 
@@ -8907,6 +8936,7 @@ def post_to_bluesky(title, excerpt, post_url, img_filepath, chat_id, user_parame
     post = client.send_post(title, embed=embed)
     post_id = post.uri.split('/')[-1]
     url = f"{BLUESKY_POST_BASE_URL}/{bluesky_identifier}/post/{post_id}"
+    button_url(chat_id, f"New article posted on bluesky: `{title}", 'View on Bluesky', url, token=TELEGRAM_BOT_TOKEN)
     return url
 
 

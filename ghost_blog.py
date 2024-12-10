@@ -2481,9 +2481,8 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
         df = pd.DataFrame(data_dict)
         df.to_sql('creator_journals_repost', engine, if_exists='append', index=False)
 
-        try: post_to_bluesky(title, custom_excerpt[:200], url, image_path, chat_id, user_parameters)
+        try: post_to_bluesky(title, custom_excerpt, url, image_url, chat_id, user_parameters)
         except: send_debug_to_laogege(f"repost_journal_to_ghost_creator() >> Failed to post to Bluesky for the post {title}.")
-
 
         url_markdown = f"HERE's YOUR REPOSTED ARTICLE:\n[{title}]({url})"
         callback_update_post_status(chat_id, url_markdown, post_id, token, user_parameters, 'creator_journals_repost')
@@ -3274,3 +3273,7 @@ AI generated {journal_or_story} in raw text:
 
 if __name__ == "__main__":
     print("Testing GHOST blog post!")
+    chat_id = LAOGEGE_CHAT_ID
+    url = 'https://bsky.app/profile/codexodyssey.bsky.social/post/3lcwwsewoks2a'
+    title = 'Day 28: The Fabric of Human Relationships: Bonds that Bind and Shape'
+    button_url(chat_id, f"New article posted on bluesky: `{title}`", 'View on Bluesky', url, token=TELEGRAM_BOT_TOKEN)
