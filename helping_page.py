@@ -43,6 +43,9 @@ import unicodedata
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
 from urllib.parse import urlencode
+from atproto import Client
+from atproto import client_utils
+from atproto import models
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -105,7 +108,14 @@ if 'Making variables':
 
     GHOST_ADMIN_API_KEY = os.getenv("BLOG_POST_ADMIN_API_KEY")
     GHOST_API_URL = os.getenv("BLOG_POST_API_URL")
-    
+
+    BLUESKY_POST_BASE_URL = "https://bsky.app/profile"
+
+    BLUESKY_IDENTIFIER_SUMATMAN=os.getenv("BLUESKY_IDENTIFIER_SUMATMAN")
+    BLUESKY_API_KEY_SUMATMAN=os.getenv("BLUESKY_API_KEY_SUMATMAN")
+
+    BLUESKY_IDENTIFIER_CODEXODYSSEY=os.getenv("BLUESKY_IDENTIFIER_CODEXODYSSEY")
+    BLUESKY_API_KEY_CODEXODYSSEY=os.getenv("BLUESKY_API_KEY_CODEXODYSSEY")
 
     ENSPIRING_BOT_HANDLE = os.getenv('ENSPIRING_BOT_HANDLE')
     ENSPIRING_ACTIVATE_PAGE = f'{BLOG_BASE_URL}/activate'
@@ -8852,6 +8862,27 @@ def create_activation_webhook_button(email_address, chat_id, user_name, token, e
     return send_message(chat_id, f"An activation email has been sent to {email_address}. Please check your inbox and click the activation link to complete the process.", token)
 
 
+def post_to_bluesky(title, excerpt, post_url, img_filepath, bluesky_identifier=BLUESKY_IDENTIFIER_CODEXODYSSEY, bluesky_api_key=BLUESKY_API_KEY_CODEXODYSSEY):
+    client = Client()
+    client.login(bluesky_identifier, bluesky_api_key)
+    
+    with open(img_filepath, 'rb') as f: img_data = f.read()
+
+    thumb = client.upload_blob(img_data)
+    embed = models.AppBskyEmbedExternal.Main(
+        external=models.AppBskyEmbedExternal.External(
+            title=title,
+            description=excerpt,
+            uri = post_url,
+            thumb=thumb.blob,
+        )
+    )
+    post = client.send_post(title, embed=embed)
+    post_id = post.uri.split('/')[-1]
+    url = f"{BLUESKY_POST_BASE_URL}/{bluesky_identifier}/post/{post_id}"
+    return url
+
+
 def post_to_twitter_by_chat_id(chat_id, title, post_url, token = TELEGRAM_BOT_TOKEN, user_parameters = {}):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
     twitter_id = ''
@@ -10325,3 +10356,9 @@ def pdf_to_text(pdf_path, output_path=None):
 
 if __name__ == '__main__':
     print("Helping page constants")
+    title = 'Day 27: The Dance of Politics: Power, Governance, and the Human Condition'
+    url = 'https://www.enspiring.org/day_27/'
+    custom_excerpt = 'Exploring the evolution of political systems and ideologies and their impact on humanity....'
+    image_path = '/Users/lgg/Downloads/day_27.png'
+    url = post_to_bluesky(title, custom_excerpt, url, image_path, bluesky_identifier=BLUESKY_IDENTIFIER_CODEXODYSSEY, bluesky_api_key=BLUESKY_API_KEY_CODEXODYSSEY)
+    print(url)
