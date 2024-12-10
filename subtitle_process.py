@@ -471,6 +471,16 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         if len(split_by_colon) != 2 or len(split_by_colon[0]) != 24 or len(split_by_colon[1]) != 64: return send_message(chat_id, "Invalid Ghost Admin API Key. Please provide a valid Ghost Admin API Key. A valid Ghost Admin API Key looks like this: 88fd6030d898fe456dd7d20a:b6813f5ab53613a7c9efafb547fc1a681bc9b048d11645203fdf87ad5h9d8e54", token)
         return set_ghost_admin_api_key(chat_id, user_ghost_admin_api_key, token, engine, message_id)
 
+    elif msg_lower.startswith('bluesky_app_passwords'):
+        user_bluesky_api_key = msg.replace('bluesky_app_passwords', '').replace('>', '').strip()
+        if not user_bluesky_api_key: return send_message(chat_id, "Please provide your BlueSky API Key after the command. For example: /bluesky_app_passwords >> twd2-4lwx-qb6o-4dir", token)
+        return set_bluesky_app_passwords(chat_id, user_bluesky_api_key,token, engine, message_id)
+    
+    elif msg_lower.startswith('bluesky_identifier'): 
+        user_bluesky_identifier = msg.replace('bluesky_identifier', '').replace('>', '').strip()
+        if not user_bluesky_identifier: return send_message(chat_id, "Please provide your BlueSky Identifier after the command. For example: /bluesky_identifier >> codexodyssey.bsky.social", token)
+        if not user_bluesky_identifier.endswith('.bsky.social'): return send_message(chat_id, "Invalid BlueSky Identifier. Please provide a valid BlueSky Identifier. A valid BlueSky Identifier looks like this: codexodyssey.bsky.social", token)
+        return set_bluesky_identifier(chat_id, user_bluesky_identifier, token, engine, message_id)
 
     elif msg_lower.startswith('ghost_blog_url '):
         user_ghost_blog_url = msg.replace('ghost_blog_url', '').replace('>', '').strip()

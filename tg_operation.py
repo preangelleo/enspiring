@@ -124,6 +124,8 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
             return send_message_markdown(chat_id, reply, token)
         return
     
+    elif callback_data == 'set_bluesky_app_passwords': return callback_bluesky_app_passwords(chat_id, token, message_id)
+    elif callback_data == 'set_bluesky_identifier': return callback_bluesky_identifier(chat_id, token, message_id)
 
     elif callback_data.startswith('linkedin_'):
         post_id = callback_data.split('_')[-1]
@@ -562,8 +564,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
                     next_language = mother_language if mother_language != target_language else secondary_language if secondary_language != target_language else ''
                     return callback_translation_audio(chat_id, explanation, token, engine, user_parameters, message_id, target_language, next_language, is_markdown = False)
                 
-                else: send_message(chat_id, "Failed to generate the explanation, please try again.", token, message_id)
-                
+                else: send_message(chat_id, "Failed to generate the explanation, please try again.", token, message_id)                
 
     elif callback_data.startswith('renew_vocabulary_'):
         if ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Diamond or higher tier to use this function.\n\n/get_premium", token)

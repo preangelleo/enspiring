@@ -7230,9 +7230,21 @@ def creator_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = 0):
 def set_ghost_admin_api_key(chat_id, ghost_admin_api_key, token, engine, message_id=0):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET ghost_admin_api_key = :ghost_admin_api_key WHERE chat_id = :chat_id;"""), {"ghost_admin_api_key": ghost_admin_api_key, "chat_id": chat_id})
     if message_id: delete_message(chat_id, message_id, token)
-    send_message(OWNER_CHAT_ID, f"/chat_{chat_id} just updated Ghost admin API key.", token)
+    send_message(OWNER_CHAT_ID, f"/chat_{chat_id} just updated Ghost admin API Key.", token)
     return send_message(chat_id, "Ghost admin API key has been updated successfully.", token)
 
+
+def set_bluesky_app_passwords(chat_id, bluesky_api_key, token, engine, message_id=0):
+    with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET bluesky_api_key = :bluesky_api_key WHERE chat_id = :chat_id;"""), {"bluesky_api_key": bluesky_api_key, "chat_id": chat_id})
+    if message_id: delete_message(chat_id, message_id, token)
+    send_message(OWNER_CHAT_ID, f"/chat_{chat_id} just updated Bluesky API Key.", token)
+    return send_message(chat_id, "Bluesky API Key has been updated successfully.", token)
+
+def set_bluesky_identifier(chat_id, bluesky_identifier, token, engine, message_id=0):
+    with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET bluesky_identifier = :bluesky_identifier WHERE chat_id = :chat_id;"""), {"bluesky_identifier": bluesky_identifier, "chat_id": chat_id})
+    if message_id: delete_message(chat_id, message_id, token)
+    send_message(OWNER_CHAT_ID, f"/chat_{chat_id} just updated Bluesky Identifier.", token)
+    return send_message(chat_id, "Bluesky Identifier has been updated successfully.", token)
 
 def set_ghost_blog_url(chat_id, ghost_api_url, token, engine, message_id=0):
     with engine.begin() as conn: conn.execute(text("""UPDATE chat_id_parameters SET ghost_api_url = :ghost_api_url WHERE chat_id = :chat_id;"""), {"ghost_api_url": ghost_api_url, "chat_id": chat_id})
@@ -7465,6 +7477,16 @@ def callback_creator_ghost_blog_api_key(chat_id, token = TELEGRAM_BOT_TOKEN, mes
 def callback_creator_ghost_blog_url(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
     creator_ghost_blog_url_prompt = "Your blog URL should look like this: `https://your-blog-name.ghost.io` or `https://your-blog-name.com` (if you have already set up your own domain for your Ghost blog).\n\nPlease send the URL in the format below. Just replace the placeholder with your real URL.\n\n/ghost_blog_url >> replace_this_placeholder_with_your_blog_url"
     return send_message(chat_id, creator_ghost_blog_url_prompt, token)
+
+
+def callback_bluesky_app_passwords(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
+    bluesky_api_key_prompt = "Please send me your Bluesky API key directly with the correct prefix shown below. You can find it in your Bluesky dashboard under Settings >> Privacy and Security App passwords.\n\nA valid Bluesky App passwords looks like this: twd2-4lwx-qb6o-4dir\n\nPlease send the App passwords exactly in the format below. Just replace the placeholder with your real App passwords.\n\n/bluesky_app_passwords >> replace_this_placeholder_with_your_app_passwords"
+    return send_message(chat_id, bluesky_api_key_prompt, token)
+
+
+def callback_bluesky_identifier(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = ''):
+    bluesky_identifier_prompt = "Please send me your Bluesky Identifier directly with the correct prefix shown below. \n\nA valid Bluesky Identifier looks like this: codexodyssey.bsky.social\n\nPlease send the identifier exactly in the format below. Just replace the placeholder with your real key.\n\n/bluesky_identifier >> replace_this_placeholder_with_your_identifier"
+    return send_message(chat_id, bluesky_identifier_prompt, token)
 
 
 def get_total_posts(engine = engine):
@@ -8862,8 +8884,13 @@ def create_activation_webhook_button(email_address, chat_id, user_name, token, e
     return send_message(chat_id, f"An activation email has been sent to {email_address}. Please check your inbox and click the activation link to complete the process.", token)
 
 
-def post_to_bluesky(title, excerpt, post_url, img_filepath, bluesky_identifier=BLUESKY_IDENTIFIER_CODEXODYSSEY, bluesky_api_key=BLUESKY_API_KEY_CODEXODYSSEY):
+def post_to_bluesky(title, excerpt, post_url, img_filepath, chat_id, user_parameters = {}):
     client = Client()
+
+    bluesky_identifier = user_parameters.get('bluesky_identifier', '')
+    bluesky_api_key = user_parameters.get('bluesky_api_key', '')
+    if not all ([bluesky_identifier, bluesky_api_key]): return
+
     client.login(bluesky_identifier, bluesky_api_key)
     
     with open(img_filepath, 'rb') as f: img_data = f.read()
@@ -8947,6 +8974,8 @@ def main_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = 0):
         'Today News Keywords': 'set_news_keywords',
         'Creator Preferences': 'set_creator_configurations',
         'Daily Words List ON/OFF': 'set_daily_words_list_on_off',
+        'Bluesky Identifier': 'set_bluesky_identifier',
+        'Bluesky App Passwords': 'set_bluesky_app_passwords',
         'Cancel Settings': 'cancel_settings'
     }
     button_per_list = 2
@@ -10356,9 +10385,3 @@ def pdf_to_text(pdf_path, output_path=None):
 
 if __name__ == '__main__':
     print("Helping page constants")
-    title = 'Day 27: The Dance of Politics: Power, Governance, and the Human Condition'
-    url = 'https://www.enspiring.org/day_27/'
-    custom_excerpt = 'Exploring the evolution of political systems and ideologies and their impact on humanity....'
-    image_path = '/Users/lgg/Downloads/day_27.png'
-    url = post_to_bluesky(title, custom_excerpt, url, image_path, bluesky_identifier=BLUESKY_IDENTIFIER_CODEXODYSSEY, bluesky_api_key=BLUESKY_API_KEY_CODEXODYSSEY)
-    print(url)
