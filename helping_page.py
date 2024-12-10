@@ -4164,7 +4164,7 @@ def escape_markdown_for_ai_response(text):
 
 
 def send_or_edit_inline_keyboard(prompt, inline_keyboard_dict, chat_id, button_per_list = 2, token = TELEGRAM_BOT_TOKEN, message_id = 0,  is_markdown = False):
-    logging.info(f"Sending/Editing inline keyboard with inline_keyboard_dict: {inline_keyboard_dict}")
+    logging.info(f"Sending/Editing inline keyboard with inline_keyboard_dict: {prompt}")
     inline_keyboard_list = []
 
     # Create a temporary list to hold buttons before adding them to the final inline_keyboard_list
@@ -4205,6 +4205,7 @@ def send_or_edit_inline_keyboard(prompt, inline_keyboard_dict, chat_id, button_p
 
     # Send the request via Telegram API
     response = requests.post(url, json=payload)
+    logging.info(f"Response: {response.text}")
 
     if response.status_code != 200:
         payload.pop("parse_mode", None)  # Remove markdown formatting
