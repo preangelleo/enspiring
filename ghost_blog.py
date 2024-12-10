@@ -2481,6 +2481,10 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
         df = pd.DataFrame(data_dict)
         df.to_sql('creator_journals_repost', engine, if_exists='append', index=False)
 
+        try: post_to_bluesky(title, custom_excerpt[:200], url, image_path, chat_id, user_parameters)
+        except: send_debug_to_laogege(f"repost_journal_to_ghost_creator() >> Failed to post to Bluesky for the post {title}.")
+
+
         url_markdown = f"HERE's YOUR REPOSTED ARTICLE:\n[{title}]({url})"
         callback_update_post_status(chat_id, url_markdown, post_id, token, user_parameters, 'creator_journals_repost')
 
@@ -3051,7 +3055,6 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
             callback_update_post_status(chat_id, url_markdown, post_id, token, user_parameters, 'creator_auto_posts')
             post_to_twitter_by_chat_id(chat_id, custom_excerpt[:180], url, token, user_parameters)
 
-            
             try: post_to_bluesky(title, custom_excerpt, url, image_path, chat_id, user_parameters)
             except: send_debug_to_laogege(f"auto_blog_post() >> Failed to post to Bluesky for the post {title}.")
 
