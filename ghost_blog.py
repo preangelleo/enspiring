@@ -1632,8 +1632,8 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
             else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
         else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
 
-    midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
-    html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
+    # midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
+    # html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
 
     if not custom_excerpt: custom_excerpt = f"Generated on {date_today} by {model}"
 
@@ -1821,8 +1821,8 @@ def post_news_to_ghost_creator(prompt: str, chat_id: str, engine = engine, token
             else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {content[:200]}......")
         else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {content[:200]}......")
 
-    midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
-    html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
+    # midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
+    # html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
 
     post_type_key = f"{post_type}s"
     post_content_dict = {
@@ -2030,8 +2030,8 @@ def post_youtube_to_ghost_creator(youtube_url: str, chat_id: str, engine = engin
 
     html_content += f'<p><iframe width="560" height="315" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allowfullscreen></iframe></p>'
 
-    midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
-    html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
+    # midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
+    # html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
 
     custom_excerpt = event_dict.get('excerpt', '') or ''
     if not custom_excerpt: custom_excerpt = f"Generated on {date_today} by {model}"
@@ -2418,7 +2418,7 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
                 else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
             else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
 
-    html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
+    # html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
 
     if not image_url and image_id:
         df_img = pd.read_sql(text("SELECT upscaled_url_1 FROM image_midjourney WHERE image_id = :image_id"), engine, params={'image_id': image_id})
@@ -2959,8 +2959,8 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
         else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
     else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
 
-    midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
-    html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
+    # midjourney_prompt = f"Midjourney prompt for the cover image: {midjourney_prompt}"
+    # html_content += f"<blockquote>{midjourney_prompt}</blockquote>"
 
     if not custom_excerpt: custom_excerpt = f"Generated on {date_today} by {model}"
 
