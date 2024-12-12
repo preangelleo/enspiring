@@ -734,6 +734,11 @@ def handle_message(update, token, engine = engine):
                     if reply_dict['Status']:  reply_dict['Message'] = f"Cover image updated successfully:\n{reply_dict['Message']}"
                     return send_message(chat_id, reply_dict['Message'], token)
 
+                elif user_ranking >= 66: 
+                    caption = caption.replace('/', '').strip()
+                    caption = caption.replace(' ', '_')
+                    if caption.lower() in ['group_send_image', 'send_to_group', 'group_image', 'send_group_image', 'send_image_group']: return send_img_to_everyone(file_path, token, engine)
+
                 send_message(chat_id, "Image received, extracting text from the image now...", token)
                 message_id += 1
                 cleaned_text = azure_cognitive_ai_extract_text(file_path)
@@ -791,13 +796,6 @@ def handle_message(update, token, engine = engine):
                             reply_dict = update_story_cover_image_to_ghost(post_id, image_url, 'page', BLOG_POST_ADMIN_API_KEY, BLOG_POST_API_URL)
                             if reply_dict['Status'] and image_midjourney_posted_updated(post_id, engine): return send_message(chat_id, f"The cover image for your story is updated.\n{reply_dict['Message']}", token)
                             return 
-                    
-                    elif user_ranking >= 66: 
-                        caption = caption.replace('/', '').strip()
-                        caption = caption.replace(' ', '_')
-                        if caption.lower() in ['group_send_image', 'send_to_group', 'group_image', 'send_group_image', 'send_image_group']: send_img_to_everyone(file_path, token, engine)
-                        else: reply = dealing_tg_photo(file_path, caption, chat_id, engine, token)
-                        return 
 
                 else: reply = "You need to provide a caption for the image. So I know what to do with it."
 
