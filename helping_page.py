@@ -4505,7 +4505,7 @@ def callback_image_prompt_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_
         df = pd.DataFrame(data_dict)
         df.to_sql('markdown_text', con=conn, if_exists='append', index=False)
     button_per_list = 2
-    text_audioinline_keyboard_dict = {'Generate with Midjourney': f'generate_image_midjourney_{hash_md5}', 'Generate with Blackforest': f'generate_image_blackforest_{hash_md5}', 'Generate with Dalle': f'generate_image_dalle_{hash_md5}', 'Play Audio': f'markdown_audio_{hash_md5}'}
+    text_audioinline_keyboard_dict = {'Midjourney': f'generate_image_midjourney_{hash_md5}', 'Blackforest': f'generate_image_blackforest_{hash_md5}', 'Dalle': f'generate_image_dalle_{hash_md5}', 'Play Audio': f'markdown_audio_{hash_md5}'}
     
     mother_language = user_parameters.get('mother_language', '')
     if mother_language != 'English': text_audioinline_keyboard_dict[f'Translate to {mother_language.capitalize()}'] = f'translate_to_{mother_language}_{hash_md5}'
@@ -4580,7 +4580,7 @@ def callback_icebreaker_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_TO
         df = pd.DataFrame(data_dict)
         df.to_sql('markdown_text', con=conn, if_exists='append', index=False)
     button_per_list = 2
-    text_audioinline_keyboard_dict = {'Play Audio': f'markdown_audio_{hash_md5}'}
+    text_audioinline_keyboard_dict = {'Play Audio': f'markdown_audio_{hash_md5}', 'Ice Breaker': 'ice_breaker'}
 
     mother_language = user_parameters.get('mother_language', '')
     if mother_language != 'English': text_audioinline_keyboard_dict[f'Translate to {mother_language.capitalize()}'] = f'translate_to_{mother_language}_{hash_md5}'
@@ -4590,7 +4590,6 @@ def callback_icebreaker_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_TO
     if secondary_language and secondary_language != 'English': text_audioinline_keyboard_dict[f'Translate to {secondary_language.capitalize()}'] = f'translate_to_{secondary_language}_{hash_md5}'
     else: text_audioinline_keyboard_dict['Set Secondary Language'] = 'set_secondary_language'
 
-    text_audioinline_keyboard_dict['Ice Breaker'] = 'ice_breaker'
     return send_or_edit_inline_keyboard(prompt, text_audioinline_keyboard_dict, chat_id, button_per_list, token, message_id = '')
 
 
@@ -8984,7 +8983,7 @@ def generate_midjourney_prompt(chat_id, user_prompt, token, engine, user_paramet
     if ranking >=5:
         image_id = generate_image_midjourney(chat_id, midjourney_prompt, 'telegram', midjourney_token = IMAGEAPI_MIDJOURNEY)
         if image_id: send_message(chat_id, f"As our esteemed /{tier} member, I have generated the image with my Midjourney API, you will get 4 upscaled images once the process is completed. Image ID: \n`{image_id}`", token)
-        else: send_message(chat_id, "Error in generating the image with Midjourney API, please try again later by clicking the `Generate with Midjourney` button. Or try other image models.", token)
+        else: send_message(chat_id, "Error in generating the image with Midjourney API, please try again later by clicking the `Midjourney` button. Or try other image models.", token)
     return 'DONE'
 
 
