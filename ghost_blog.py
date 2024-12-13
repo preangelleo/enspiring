@@ -2368,6 +2368,13 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
         title = event_dict.get('title', '') or title
         custom_excerpt = event_dict.get('excerpt', '') or custom_excerpt
         translated_journal = event_dict.get('article', '') or generated_journal
+        
+        if post_language == 'Chinese':
+            try: translated_journal = call_gaia(translated_journal, SYSTEM_PROMPT_CHINESE_REFINER, api_url = DEFAULT_GAIA_ENDPOINT_QWEN)
+            except Exception as e: 
+                send_debug_to_laogege(f"repost_journal_to_ghost() chat_id {chat_id} >> Failed to refine the translated journal with post_id: {post_id}, title: {title}\n\n{e}")
+                refined_translated_journal = translated_journal
+
         new_tags = event_dict.get('tags', '')
 
         generated_journal = translated_journal

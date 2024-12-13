@@ -2065,6 +2065,21 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     ```
     '''
 
+    SYSTEM_PROMPT_CHINESE_REFINER = """Refine the provided translated article to fit modern Chinese readers, while keeping the original markdown format. Maintain coherence, flow, and readability, ensuring the language is fluent and engaging for the target audience. Include no additional text beyond the article content itself.
+
+# Steps
+
+1. Review the translated article for grammatical errors, awkward phrasing, and inconsistencies.
+2. Adjust language to align with modern Chinese expressions and cultural context.
+3. Ensure the article remains engaging, clear, and relevant to the intended audience.
+4. Preserve the original markdown formatting, such as headings, lists, bold, italics, etc.
+5. Output only the refined article without any introductory or closing remarks.
+
+# Output Format
+
+- The output should only include the article, fully refined and formatted in markdown.
+- There should be no additional text, header, or footer; just the article content."""
+
     SYSTEM_PROMPT_DOCTOR = """You are a doctor tasked with explaining medical reports in simple, easy-to-understand language in _language_placeholder_for patients or their families.
 
 - Ensure medical terminology and complex concepts are translated into layman's terms in _language_placeholder_.
@@ -7614,6 +7629,36 @@ def cloude_basic(prompt, system_prompt = SYSTEM_PROMPT_CHATBOT, model = "claude-
     return response_text
 
 
+DEFAULT_GAIA_ENDPOINT_QWEN = 'https://qwen7b.us.gaianet.network/v1/chat/completions'
+DEFAULT_GAIA_ENDPOINT_CONSENSUS = 'https://consensus.us.gaianet.network/v1/chat/completions'
+
+def call_gaia(prompt: str, system_prompt: str, api_url: str = DEFAULT_GAIA_ENDPOINT_QWEN):
+
+   headers = {
+       'accept': 'application/json',
+       'Content-Type': 'application/json'
+   }
+
+   data = {
+       "messages": [
+           {
+               "role": "system",
+               "content": system_prompt
+           },
+           {
+               "role": "user", 
+               "content": prompt
+           }
+       ]
+   }
+
+   try:
+       response = requests.post(api_url, headers=headers, json=data)
+       return response.json()["choices"][0]["message"]["content"]
+   
+   except Exception as e: return
+
+
 def openai_gpt_chat(system_prompt, prompt, chat_id: str = LAOGEGE_CHAT_ID, model=ASSISTANT_DOCUMENT_MODEL, user_parameters = {}, token = TELEGRAM_BOT_TOKEN):
     if not user_parameters: user_parameters = user_parameters_realtime(chat_id, engine)
     openai_api_key = user_parameters.get('openai_api_key') or OPENAI_API_KEY
@@ -8936,7 +8981,7 @@ def post_to_bluesky(title:str, excerpt:str, post_url:str, img_filepath:str, chat
     post = client.send_post(title, embed=embed)
     post_id = post.uri.split('/')[-1]
     url = f"{BLUESKY_POST_BASE_URL}/{bluesky_identifier}/post/{post_id}"
-    button_url(chat_id, f"New article posted on bluesky: \n\n`{title}`", 'View on Bluesky', url, token=TELEGRAM_BOT_TOKEN)
+    button_url(chat_id, f"New article posted on bluesky: \n`{title}`", 'View on Bluesky', url, token=os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"))
     return url
 
 
@@ -10415,3 +10460,5 @@ def pdf_to_text(pdf_path, output_path=None):
 
 if __name__ == '__main__':
     print("Helping page constants")
+    r = scrape_content('https://www.seattletimes.com/life/for-tesla-owners-a-referendum-through-bumper-stickers/')
+    print(r)
