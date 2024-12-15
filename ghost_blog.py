@@ -1583,7 +1583,7 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
     generated_journal = event_dict.get('article', '')
     midjourney_prompt = event_dict.get('midjourney_prompt', '')
 
-    if not all([title, generated_journal, midjourney_prompt]): return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the youtube link you provided.")
+    if not all([title, generated_journal, midjourney_prompt]): return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the prompt you provided.")
 
     if title in generated_journal: generated_journal = '\n'.join(generated_journal.split('\n')[1:]).strip()
     if midjourney_prompt in generated_journal: generated_journal = generated_journal.replace(midjourney_prompt, '').strip()

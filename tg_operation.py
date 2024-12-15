@@ -90,14 +90,16 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
     elif callback_data == 'creator_ghost_blog_url': callback_creator_ghost_blog_url(chat_id, token, message_id)
     elif callback_data == 'creator_default_image_model': callback_creator_default_image_model(chat_id, token, message_id)
     elif callback_data == 'creator_slug_style': callback_creator_slug_style(chat_id, token, message_id)
+
     elif callback_data == 'creator_twitter_authentication': 
         auth_url = start_twitter_auth(chat_id)
         markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Twitter account."
-        return send_message_markdown(chat_id, markdown_msg, token)
+        return button_url(chat_id, markdown_msg, 'Authenticate Twitter', auth_url, token)
+    
     elif callback_data == 'creator_linkedin_authentication':
         auth_url = start_linkedin_auth(chat_id)
         markdown_msg = f"Please click [HERE]({auth_url}) to authenticate your Linkedin account."
-        return send_message_markdown(chat_id, markdown_msg, token)
+        return button_url(chat_id, markdown_msg, 'Authenticate Linkedin', auth_url, token)
 
     elif callback_data.startswith('tweet_'):
         post_id = callback_data.split('_')[-1]
@@ -121,7 +123,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
         tweet_result = handle_share_to_twitter_button(chat_id, title, url, token)
         if tweet_result and tweet_result.startswith('http'):
             reply = f"Click [HERE]({tweet_result}) to view the tweet."
-            return send_message_markdown(chat_id, reply, token)
+            return button_url(chat_id, reply, 'Go to Twitter', tweet_result, token)
         return
     
     elif callback_data == 'set_bluesky_app_passwords': return callback_bluesky_app_passwords(chat_id, token, message_id)
@@ -160,8 +162,9 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
 
         share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
         if share_asset and share_asset.startswith('urn:li:share:'):
-            reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
-            return send_message_markdown(chat_id, reply, token)
+            url = f"https://www.linkedin.com/feed/update/{share_asset}"
+            reply = f"Clicke [HERE]({url}) to view the post on LinkedIn."
+            return button_url(chat_id, reply, 'Go to Linkedin', url, token)
         return
 
 
@@ -618,7 +621,7 @@ def handle_message(update, token, engine = engine):
     update_message = update.get('message', {})
     chat_id = update_message['chat']['id']
     chat_id = str(chat_id)
-    
+
     send_typing_action(chat_id, action = "typing", token = token)
 
     user_parameters = user_parameters_realtime(chat_id, engine)
@@ -1244,6 +1247,9 @@ def handle_message(update, token, engine = engine):
         
 
 def handle_update(update, token, engine = engine):
+    
+    # print(json.dumps(update, indent=2))
+
     callback_query = update.get("callback_query")
     if callback_query: 
         try: handle_callback_query(callback_query, token, engine)
