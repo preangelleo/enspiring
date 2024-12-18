@@ -640,8 +640,9 @@ def handle_message(update, token, engine = engine):
     msg_text = update_message.get('text', '')
     message_id = update_message.get('message_id')
     message_id = int(message_id)
-    caption, reply, img_file_id, doc_file_id, voice_file_id, video_file_id, animation_file_id, audio_file_id, sticker_file_id, contact, location, poll = '', '',  None, None, None, None, None, None, None, None, None, None
-    
+    caption, reply, img_file_id, doc_file_id, voice_file_id, video_file_id, animation_file_id, audio_file_id, sticker_file_id, contact, location, poll = update_message.get('caption'), '',  None, None, None, None, None, None, None, None, None, None
+
+
     if update_message['chat'].get('username', ''): user_name = f"@{update_message['chat'].get('username', '')}"
     else: user_name = " ".join([i for i in [update_message['chat'].get('first_name', ''), update_message['chat'].get('last_name', '')] if i])
 

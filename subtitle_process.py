@@ -967,7 +967,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         elif msg_lower.startswith('domain_verification'):
             '''/domain_verification domain_name'''
             domain_name_verification_string = msg.replace('domain_verification', '').strip()
-            if not domain_name_verification_string: return send_message(chat_id, "Please provide the domain name after the command. Example: /domain_verification your_domain_name", token)
+            if not domain_name_verification_string: return send_message(chat_id, "Please provide the domain name after the command. Example: /domain_verification your_domain_name your_verification_string", token)
             domain_name_verification_string_list = domain_name_verification_string.split(' ')
             if len(domain_name_verification_string_list) < 2: return send_message(chat_id, "Please provide the domain name and the verification string after the command. Example: /domain_verification your_domain_name your_verification_string", token)
             verification_string = domain_name_verification_string_list[-1].strip()

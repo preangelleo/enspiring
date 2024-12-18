@@ -427,7 +427,8 @@ def run_assistant(chat_id, query, session_name, engine = engine, model = ASSISTA
         # Add the user's query to the thread
         if session_name == 'session_help': client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"file_id": SESSION_HELP_FILE_ID, "tools": [{"type": tools_type}]}])
         elif session_name == 'session_query_doc': client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"file_id": user_parameters.get('session_document_id'), "tools": [{"type": tools_type}]}])
-        elif session_name in ['session_creator', 'session_translator']: client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"file_id": user_parameters.get('writing_style_sample'), "tools": [{"type": tools_type}]}])
+        elif session_name in ['session_creator']: client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"tools": [{"type": tools_type}]}])
+        elif session_name in ['session_translator']: client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query, attachments=[{"tools": [{"type": tools_type}]}])
         else: client.beta.threads.messages.create(thread_id=session_thread_id, role="user", content=query)
 
         run = client.beta.threads.runs.create_and_poll(thread_id=session_thread_id, assistant_id=assistant_id, model=model)

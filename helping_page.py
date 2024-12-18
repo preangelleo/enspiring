@@ -5408,11 +5408,8 @@ def whisper_speech_to_text(audio_file_path, chat_id, model="whisper-1", engine =
     openai_api_key = user_parameters.get('openai_api_key') or OPENAI_API_KEY
     client = OpenAI(api_key=openai_api_key)
 
-    audio_file = open(audio_file_path, "rb")
-    transcript = client.audio.transcriptions.create(
-    model=model,
-    file=audio_file
-    )
+    with open(audio_file_path, "rb") as audio_file: transcript = client.audio.transcriptions.create(model=model, file=audio_file)
+
     # Calculate the duration of the audio file
     audio = AudioSegment.from_file(audio_file_path)
     duration_seconds = len(audio) / 1000
@@ -7478,7 +7475,7 @@ def set_is_blacklist_for_chat_id(chat_id: str, is_blacklist: int, engine = engin
 
 
 def generate_youtube_slug(length=11):
-    characters = string.ascii_letters + string.digits  # All letters (a-z, A-Z) and numbers (0-9)
+    characters = string.ascii_letters + string.digits
     slug = ''.join(random.choice(characters) for _ in range(length))
     return slug
 
@@ -8997,8 +8994,9 @@ def post_to_twitter_by_chat_id(chat_id, title, post_url, token = TELEGRAM_BOT_TO
 
     if twitter_id: 
         tweet_url = f"{TWITTER_BASE_URL}/{twitter_id}"
-        markdown_message = f"Your article has been posted to out official twitter account and you'll x account has been @ed.\n\n[{title}]({tweet_url})"
-        send_message_markdown(chat_id, markdown_message, token)
+        markdown_message = f"Your article has been posted to twitter."
+        # send_message_markdown(chat_id, markdown_message, token)
+        button_url(chat_id, markdown_message, 'Go to Twitter', tweet_url, token)
         
     return
 

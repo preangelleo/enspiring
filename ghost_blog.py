@@ -3065,8 +3065,9 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
             except: send_debug_to_laogege(f"auto_blog_post() >> Failed to post to Bluesky for the post {title}.")
 
             share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
-            reply = f"Clicke [HERE](https://www.linkedin.com/feed/update/{share_asset}) to view the post on LinkedIn."
-            send_message_markdown(chat_id, reply, token)
+            linkedin_url = f"https://www.linkedin.com/feed/update/{share_asset}"
+            reply = f"Clicke [HERE]({linkedin_url}) to view the post on LinkedIn."
+            button_url(chat_id, reply, 'Go to Linkedin', linkedin_url, token)
 
         if image_id:
             with engine.begin() as conn: conn.execute(text(f"UPDATE image_midjourney SET post_id = :post_id, title = :title, slug = :slug, post_url = :url WHERE image_id = :image_id"), {'post_id': post_id, 'image_id': image_id, 'title': title, 'slug': returned_slug, 'url': url})
