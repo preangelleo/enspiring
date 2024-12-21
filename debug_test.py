@@ -1,1 +1,3 @@
-print(len('Exploring the fundamental role of human relationships in shaping individuals and societies.'))
+test_text = 'explain_in_japanese'
+test_text = test_text[7:]
+print(test_text)

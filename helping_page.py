@@ -5006,6 +5006,36 @@ def convert_markdown_to_telegram_v2(text):
     return text
 
 
+def send_message_markdown_return_message_id(chat_id:str, input_text:str, token=TELEGRAM_BOT_TOKEN, message_id=0, disable_web_page_preview = True):
+    input_text = input_text.replace('**', '*').replace('#', '')
+    if message_id:
+        # Editing an existing message
+        url = f"https://api.telegram.org/bot{token}/editMessageText"
+        data = {
+            'chat_id': chat_id,
+            'message_id': message_id,
+            'text': input_text,
+            'parse_mode': 'Markdown',
+            'disable_web_page_preview': disable_web_page_preview
+        }
+    else:
+        # Sending a new message
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        data = {
+            'chat_id': chat_id,
+            'text': input_text,
+            'parse_mode': 'Markdown',
+            'disable_web_page_preview': disable_web_page_preview
+        }
+    response = requests.post(url, data=data)
+
+    # If not successful, send plain text message
+    if response.status_code != 200: return send_message(chat_id, input_text, token, message_id, disable_web_page_preview)
+
+    message_id = response.json().get('result', {}).get('message_id', 0)
+    return int(message_id)
+
+
 def send_message_markdown(chat_id, text, token=TELEGRAM_BOT_TOKEN, message_id=0):
     # If text is empty, provide a random happy emoji
     if not text:

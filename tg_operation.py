@@ -556,9 +556,7 @@ def handle_callback_query(callback_query, token=TELEGRAM_BOT_TOKEN, engine=engin
             target_language = commands_list[1]
             if target_language == 'Chinese': from_vocabulary_chinese_get_explanation(vocabulary, chat_id, engine, token, user_parameters)
             else:
-                send_message_markdown(chat_id, f"Generating `{vocabulary}` explanation in {target_language}...", token)
-                message_id = int(message_id) + 1
-
+                message_id = send_message_markdown_return_message_id(chat_id, f"Generating `{vocabulary}` explanation in {target_language}...", token)
                 explanation = get_explanation_in_mother_language(vocabulary, chat_id, target_language, model=ASSISTANT_MAIN_MODEL, engine = engine, user_parameters=user_parameters)
                 
                 if explanation: 
