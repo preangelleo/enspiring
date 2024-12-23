@@ -69,6 +69,7 @@ available_functions = {
     "Generate_News": post_news_to_ghost_creator_front,
     "Generate_Image": generate_image_front,
     "Generate_Audio": function_call_audio_generation,
+    "google_search": google_search,
 }
 
 functions_with_audio_output = ['Vocabulary_Dictionary']
@@ -88,7 +89,29 @@ FUNCTIONS_TOOLS = [
                 "required": ["prompt"]
             }
         }
-    }, {
+    }, 
+    {
+        "type": "function",
+        "function": {
+            "name": "google_search",
+            "description": "Perform a real-time web search using Google search engine, providing up to 5 relevant results with source URLs. The search covers current events, facts, and general information.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string", 
+                        "description": "The search query or keywords to search for"
+                    },
+                    "chat_id": {
+                        "type": "string",
+                        "description": "Telegram chat ID for usage tracking"
+                    }
+                },
+                "required": ["prompt", "chat_id"]
+            }
+        }
+    },
+    {
         "type": "function",
         "function": {
             "name": "Generate_Journal",
@@ -476,7 +499,7 @@ def run_assistant(chat_id, query, session_name, engine = engine, model = ASSISTA
     except Exception as e: return send_debug_to_laogege(f"run_assistant() >> /chat_{chat_id} >> Failed to run the assistant. Error: {str(e)}\n\nUSER QUERY: \n{query[:500]}...")
 
 
-def session_conversation(chat_id: str, query: dict, session_name: str, token = TELEGRAM_BOT_TOKEN, engine = engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = {}):
+def session_conversation(chat_id: str, query: str, session_name: str, token = TELEGRAM_BOT_TOKEN, engine = engine, model = ASSISTANT_DOCUMENT_MODEL, user_parameters = {}):
 
     if session_name == 'session_translation': return session_translation(query, chat_id, token, user_parameters)
     else: 

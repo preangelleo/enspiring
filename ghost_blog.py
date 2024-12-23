@@ -1575,6 +1575,14 @@ def post_journal_to_ghost_creator(prompt: str, chat_id: str, engine = engine, to
     system_prompt_creator = SYSTEM_PROMPT_CONTENT_CREATOR_STRUCTURED_OUTPUT.replace('_Language_Placeholder_', post_language).replace('_cartoon_style_place_holder_', cartoon_style).replace('_my_writing_style_placeholder_', my_writing_style)
     system_prompt_creator = system_prompt_creator.replace('_words_length_placeholder_', '3000 ~ 6000') if is_journal else system_prompt_creator.replace('_words_length_placeholder_', '1000 ~ 3000')
 
+    if len(prompt) > 100: query = openai_gpt_chat(SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH, prompt, chat_id, model, user_parameters, token)
+    else: query = prompt
+
+    try: formatted_response = google_search(query, chat_id, engine, token, user_parameters)
+    except: formatted_response = 'No relevant information found.'
+
+    prompt += f"\n\nAnd here's today's online search results from the given prompt, ignore the irrelevant contents and take only the relevant contents as a reference for your post generation.\n\n{formatted_response}"
+
     event_dict = openai_gpt_structured_output(prompt, system_prompt_creator, chat_id, model, engine, user_parameters)
     if not event_dict: return send_debug_to_laogege(f"post_youtube_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate the article based on the youtube link you provided.")
 
@@ -2369,11 +2377,11 @@ def repost_journal_to_ghost_creator(chat_id: str, post_id: int, engine = engine,
         custom_excerpt = event_dict.get('excerpt', '') or custom_excerpt
         translated_journal = event_dict.get('article', '') or generated_journal
         
-        if post_language == 'Chinese':
-            try: translated_journal = call_gaia(translated_journal, SYSTEM_PROMPT_CHINESE_REFINER, api_url = DEFAULT_GAIA_ENDPOINT_QWEN)
-            except Exception as e: 
-                send_debug_to_laogege(f"repost_journal_to_ghost() chat_id {chat_id} >> Failed to refine the translated journal with post_id: {post_id}, title: {title}\n\n{e}")
-                refined_translated_journal = translated_journal
+        # if post_language == 'Chinese':
+        #     try: translated_journal = call_gaia(translated_journal, SYSTEM_PROMPT_CHINESE_REFINER, api_url = DEFAULT_GAIA_ENDPOINT_QWEN)
+        #     except Exception as e: 
+        #         send_debug_to_laogege(f"repost_journal_to_ghost() chat_id {chat_id} >> Failed to refine the translated journal with post_id: {post_id}, title: {title}\n\n{e}")
+        #         refined_translated_journal = translated_journal
 
         new_tags = event_dict.get('tags', '')
 

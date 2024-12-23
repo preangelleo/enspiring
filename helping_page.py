@@ -63,6 +63,8 @@ if 'Making variables':
     PAGE_PREMIUM = os.getenv('PAGE_PREMIUM')
     GOOGLE_SPREADSHEET_SETUP_PAGE = os.getenv('GOOGLE_SPREADSHEET_SETUP_PAGE')
 
+    GEMINI_API_KEY=os.getenv("GEMINI_API_KEY")
+
     BLOG_BASE_URL = os.getenv("BLOG_BASE_URL")
 
     LINKEDIN_CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID')
@@ -8883,7 +8885,7 @@ def search_keywords_and_summarize_by_gpt(query: str, chat_id: str, model=ASSISTA
     
     if len(query) > 100: query = ollama_gpt_chat_basic(query, SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH, model = "llama3.2")
 
-    formatted_response = get_news_results(query)
+    formatted_response = google_search(query, chat_id, engine, token, user_parameters)
     # system_prompt = SYSTEM_PROMPT_SEARCH_RESULTS_POLISH.replace('_user_prompt_placeholder_', query)
     # formatted_response = openai_gpt_chat(formatted_response, system_prompt, chat_id, ASSISTANT_MAIN_MODEL, user_parameters, token)
 
@@ -10484,9 +10486,199 @@ def pdf_to_text(pdf_path, output_path=None):
     except Exception as e:
         raise Exception(f"Error processing PDF: {str(e)}")
     
+from google import genai
+from typing import List, Optional
+from google.genai import types
+
+class GeminiSearchAgent:
+    def __init__(self, api_key: str):
+        """
+        Initialize the Gemini search agent with API credentials and search tools
+        
+        Args:
+            api_key (str): Your Google API key for Gemini access
+        """
+        # Use genai.Client instead of basic configure for tools support
+        self.client = genai.Client(
+            api_key=api_key,
+            http_options={'api_version': 'v1alpha'}  # Required for tools support
+        )
+        self.model = 'gemini-2.0-flash-exp'
+        
+    def search(self, 
+               query: str,
+               max_results: int = 5,
+               temperature: float = 0.3,
+               top_k: int = 40) -> List[str]:
+        """
+        Perform a real web search using Gemini with search tools
+        
+        Args:
+            query (str): Search keywords/query
+            max_results (int): Maximum number of results to return
+            temperature (float): Controls randomness in generation
+            top_k (int): Number of tokens to consider
+            
+        Returns:
+            List[str]: List of search results with sources
+        """
+        try:
+            # Configure search tools
+            tools = [{'google_search': {}}]
+            
+            # Configure model parameters
+            model_config = {
+                'temperature': temperature,
+                'top_k': top_k,
+                'tools': tools
+            }
+            
+            search_prompt = f"""
+            Search the web for: "{query}"
+            
+            Provide {max_results} relevant results. For each result:
+            1. Include factual, up-to-date information
+            2. Add the source URL at the end of each result
+            3. Focus on accurate and verified information
+            4. Format as a clear, informative paragraph
+            
+            Format each response as:
+            [Information paragraph]
+            Source: [URL]
+            """
+            
+            # Generate response using the models API with search tools
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=search_prompt,
+                config=model_config
+            )
+            
+            results = []
+            if response.candidates:
+                raw_text = response.candidates[0].content.parts[0].text
+                # Split by double newline and filter empty strings
+                raw_results = [r.strip() for r in raw_text.split('\n\n') if r.strip()]
+                results = raw_results[:max_results]
+                
+            return results
+            
+        except Exception as e:
+            print(f"Error performing search: {str(e)}")
+            return []
+    
+    def search_with_filters(self,
+                          query: str,
+                          date_range: Optional[str] = None,
+                          source_types: Optional[List[str]] = None,
+                          language: str = 'en',
+                          max_results: int = 5) -> List[str]:
+        """
+        Perform a filtered web search with additional parameters
+        
+        Args:
+            query (str): Search keywords/query
+            date_range (str, optional): Time period for results
+            source_types (List[str], optional): Types of sources to include
+            language (str): Preferred language for results
+            max_results (int): Maximum number of results to return
+            
+        Returns:
+            List[str]: Filtered search results with sources
+        """
+        try:
+            # Configure search tools
+            tools = [{'google_search': {}}]
+            
+            # Configure model
+            model_config = {
+                'temperature': 0.3,  # Lower temperature for more focused results
+                'top_k': 40,
+                'tools': tools
+            }
+            
+            filter_prompt = f"""
+            Perform a web search for: "{query}"
+            
+            Search constraints:
+            - Time period: {date_range if date_range else 'Any time'}
+            - Source types: {', '.join(source_types) if source_types else 'All sources'}
+            - Language: {language}
+            
+            Provide {max_results} results that match these criteria. For each result:
+            1. Only use sources from the specified time period
+            2. Only include content from the specified source types
+            3. Ensure content is in the specified language
+            4. Include the source URL for verification
+            5. Format as a clear, informative paragraph
+            
+            Format each response as:
+            [Information paragraph]
+            Source: [URL]
+            """
+            
+            # Generate response using the models API with search tools
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=filter_prompt,
+                config=model_config
+            )
+            
+            results = []
+            if response.candidates:
+                raw_text = response.candidates[0].content.parts[0].text
+                raw_results = [r.strip() for r in raw_text.split('\n\n') if r.strip()]
+                results = raw_results[:max_results]
+            
+            return results
+            
+        except Exception as e:
+            print(f"Error performing filtered search: {str(e)}")
+            return []
+        
+
+def google_search(prompt: str, chat_id: str, engine = engine, token = TELEGRAM_BOT_TOKEN, user_parameters = {}) -> str:
+    """
+    Quick search function using Gemini model
+    Returns formatted search results as a string
+    
+    Args:
+        query (str): Search query
+        max_results (int): Maximum number of results to return
+    
+    Returns:
+        str: Formatted search results in markdown format
+    """
+    try:
+        # Initialize the search agent
+        search_agent = GeminiSearchAgent(api_key=GEMINI_API_KEY)
+        
+        # Perform the search
+        results = search_agent.search(
+            query=prompt,
+            max_results=5,
+            temperature=0.2  # Lower temperature for more focused results
+        )
+
+        if chat_id:  update_chat_id_monthly_consumption(chat_id, 0.01, engine)
+        if not results: return "No results found."
+
+        # Format content as markdown
+        content = "###Google Search Results:\n\n"
+        for i, result in enumerate(results, 1): content += f"{i}. {result}\n\n"
+
+        return content
+
+    except Exception as e: return f"Error performing search: {str(e)}"
+
+
 
 
 if __name__ == '__main__':
     print("Helping page constants")
-    r = scrape_content('https://www.seattletimes.com/life/for-tesla-owners-a-referendum-through-bumper-stickers/')
+    query = "搜索今天越疆科技港股上市的新闻"
+    chat_id = OWNER_CHAT_ID
+    token = TELEGRAM_BOT_TOKEN
+    user_parameters = user_parameters_realtime(chat_id, engine)
+    r = formatted_response = google_search(query, chat_id, engine, token, user_parameters)
     print(r)
