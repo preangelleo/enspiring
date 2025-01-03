@@ -759,7 +759,7 @@ Only when you reply directly to the user, you are allowed to use markdown format
         "generate_prompt_midjourney": "Send me /generate_prompt_midjourney Your thoughts here. For example: /generate_prompt_midjourney a cover image for a blog post about the future of AI.",
         "generate_image_dalle": "Send me /generate_image_dalle Your thoughts here. For example: /generate_image_dalle a cover image for a blog post about the future of AI.",
         "generate_image_blackforest": "Send me /generate_image_blackforest Your thoughts here. For example: /generate_image_blackforest a cover image for a blog post about the future of AI.",
-        "generate_image_midjourney": "Send me /generate_midjourney_image Your prompt here. For example: /generate_midjourney_image a dog walking around a futuristic alien city.",
+        # "generate_image_midjourney": "Send me /generate_midjourney_image Your prompt here. For example: /generate_midjourney_image a dog walking around a futuristic alien city.",
         # "email_assistant": "Send me /email_assistant Prompt and Your email content here. For example: /email_assistant Summarize my email : Hello Leo, I'm sending this email to you because...",
         # "check_tier_status": "Click to update your /tier_status status if you just upgraded your subscription.",
         # "supported_file_types": "Click to see the supported file types for the /session_query_doc command.",
@@ -4522,7 +4522,7 @@ def callback_image_prompt_audio(chat_id: str, prompt: str, token = TELEGRAM_BOT_
         df = pd.DataFrame(data_dict)
         df.to_sql('markdown_text', con=conn, if_exists='append', index=False)
     button_per_list = 2
-    text_audioinline_keyboard_dict = {'Midjourney': f'generate_image_midjourney_{hash_md5}', 'Blackforest': f'generate_image_blackforest_{hash_md5}', 'Dalle': f'generate_image_dalle_{hash_md5}', 'Play Audio': f'markdown_audio_{hash_md5}'}
+    text_audioinline_keyboard_dict = {'Blackforest': f'generate_image_blackforest_{hash_md5}', 'Dalle': f'generate_image_dalle_{hash_md5}', 'Play Audio': f'markdown_audio_{hash_md5}'}
     
     mother_language = user_parameters.get('mother_language', '')
     if mother_language != 'English': text_audioinline_keyboard_dict[f'Translate to {mother_language.capitalize()}'] = f'translate_to_{mother_language}_{hash_md5}'
@@ -9052,14 +9052,15 @@ def generate_midjourney_prompt(chat_id, user_prompt, token, engine, user_paramet
 
     image_model = 'Midjourney' if not prompt_only else ''
     callback_image_prompt_audio(chat_id, midjourney_prompt, token, engine, user_parameters, '', image_model, suffix = '')
+    return
 
-    ranking = user_parameters.get('ranking') or 0
-    tier = user_parameters.get('tier') or 'Free'
-    if ranking >=5:
-        image_id = generate_image_midjourney(chat_id, midjourney_prompt, 'telegram', midjourney_token = IMAGEAPI_MIDJOURNEY)
-        if image_id: send_message(chat_id, f"As our esteemed /{tier} member, I have generated the image with my Midjourney API, you will get 4 upscaled images once the process is completed. Image ID: \n`{image_id}`", token)
-        else: send_message(chat_id, "Error in generating the image with Midjourney API, please try again later by clicking the `Midjourney` button. Or try other image models.", token)
-    return 'DONE'
+    # ranking = user_parameters.get('ranking') or 0
+    # tier = user_parameters.get('tier') or 'Free'
+    # if ranking >=5:
+    #     image_id = generate_image_midjourney(chat_id, midjourney_prompt, 'telegram', midjourney_token = IMAGEAPI_MIDJOURNEY)
+    #     if image_id: send_message(chat_id, f"As our esteemed /{tier} member, I have generated the image with my Midjourney API, you will get 4 upscaled images once the process is completed. Image ID: \n`{image_id}`", token)
+    #     else: send_message(chat_id, "Error in generating the image with Midjourney API, please try again later by clicking the `Midjourney` button. Or try other image models.", token)
+    # return 'DONE'
 
 
 def main_menu_setting(chat_id, token = TELEGRAM_BOT_TOKEN, message_id = 0):

@@ -865,14 +865,14 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
         return from_gpt_to_replicate_image(chat_id, prompt, midjourney_images_dir, token, user_parameters)
     
 
-    elif msg_lower.startswith('generate_image_midjourney'):
-        if user_ranking < 4 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Platinum or higher tier to use this function.\n\n/get_premium", token)
-        user_prompt = msg.replace('generate_image_midjourney', '').strip()
-        if not user_prompt: return send_message(chat_id, commands_dict.get("generate_image_midjourney"), token)
+    # elif msg_lower.startswith('generate_image_midjourney'):
+    #     if user_ranking < 4 and not openai_api_key: return send_message(chat_id, f"As a /{tier} user, you are not qualified to use this function. You need to upgrade to /Platinum or higher tier to use this function.\n\n/get_premium", token)
+    #     user_prompt = msg.replace('generate_image_midjourney', '').strip()
+    #     if not user_prompt: return send_message(chat_id, commands_dict.get("generate_image_midjourney"), token)
 
-        image_id = generate_image_midjourney(chat_id, user_prompt, 'user', midjourney_token = IMAGEAPI_MIDJOURNEY)
-        if image_id: send_message_markdown(chat_id, f"Your image generation request has been submitted to Midjourney bot. The image ID is: `{image_id[:6]}...{image_id[-6:]}`. All four images will be send to you once generated. Click [HERE](https://docs.midjourney.com/docs/prompts) to learn more about how to create a better `Midjourney Prompt`", token)
-        return
+    #     image_id = generate_image_midjourney(chat_id, user_prompt, 'user', midjourney_token = IMAGEAPI_MIDJOURNEY)
+    #     if image_id: send_message_markdown(chat_id, f"Your image generation request has been submitted to Midjourney bot. The image ID is: `{image_id[:6]}...{image_id[-6:]}`. All four images will be send to you once generated. Click [HERE](https://docs.midjourney.com/docs/prompts) to learn more about how to create a better `Midjourney Prompt`", token)
+    #     return
 
 
     elif msg_lower.startswith('post_journal'):
@@ -988,7 +988,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             print(f"point_subdomain command...")
             '''/point_subdomain sub.domainname new_ip'''
             domain_name_subdomain_new_ip = msg_lower.replace('point_subdomain', '').strip()
-            if not domain_name_subdomain_new_ip: return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain your_domain_name your_subdomain your_new_ip", token)
+            if not domain_name_subdomain_new_ip: return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain api.sumatman.ai your_new_ip", token)
             subdomain_name_new_ip_list = domain_name_subdomain_new_ip.split(' ')
             if len(subdomain_name_new_ip_list) < 2: return send_message(chat_id, "Please provide subdomain and the new IP address after the command. Example: /point_subdomain api.sumatman.ai your_new_ip", token)
             domain_name = subdomain_name_new_ip_list[0].strip()
@@ -996,7 +996,7 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             # from get subdomain and domain name
             subdomain = domain_name.split('.', 1)[0]
             domain_name = domain_name.replace(f"{subdomain}.", '').strip()
-            if not all([domain_name, subdomain, ip_address]): return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain your_domain_name your_subdomain your_new_ip", token)
+            if not all([domain_name, subdomain, ip_address]): return send_message(chat_id, "Please provide the domain name, subdomain and the new IP address after the command. Example: /point_subdomain api.sumatman.ai your_new_ip", token)
             api = NameComAPI(DOMAIN_NAME_USERNAME, DOMAIN_NAME_TOKEN)
             result = update_subdomain_a_record(api, domain_name, subdomain, ip_address)
             return send_message(chat_id, f"Result: {result['message']}", token)

@@ -388,6 +388,7 @@ def domain_verification(domain_name:str, verification_string:str, username: str=
 
     return verify_google_search_console(api, domain_name, verification_string)
 
+
 def update_subdomain_a_record(api: NameComAPI, domain_name: str, subdomain: str, new_ip: str, ttl: int = 300) -> Dict[str, Any]:
     """
     更新域名的二级域名 A 记录

@@ -1247,7 +1247,7 @@ def handle_message(update, token, engine = engine):
 
 def handle_update(update, token, engine = engine):
     
-    # print(json.dumps(update, indent=2))
+    print(json.dumps(update, indent=2))
 
     callback_query = update.get("callback_query")
     if callback_query: 
