@@ -833,12 +833,12 @@ def handle_message(update, token, engine = engine):
                 return send_message(chat_id, ".json file is received, but the name is not correct, if you want to setup your google sreadsheet credentials, please name the file as `google_sheet_credentials.json`", token)
 
 
-            elif doc_name in ["creator_post_journal.txt", "creator_post_news.txt", "creator_post_story.txt", "journal.txt", "story.txt", "news.txt"] or caption in ['creator_post_journal', 'creator_post_news', 'creator_post_story', 'news', 'journal', 'story']:
+            elif doc_name in ["creator_post_journal.txt", "creator_post_news.txt", "creator_post_story.txt", "journal.txt", "story.txt", "news.txt", "journal.md", "story.md", "news.md"] or caption in ['creator_post_journal', 'creator_post_news', 'creator_post_story', 'news', 'journal', 'story']:
                 with open(file_path, 'r') as f: prompt_text = f.read()
                 
-                if doc_name in ["creator_post_journal.txt", "journal.txt"] or caption in ['creator_post_journal', 'journal']: post_journal_to_ghost_creator_front(prompt_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, '', user_parameters, is_journal = True)
-                elif doc_name in ["creator_post_story.txt", "story.txt"] or caption in ['creator_post_story', 'story']: post_journal_to_ghost_creator_front(prompt_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, '', user_parameters, is_journal = False)
-                elif doc_name in ["creator_post_news.txt""news.txt"] or caption in ['creator_post_news', 'news']: post_news_to_ghost_creator_front(prompt_text, chat_id, engine, token, user_parameters)
+                if doc_name in ["creator_post_journal.txt", "journal.txt", "journal.md"] or caption in ['creator_post_journal', 'journal']: post_journal_to_ghost_creator_front(prompt_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, '', user_parameters, is_journal = True)
+                elif doc_name in ["creator_post_story.txt", "story.txt", "story.md"] or caption in ['creator_post_story', 'story']: post_journal_to_ghost_creator_front(prompt_text, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, '', user_parameters, is_journal = False)
+                elif doc_name in ["creator_post_news.txt", "news.txt", "news.md"] or caption in ['creator_post_news', 'news']: post_news_to_ghost_creator_front(prompt_text, chat_id, engine, token, user_parameters)
                 return 
             
             
