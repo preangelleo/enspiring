@@ -3072,6 +3072,9 @@ def auto_blog_post(chat_id: str, engine = engine, token = os.getenv("TELEGRAM_BO
             try: post_to_bluesky(title, custom_excerpt, url, image_path, chat_id, user_parameters)
             except: send_debug_to_laogege(f"auto_blog_post() >> Failed to post to Bluesky for the post {title}.")
 
+            try: send_message_basic(TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY, url, token=os.getenv("TELEGRAM_BOT_TOKEN_CODEXODYSSEY"))
+            except: pass
+
             share_asset = handle_share_to_linkedin_button(chat_id, title, custom_excerpt, url, image_path, token)
             linkedin_url = f"https://www.linkedin.com/feed/update/{share_asset}"
             reply = f"Clicke [HERE]({linkedin_url}) to view the post on LinkedIn."
@@ -3289,3 +3292,5 @@ AI generated {journal_or_story} in raw text:
 
 if __name__ == "__main__":
     print("Testing GHOST blog post!")
+    # url = 'https://codexodyssey.ai/day_55/'
+    # send_message_basic(TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY, url, token=os.getenv("TELEGRAM_BOT_TOKEN_CODEXODYSSEY"))

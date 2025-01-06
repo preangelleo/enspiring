@@ -55,6 +55,8 @@ if 'Making variables':
     DOMAIN_NAME_USERNAME = os.getenv("DOMAIN_NAME_USERNAME")
     DOMAIN_NAME_TOKEN = os.getenv("DOMAIN_NAME_TOKEN")
     
+    TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY = os.getenv("TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY")
+    
     AUTO_BLOG_BASE_URL = 'enspiring.org'
     ENSPIRING_DOT_AI = os.getenv("ENSPIRING_DOT_AI")
 
@@ -1765,6 +1767,8 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
 
     emoji_list_happy = ["😊", "😉", "😎", "🤗", "🤩", "🥳", "😇", "🤓", "🤭", "🤫", "🤔", "🧐", "🤖", "👻", "🤡"]
     emoji_list_sad = ["😅", "😂", "😭", "😡", "🤯", "🤨", "🧐"]
+
+    TELEGRAM_BOT_TOKEN_CODEXODYSSEY = os.getenv("TELEGRAM_BOT_TOKEN_CODEXODYSSEY")
 
 
     whisper_voice_list_female = ['nova', 'alloy', 'fable', 'shimmer']
