@@ -335,7 +335,7 @@ def openai_gpt_structured_output(prompt: str, system_prompt: str, chat_id: str, 
         tags: str
         midjourney_prompt: str
 
-    openai_api_key = user_parameters.get('openai_api_key', '') or os.getenv("OPENAI_API_KEY_BACKUP")
+    openai_api_key = user_parameters.get('openai_api_key', '') or os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=openai_api_key)
 
     try: completion = client.beta.chat.completions.parse(model=model, messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}], response_format=PostContents)
@@ -370,7 +370,7 @@ def openai_gpt_structured_output_translate(prompt: str, system_prompt: str, chat
         tags: str
         article: str
 
-    openai_api_key = user_parameters.get('openai_api_key', '') or os.getenv("OPENAI_API_KEY_BACKUP")
+    openai_api_key = user_parameters.get('openai_api_key', '') or os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=openai_api_key)
 
     try: completion = client.beta.chat.completions.parse(model=model, messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}], response_format=PostContents)
@@ -3294,3 +3294,4 @@ if __name__ == "__main__":
     print("Testing GHOST blog post!")
     # url = 'https://codexodyssey.ai/day_55/'
     # send_message_basic(TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY, url, token=os.getenv("TELEGRAM_BOT_TOKEN_CODEXODYSSEY"))
+    auto_blog_post(DOLLARPLUS_CHAT_ID, engine, os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), ASSISTANT_MAIN_MODEL_BEST, user_parameters_realtime(DOLLARPLUS_CHAT_ID, engine))

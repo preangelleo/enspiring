@@ -101,7 +101,6 @@ if 'Making variables':
     DB_PASSWORD_LOCOL = os.getenv('DB_LOCAL_PASSWORD')
     DB_PASSWORD_NEW = os.getenv('DB_PASSWORD_NEW')
 
-    OPENAI_API_KEY_BACKUP = os.getenv("OPENAI_API_KEY_BACKUP")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     CLOUDE_API_KEY = os.getenv("CLOUDE_API_KEY")
 
@@ -6148,7 +6147,7 @@ Sample for transcript_tags list:
     
     reply_dict['Last_Process'] = "posts_generator() just about to generate post contents"
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_BACKUP"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     try:
         completion = client.beta.chat.completions.parse(
