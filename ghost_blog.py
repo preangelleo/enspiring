@@ -3150,9 +3150,7 @@ def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engin
 
     image_path = os.path.join(midjourney_images_dir, f"{slug}.png")
     image_id, img_url = '', ''
-    if default_image_model == 'Midjourney': 
-        if '--ar' not in midjourney_prompt: midjourney_prompt += ' --ar 16:9'
-        image_id = generate_image_midjourney(chat_id, midjourney_prompt, post_type, IMAGEAPI_MIDJOURNEY)
+    if chat_id == TELEGRAM_CHAT_ID_ORA: img_url = 'https://gmora.ai/content/images/2025/01/gmORA-Banner-logo-realistic-1.png'  
     else: img_url = first_cover_image_blackforest(midjourney_prompt, image_path, admin_api_key, ghost_url)
 
     key_id, secret = admin_api_key.split(':')
@@ -3170,18 +3168,18 @@ def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engin
     html_content = md.render(generated_journal)
 
     audio_url = ''
-    if audio_switch == 'on':
-        user_story_audio_dir = os.path.join(story_audio, chat_id)
-        if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
+    # if audio_switch == 'on':
+    #     user_story_audio_dir = os.path.join(story_audio, chat_id)
+    #     if not os.path.isdir(user_story_audio_dir): os.makedirs(user_story_audio_dir)
 
-        audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
-        if audio_file_path and os.path.isfile(audio_file_path): 
-            upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
-            if upload_result['Status']: 
-                audio_url = upload_result['URL']
-                html_content = embed_audio_to_html(audio_url, title) + html_content
-            else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
-        else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
+    #     audio_file_path = generate_story_voice(generated_journal, chat_id, user_story_audio_dir, engine, token, user_parameters, language_name = post_language.lower())
+    #     if audio_file_path and os.path.isfile(audio_file_path): 
+    #         upload_result = upload_audio_to_ghost(admin_api_key, ghost_url, audio_file_path)
+    #         if upload_result['Status']: 
+    #             audio_url = upload_result['URL']
+    #             html_content = embed_audio_to_html(audio_url, title) + html_content
+    #         else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to upload audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
+    #     else: send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to generate audio for the article. Title: {title}\n\nContent: {generated_journal[:200]}......")
 
     if not custom_excerpt: custom_excerpt = f"Generated on {date_today} by {model}"
 
@@ -3195,9 +3193,11 @@ def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engin
     tags_html = tags_list_to_html(tags, prefix=f"{ghost_url}/tag/")
     html_content += tags_html
 
+    title = f"Good Morning ORA - {date_today}" if chat_id == TELEGRAM_CHAT_ID_ORA else title
+
     post_type_key = f"{post_type}s"
     post_content_dict = {
-        "title": f"Good Morning {date_today}",
+        "title": title,
         "slug": slug,
         "tags": tags,
         "html": html_content,
@@ -3260,10 +3260,24 @@ def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engin
         df = pd.DataFrame(data_dict)
         df.to_sql('creator_journals', engine, if_exists='append', index=False)
 
-        if img_url and post_type == 'post': callback_update_post_status(chat_id, url_markdown, post_id, token, user_parameters, 'creator_journals')
+        if img_url and post_type == 'post': 
+            callback_update_post_status(chat_id, url_markdown, post_id, token, user_parameters, 'creator_journals')
+
+            try: post_to_twitter_by_chat_id(chat_id, title, url, token, user_parameters)
+            except: send_debug_to_laogege(f"post_discord_conversation_to_ghost() >> Failed to post to Twitter for the post {title}.")
+
+            try: send_message_basic(TELEGRAM_CHANNEL_ID_GMORA, url, token=os.getenv("TELEGRAM_BOT_TOKEN_GMORA"))
+            except: send_debug_to_laogege(f"post_discord_conversation_to_ghost() >> Failed to post to GMORA post to the telegram channel.")
 
         if image_id:
             with engine.begin() as conn: conn.execute(text(f"UPDATE image_midjourney SET post_id = :post_id, title = :title, slug = :slug, post_url = :url WHERE image_id = :image_id"), {'post_id': post_id, 'image_id': image_id, 'title': title, 'slug': slug, 'url': url})
+
+        try: 
+            # save html_content to a temp file
+            html_path = os.path.join('Temp', f"{slug}.html")
+            output_path = os.path.join('Temp', f"{slug}.png")
+            html_file_to_image(html_path, output_path)
+        except Exception as e: send_debug_to_laogege(f"post_discord_conversation_to_ghost() >> Failed to save the html content to image: {str(e)}")
 
         title = title.replace('-', ' ')
         email_subject = f"{journal_or_story.upper()}: {title}"
@@ -3290,8 +3304,173 @@ AI generated {journal_or_story} in raw text:
     else: return send_debug_to_laogege(f"post_journal_to_ghost_creator() user_name {user_name} (/chat_{chat_id}) >> Failed to create post: \n{response.status_code} {response.text}")
 
 
+def update_blog_post_feature_img_to_ghost_by_url(post_id: str, image_url: str, post_type: str = 'post', api_key=GHOST_ADMIN_API_KEY, api_url=GHOST_API_URL):
+    post_type_key = f"{post_type}s"
+
+    # Split the key into ID and SECRET
+    id, secret = api_key.split(':')
+
+    # Create a JWT (expires in 5 minutes)
+    iat = datetime.now(tz=timezone.utc)
+    exp = iat + timedelta(minutes=5)
+
+    payload = {
+        'iat': iat.timestamp(),
+        'exp': exp.timestamp(),
+        'aud': '/admin/'
+    }
+
+    # Create the JWT token
+    token = jwt.encode(payload, bytes.fromhex(secret), algorithm='HS256', headers={'kid': id})
+
+    # Fetch the existing post data to get the `updated_at` field
+    headers = {
+        'Authorization': f'Ghost {token}',
+        'Content-Type': 'application/json'
+    }
+
+    get_post_response = requests.get(f'{api_url}/ghost/api/admin/{post_type_key}/{post_id}/', headers=headers)
+
+    if get_post_response.status_code != 200: return f"Failed to retrieve post data: \n{get_post_response.status_code} {get_post_response.text}"
+
+    post_data = get_post_response.json()
+    updated_at = post_data[post_type_key][0]['updated_at']
+
+    # Prepare the post data with the `updated_at` field and the new feature image
+    post_data = {
+        post_type_key: [{
+            "feature_image": image_url,
+            "updated_at": updated_at
+        }]
+    }
+
+    # Send the PUT request to update the blog post's feature image
+    response = requests.put(f'{api_url}/ghost/api/admin/{post_type_key}/{post_id}/', headers=headers, json=post_data)
+
+    # Check the response status
+    if response.status_code == 200: return response.json()[post_type_key][0]['url']
+    else: return f"Failed to update post feature image: \n{response.status_code} {response.text}"
+
+
+def list_ghost_posts(admin_api_key: str, ghost_url: str):
+    """
+    Retrieve all posts from Ghost using Admin API
+    Returns a list of tuples containing (post_id, title)
+    """
+    # Split the key into ID and SECRET
+    id, secret = admin_api_key.split(':')
+
+    # Create a JWT (expires in 5 minutes)
+    iat = datetime.now(tz=timezone.utc)
+    exp = iat + timedelta(minutes=5)
+
+    payload = {
+        'iat': iat.timestamp(),
+        'exp': exp.timestamp(),
+        'aud': '/admin/'
+    }
+
+    # Create the JWT token
+    token = jwt.encode(payload, bytes.fromhex(secret), algorithm='HS256', headers={'kid': id})
+
+    # Set up headers
+    headers = {
+        'Authorization': f'Ghost {token}',
+        'Content-Type': 'application/json'
+    }
+
+    try:
+        # Get all posts with pagination
+        all_posts = []
+        page = 1
+        while True:
+            response = requests.get(
+                f'{ghost_url}/ghost/api/admin/posts/',
+                params={'page': page, 'limit': 100, 'formats': 'html,mobiledoc'},
+                headers=headers
+            )
+            
+            if response.status_code != 200:
+                print(f"Error: {response.status_code} {response.text}")
+                break
+                
+            posts = response.json().get('posts', [])
+            if not posts:
+                break
+                
+            all_posts.extend([(post['id'], post['title']) for post in posts])
+            page += 1
+
+        return all_posts
+
+    except Exception as e:
+        print(f"Error retrieving posts: {str(e)}")
+        return []
+
+
+def update_ghost_posts_feature_image(admin_api_key: str, ghost_url: str, new_image_url: str):
+    """
+    Update feature image for all posts in Ghost
+    """
+    # Get all posts first
+    posts = list_ghost_posts(admin_api_key, ghost_url)
+    total_posts = len(posts)
+    
+    print(f"Found {total_posts} posts. Starting update...")
+    
+    success_count = 0
+    fail_count = 0
+    
+    for index, (post_id, title) in enumerate(posts, 1):
+        try:
+            print(f"\nProcessing {index}/{total_posts}: {title}")
+            result = update_blog_post_feature_img_to_ghost_by_url(
+                post_id=post_id,
+                image_url=new_image_url,
+                post_type='post',
+                api_key=admin_api_key,
+                api_url=ghost_url
+            )
+            
+            if isinstance(result, str) and result.startswith('Failed'):
+                print(f"Failed to update post {post_id}: {result}")
+                fail_count += 1
+            else:
+                print(f"Successfully updated post {post_id}")
+                success_count += 1
+                
+        except Exception as e:
+            print(f"Error updating post {post_id}: {str(e)}")
+            fail_count += 1
+            
+        # Add a small delay between requests
+        time.sleep(1)
+    
+    print(f"\nUpdate complete!")
+    print(f"Successfully updated: {success_count} posts")
+    print(f"Failed updates: {fail_count} posts")
+    
+
+
 if __name__ == "__main__":
     print("Testing GHOST blog post!")
     # url = 'https://codexodyssey.ai/day_55/'
     # send_message_basic(TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY, url, token=os.getenv("TELEGRAM_BOT_TOKEN_CODEXODYSSEY"))
-    auto_blog_post(DOLLARPLUS_CHAT_ID, engine, os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), ASSISTANT_MAIN_MODEL_BEST, user_parameters_realtime(DOLLARPLUS_CHAT_ID, engine))
+    # auto_blog_post(DOLLARPLUS_CHAT_ID, engine, os.getenv("TELEGRAM_BOT_TOKEN_ENSPIRING"), ASSISTANT_MAIN_MODEL_BEST, user_parameters_realtime(DOLLARPLUS_CHAT_ID, engine))
+
+    # Usage
+    # chat_id = '2048131184'
+    # user_parameters = user_parameters_realtime(chat_id, engine)
+
+    # admin_api_key = user_parameters.get('ghost_admin_api_key', '')
+    # ghost_url = user_parameters.get('ghost_api_url', '')
+    # new_image_url = "https://gmora.ai/content/images/2025/01/gmORA-Banner-logo-realistic-1.png"
+
+    # if not all([admin_api_key, ghost_url]): print(NO_BLOG_ADMIN_API_KEY_NOTIFICATION)
+    # else: update_ghost_posts_feature_image(admin_api_key, ghost_url, new_image_url)
+
+    # chat_id = '2048131184'
+    # user_parameters = user_parameters_realtime(chat_id, engine)
+    # custom_excerpt = 'Explore the latest developments, opportunities, and community insights in the Ora Protocol project, ensuring informed participation and engagement'
+    # url = 'https://gmora.ai/uanu6cuqkwh/'
+    # post_to_twitter_by_chat_id(chat_id, custom_excerpt[:180], url, TELEGRAM_BOT_TOKEN, user_parameters)

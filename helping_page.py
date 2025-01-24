@@ -56,6 +56,8 @@ if 'Making variables':
     DOMAIN_NAME_TOKEN = os.getenv("DOMAIN_NAME_TOKEN")
     
     TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY = os.getenv("TELEGRAM_CHANNEL_ID_CODEX_ODYSSEY")
+    TELEGRAM_CHANNEL_ID_GMORA = os.getenv("TELEGRAM_CHANNEL_ID_GMORA")
+    TELEGRAM_BOT_TOKEN_GMORA = os.getenv("TELEGRAM_BOT_TOKEN_GMORA")
     
     AUTO_BLOG_BASE_URL = 'enspiring.org'
     ENSPIRING_DOT_AI = os.getenv("ENSPIRING_DOT_AI")
@@ -1223,6 +1225,7 @@ ASSISTANT: [əˌmɔːrtəˈzeɪʃən]
     ELLY_CHAT_ID = os.getenv("ELLY_CHAT_ID")
     LAOGEGE_CHAT_ID = os.getenv("LAOGEGE_CHAT_ID")
     DOLLARPLUS_CHAT_ID = os.getenv("DOLLARPLUS_CHAT_ID")
+    TELEGRAM_CHAT_ID_ORA = os.getenv("TELEGRAM_CHAT_ID_ORA")
 
     WHITLIST_CHAT_ID = [OWNER_CHAT_ID, DANLI_CHAT_ID, RENEE_CHAT_ID, XIAOYU_CHAT_ID, MIUMIU_CHAT_ID, DANYANG_CHAT_ID, KONGDAN_CHAT_ID, BYRONG_PEI, MICHAEL_YUAN_CHAT_ID, KEJIA_CHAT_ID, ELLY_CHAT_ID, LAOGEGE_CHAT_ID, DOLLARPLUS_CHAT_ID]
 
@@ -2232,6 +2235,15 @@ Provide your explanation in a clear, conversational paragraph without medical ja
         'consumer_secret': os.getenv("TWITTER_API_KEY_SECRET_CODEX"),
         'access_token': os.getenv("TWITTER_ACCESS_TOKEN_CODEX"),
         'access_token_secret': os.getenv("TWITTER_ACCESS_TOKEN_SECRET_CODEX")
+    }
+
+
+    twitter_gmora = {
+        'bearer_token': os.getenv("TWITTER_BEARER_TOKEN_GMORA"),
+        'consumer_key': os.getenv("TWITTER_API_KEY_GMORA"),
+        'consumer_secret': os.getenv("TWITTER_API_KEY_SECRET_GMORA"),
+        'access_token': os.getenv("TWITTER_ACCESS_TOKEN_GMORA"),
+        'access_token_secret': os.getenv("TWITTER_ACCESS_TOKEN_SECRET_GMORA")
     }
 
     FISH_AUDIO_API_KEY = os.getenv("FISH_AUDIO_API_KEY")
@@ -9022,6 +9034,7 @@ def post_to_twitter_by_chat_id(chat_id, title, post_url, token = TELEGRAM_BOT_TO
     twitter_id = ''
 
     if chat_id == DOLLARPLUS_CHAT_ID: twitter_id = twitter_post(f"{title} {post_url}", **twitter_codex)
+    elif chat_id == TELEGRAM_CHAT_ID_ORA: twitter_id = twitter_post(f"{title} {post_url}", **twitter_gmora)
     else:
         twitter_handle = user_parameters.get('twitter_handle', '')
         if not twitter_handle: return
@@ -10676,6 +10689,26 @@ def google_search(prompt: str, chat_id: str, engine = engine, token = TELEGRAM_B
     except Exception as e: return f"Error performing search: {str(e)}"
 
 
+def html_file_to_image(html_path: str, output_path: str):
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(viewport={'width': 1920, 'height': 1080})
+        
+        # 使用绝对路径和 file:// 协议
+        abs_path = os.path.abspath(html_path)
+        page.goto(f'file://{abs_path}')
+        
+        # 等待页面加载完成
+        page.wait_for_load_state('domcontentloaded')
+        
+        # 截取整个页面，包括滚动部分
+        page.screenshot(
+            path=output_path,
+            full_page=True
+        )
+        browser.close()
+    send_document_from_file(OWNER_CHAT_ID, output_path, 'Screenshot', os.getenv('TELEGRAM_BOT_TOKEN_TEST'))
 
 
 if __name__ == '__main__':
