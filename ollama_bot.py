@@ -64,10 +64,10 @@ async def handle_updates(token=TELEGRAM_BOT_TOKEN_OLLAMA):
                 
                 user_prompt += NO_MARKDOWN_PROMPT
                 # Call ollama_gpt_chat_basic and log the input/output
-                response_text = ollama_gpt_chat_basic(user_prompt, system_prompt='', model="llama3.2")
+                response_text = ollama_gpt_chat_basic(user_prompt, system_prompt='', model="deepseek-r1")
                 if response_text: 
                     if chat_type == 'group': response_text = f"{username} {response_text}"
-                    send_message_basic(chat_id, response_text, token)
+                    send_message_markdown(chat_id, response_text, token)
 
         except Exception as e: print(f"Error occurred: {e}")
         await asyncio.sleep(1)  # Avoid flooding Telegram's API

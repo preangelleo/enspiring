@@ -95,7 +95,7 @@ def ollama():
 
     # Optional parameters with defaults
     system_prompt = data.get("system_prompt", "")
-    model = data.get("model", "llama3.2")
+    model = data.get("model", "deepseek-r1")
 
     # Call the Ollama function and get the response
     try:

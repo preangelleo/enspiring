@@ -2880,7 +2880,7 @@ def send_message_markdown_basic(chat_id, text, token=TELEGRAM_BOT_TOKEN, message
     return 'DONE'
 
 
-def ollama_gpt_chat_basic(prompt, system_prompt = '', model = "llama3.2"):
+def ollama_gpt_chat_basic(prompt, system_prompt = '', model = "deepseek-r1"):
     # Set the API endpoint and payload
     api_url = "http://localhost:11434/api/generate"
     payload = {
@@ -2902,10 +2902,12 @@ def ollama_gpt_chat_basic(prompt, system_prompt = '', model = "llama3.2"):
     # Parse and return the response
     data = response.json()
     response = data.get("response", "No response received from ollama")
+    response = response.replace("<think>", "```").replace("</think>", "```")
+    response = f"`Responsed by {model}`:\n\n{response}"
     return response
 
 
-def ollama_gpt_chat_remote(prompt, system_prompt='', model="llama3.2", webhook_url=f"{NGROK_WEBHOOK_BASE_URL}/ollama"):
+def ollama_gpt_chat_remote(prompt, system_prompt='', model="deepseek-r1", webhook_url=f"{NGROK_WEBHOOK_BASE_URL}/ollama"):
     """
     Makes a POST request to the remote webhook for processing the prompt.
 
@@ -2933,7 +2935,10 @@ def ollama_gpt_chat_remote(prompt, system_prompt='', model="llama3.2", webhook_u
 
         # Extract the response string and return it
         response_data = response.json()
-        return response_data.get("response", 'No response received from ollama.')
+        response = response_data.get("response", 'No response received from ollama.')
+        response = response.replace("<think>", "```").replace("</think>", "```")
+        response = f"`Responsed by {model}`:\n\n{response}"
+        return response
 
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
@@ -8898,7 +8903,7 @@ def search_keywords_and_summarize_by_gpt(query: str, chat_id: str, model=ASSISTA
     post_language = 'English'
     cartoon_style = user_parameters.get('cartoon_style') or 'Pixar Style'
     
-    if len(query) > 100: query = ollama_gpt_chat_basic(query, SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH, model = "llama3.2")
+    if len(query) > 100: query = ollama_gpt_chat_basic(query, SYSTEM_PROMPT_SEARCH_KEYWORDS_POLISH, model = "deepseek-r1")
 
     formatted_response = google_search(query, chat_id, engine, token, user_parameters)
     # system_prompt = SYSTEM_PROMPT_SEARCH_RESULTS_POLISH.replace('_user_prompt_placeholder_', query)

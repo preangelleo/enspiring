@@ -3275,6 +3275,8 @@ def post_discord_conversation_to_ghost(prompt: str, chat_id: str, engine = engin
         try: 
             # save html_content to a temp file
             html_path = os.path.join('Temp', f"{slug}.html")
+            with open(html_path, 'w', encoding='utf-8') as f: f.write(html_content)
+            
             output_path = os.path.join('Temp', f"{slug}.png")
             html_file_to_image(html_path, output_path)
         except Exception as e: send_debug_to_laogege(f"post_discord_conversation_to_ghost() >> Failed to save the html content to image: {str(e)}")

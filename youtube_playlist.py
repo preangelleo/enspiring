@@ -451,7 +451,7 @@ def get_user_stories_explained(chat_id, engine = engine, token = os.getenv("TELE
 
         user_prompt = f"Mother Language is {mother_language}. \nStory to be explained: \n\n{user_prompt}"
         try:
-            # response_text = ollama_gpt_chat_basic(user_prompt, system_prompt=OLLAMA_SYSTEM_PROMPT_EXPLAIN_STORY, model="llama3.2")
+            # response_text = ollama_gpt_chat_basic(user_prompt, system_prompt=OLLAMA_SYSTEM_PROMPT_EXPLAIN_STORY, model="deepseek-r1")
             response_text = openai_gpt_chat(OLLAMA_SYSTEM_PROMPT_EXPLAIN_STORY, user_prompt, chat_id, model=ASSISTANT_DOCUMENT_MODEL, user_parameters=user_parameters)
 
             if response_text:
@@ -489,7 +489,7 @@ def get_user_stories_explained_tailored(chat_id, engine = engine, token = os.get
         user_prompt = f"Mother Language is {mother_language}. \nStory to be explained: \n\n{generated_story}"
 
         try:
-            # response_text = ollama_gpt_chat_basic(user_prompt, system_prompt=OLLAMA_SYSTEM_PROMPT_EXPLAIN_STORY, model="llama3.2")
+            # response_text = ollama_gpt_chat_basic(user_prompt, system_prompt=OLLAMA_SYSTEM_PROMPT_EXPLAIN_STORY, model="deepseek-r1")
             response_text = openai_gpt_chat(OLLAMA_SYSTEM_PROMPT_EXPLAIN_STORY, user_prompt, chat_id, model=ASSISTANT_DOCUMENT_MODEL, user_parameters = user_parameters)
 
             if response_text:
