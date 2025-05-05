@@ -857,17 +857,20 @@ def _get_primary_ssh_client() -> paramiko.SSHClient:
 if __name__ == "__main__":
     print("Creating Ghost blog...")
  
-    try:
-        success = migrate_ghost_domain(
-            subdomain='ora',
-            new_domain='gm.ora.io'
-        )
+    # try:
+    #     success = migrate_ghost_domain(
+    #         subdomain='ora',
+    #         new_domain='gm.ora.io'
+    #     )
         
-        if success: print("域名迁移成功！现在可以通过两个域名访问博客。")
-        else: print("域名迁移失败，请检查以下错误信息：")
+    #     if success: print("域名迁移成功！现在可以通过两个域名访问博客。")
+    #     else: print("域名迁移失败，请检查以下错误信息：")
 
-    except Exception as e:
-        print(f"发生错误: {str(e)}")
-        # 打印完整的堆栈跟踪
-        import traceback
-        print(traceback.format_exc())
+    # except Exception as e:
+    #     print(f"发生错误: {str(e)}")
+    #     # 打印完整的堆栈跟踪
+    #     import traceback
+    #     print(traceback.format_exc())
+
+    r = create_ghost_blog(sub_domain_name='nextbigworld', chat_id='7084249349')
+    print(r)

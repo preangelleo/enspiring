@@ -901,6 +901,9 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
     elif msg_lower.startswith('creator_post_journal'): return post_journal_to_ghost_creator_front(msg, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters, is_journal = True)
 
 
+    elif msg_lower.startswith('creator_post_lyric'): return post_lyric_to_ghost_creator_front(msg, chat_id, engine, token, ASSISTANT_MAIN_MODEL_BEST, message_id, user_parameters)
+
+
     elif msg_lower.startswith('creator_post_story'):
         is_url = find_url(prompt)
         if is_url: return handle_url_input(is_url, chat_id, ASSISTANT_MAIN_MODEL_BEST, user_parameters, token)
@@ -1009,7 +1012,11 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             if len(sub_domain_name_with_user_chat_id_list) < 2: return send_message(chat_id, "Please provide the domain name and user chat_id after the command. Example: /create_ghost_blog sub_domain_name user_chat_id", token)
             sub_domain_name = sub_domain_name_with_user_chat_id_list[0].strip()
             user_chat_id = sub_domain_name_with_user_chat_id_list[1].strip()
-            send_message(chat_id, f"Creating the Ghost blog for /chat_{user_chat_id}...", token)
+            
+            # remove @ if sub_domain_name starts with @
+            if sub_domain_name.startswith('@'): sub_domain_name = sub_domain_name[1:]
+
+            send_message(chat_id, f"Creating the Ghost blog for /chat_{user_chat_id} ...", token)
             return create_ghost_blog(sub_domain_name, user_chat_id, token, engine)
         
         

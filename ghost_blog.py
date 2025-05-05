@@ -2576,6 +2576,31 @@ def post_journal_to_ghost_creator_front(prompt, chat_id, engine, token, model = 
         return post_journal_to_ghost_creator(prompt, chat_id, engine, token, model, message_id, user_parameters, is_journal)
 
 
+def post_lyric_to_ghost_creator_front(prompt, chat_id, engine, token, model = ASSISTANT_MAIN_MODEL, message_id = '', user_parameters = {}):
+    user_ranking = user_parameters.get('ranking') or 0
+    openai_api_key = user_parameters.get('openai_api_key')
+    tier = user_parameters.get('tier') or 'Free'
+
+    if user_ranking < 5 and not openai_api_key: return send_message(chat_id, f"As a {tier} tier user, you don't have permission to use this feature. You need to upgrade to /Diamond or higher tier to use this feature.\n\nOr you can setup your own /openai_api_key to unlock this feature.", token)
+
+    prompt = prompt.replace('creator_post_lyric', '').strip()
+    prompt = prompt.replace('post_lyric', '').strip()
+    if not prompt: return send_message(chat_id, commands_dict.get("creator_post_lyric"), token)
+
+    admin_api_key = user_parameters.get('ghost_admin_api_key', '')
+    ghost_url = user_parameters.get('ghost_api_url', '')
+
+    if not all([admin_api_key, ghost_url]): return send_message(chat_id, f"Sorry this function is only for /Diamond or above users.", token)
+    else:
+        suffix = ''
+        mother_language = user_parameters.get('mother_language') or 'English'
+        if mother_language == 'English': suffix = f"\n\nYour /mother_language is set to default value -- `English`. Meaning you won't have a `Publish to Post in Mother Language` button in your notification once your article is generated. If you want to have a translated version of your generated article, please click /mother_language to set your mother language."
+        send_message(chat_id, f"Creating the lyric study journal based on your inputed lyric, please wait about 120 seconds...{suffix}", token)
+        message_id = str(int(message_id) + 1) if message_id else ''
+        return post_journal_to_ghost_creator(prompt, chat_id, engine, token, model, message_id, user_parameters)
+
+
+
 def handle_url_input(url: str, chat_id: str = OWNER_CHAT_ID, model = ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}, token = TELEGRAM_BOT_TOKEN):
     ranking = user_parameters.get('ranking') or 0
     if ranking < 5: return send_message(chat_id, "Sorry, you don't have permission to use this `url to post` feature. \n/get_premium", token)
@@ -3476,3 +3501,4 @@ if __name__ == "__main__":
     # custom_excerpt = 'Explore the latest developments, opportunities, and community insights in the Ora Protocol project, ensuring informed participation and engagement'
     # url = 'https://gmora.ai/uanu6cuqkwh/'
     # post_to_twitter_by_chat_id(chat_id, custom_excerpt[:180], url, TELEGRAM_BOT_TOKEN, user_parameters)
+

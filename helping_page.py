@@ -5622,14 +5622,24 @@ def get_final_paragraphs_from_table(video_id, chat_id, file_url, wait_seconds=12
     transcript_id = response_dict.get('transcript_id')
     print("get_final_paragraphs_from_table() >> transcript_id: ", transcript_id)
 
+    aai.settings.api_key = api_key
+    transcript = aai.Transcript.get_by_id(transcript_id)
+
     for i in range(wait_seconds):
-        query = text("SELECT paragraphed_transcript FROM enspiring_video_and_post_id WHERE transcript_id = :transcript_id")
-        df = pd.read_sql(query, engine, params={"transcript_id": transcript_id})
-        if not df.empty and df['paragraphed_transcript'].values[0]: 
-            response_dict['paragraphed_transcript'] = df['paragraphed_transcript'].values[0]
-            print("get_final_paragraphs_from_table() >> paragraphed_transcript: ", response_dict['paragraphed_transcript'][:60])
+        time.sleep(wait_delta)
+
+        if transcript.status == aai.TranscriptStatus.completed: 
+            paragraphs = transcript.get_paragraphs()
+
+            paragraphs_list = []
+            for paragraph in paragraphs: paragraphs_list.append(paragraph.text)
+            paragraphed_transcript = "\n\n".join(paragraphs_list)
+
+            with engine.begin() as conn: conn.execute(text("UPDATE enspiring_video_and_post_id SET paragraphed_transcript = :paragraphed_transcript WHERE transcript_id = :transcript_id"), {"paragraphed_transcript": paragraphed_transcript, "transcript_id": transcript_id})
+            send_debug_to_laogege(f"INFO: download_transcription() >> Transcript downloaded successfully, transcript_id:\n\n{transcript_id}")
+
+            response_dict['paragraphed_transcript'] = paragraphed_transcript
             return response_dict
-        time.sleep(wait_delta)  # Adjust sleep duration if necessary
 
     youtube_url = f"https://www.youtube.com/watch?v={video_id}"
     official_title = parameters_dict.get('Official_Title') or ''
@@ -10716,11 +10726,221 @@ def html_file_to_image(html_path: str, output_path: str):
     send_document_from_file(OWNER_CHAT_ID, output_path, 'Screenshot', os.getenv('TELEGRAM_BOT_TOKEN_TEST'))
 
 
+def download_youtube_audio_on_mac(youtube_link, output_dir="Temp", yt_dlp_path="/Users/lgg/coding/Youtube_bot/.venv/bin/yt-dlp"):
+    archived_dir = os.path.join(output_dir, 'Archived')
+    os.makedirs(archived_dir, exist_ok=True)
+
+    # Move existing files to the Archived directory, overwriting if necessary
+    for item in os.listdir(output_dir):
+        item_path = os.path.join(output_dir, item)
+        if os.path.isfile(item_path):
+            destination_path = os.path.join(archived_dir, item)
+            if os.path.exists(destination_path): os.remove(destination_path)  # Remove the existing file
+            shutil.move(item_path, archived_dir)
+
+    if youtube_link.lower().startswith('http'):
+        # Define the output template for MP4
+        output_template_mp4 = os.path.join(output_dir, '%(title)s.%(ext)s')
+
+        # Command to get the final filename for MP4
+        get_filename_command_mp4 = [
+            yt_dlp_path,
+            '--restrict-filenames',
+            '--get-filename',
+            '-o', output_template_mp4,
+            youtube_link
+        ]
+
+        try:
+            # Run the command to get the filename for MP4
+            result_mp4 = subprocess.run(get_filename_command_mp4, check=True, capture_output=True, text=True)
+            output_filename_mp4 = result_mp4.stdout.strip()
+
+            # Download the MP4 video
+            download_command_mp4 = [
+                yt_dlp_path,
+                '--rm-cache-dir',
+                '--restrict-filenames',
+                '-f', 'bestvideo+bestaudio/best',  # Download best video and audio
+                '-o', output_template_mp4,
+                youtube_link
+            ]
+            subprocess.run(download_command_mp4, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            # Define the output template for MP3
+            output_template_mp3 = os.path.join(output_dir, '%(title)s.mp3')
+
+            # Extract the audio to MP3
+            extract_audio_command = [
+                yt_dlp_path,
+                '--rm-cache-dir',
+                '--restrict-filenames',
+                '--extract-audio',
+                '--audio-format', 'mp3',
+                '--audio-quality', '0',  # Best quality
+                '--output', output_template_mp3,
+                output_filename_mp4  # Use the downloaded MP4 as input
+            ]
+            subprocess.run(extract_audio_command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            # Get file base name for MP3
+            file_basename_mp3 = os.path.splitext(output_filename_mp4)[0]
+            return f"{file_basename_mp3}.mp3"
+
+        except subprocess.CalledProcessError as e:
+            video_id = youtube_link.split('=')[-1]
+            send_debug_to_laogege(f"download_youtube_audio() >> error when download youtube video: {video_id}\n\nError: {e}")
+            return None
+
+    return None
+
+
+
+
+def download_youtube_audio_on_mac_mp4(youtube_link, output_dir="Temp", yt_dlp_path="/Users/lgg/coding/Youtube_bot/.venv/bin/yt-dlp", ffmpeg_path="ffmpeg"):
+    archived_dir = os.path.join(output_dir, 'Archived')
+    os.makedirs(archived_dir, exist_ok=True)
+
+    # Move existing files to the Archived directory, overwriting if necessary
+    for item in os.listdir(output_dir):
+        item_path = os.path.join(output_dir, item)
+        if os.path.isfile(item_path):
+            destination_path = os.path.join(archived_dir, item)
+            if os.path.exists(destination_path): os.remove(destination_path)  # Remove the existing file
+            shutil.move(item_path, archived_dir)
+
+    if youtube_link.lower().startswith('http'):
+        output_template = os.path.join(output_dir, '%(title)s.%(ext)s')
+
+        downloaded_filepath = None
+
+        try:
+            print("Downloading youtube video as mp4")
+            # Try to download as mp4
+            download_command_mp4 = [
+                yt_dlp_path,
+                '--rm-cache-dir',
+                '--restrict-filenames',
+                '-f', 'bestvideo+bestaudio/bestvideo*+bestaudio/best',  # Prioritize best video and audio
+                '-o', output_template,
+                '--merge-output-format', 'mp4',
+                youtube_link
+            ]
+            subprocess.run(download_command_mp4, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            # Get the downloaded filename (should be mp4 if successful)
+            get_filename_command_mp4 = [
+                yt_dlp_path,
+                '--restrict-filenames',
+                '--get-filename',
+                '-o', output_template,
+                youtube_link
+            ]
+            result_filename_mp4 = subprocess.run(get_filename_command_mp4, check=True, capture_output=True, text=True)
+            downloaded_filepath = result_filename_mp4.stdout.strip()
+
+        except subprocess.CalledProcessError:
+            # If mp4 download fails, try downloading as webm
+            try:
+                print("Downloading youtube video as webm")
+                download_command_webm = [
+                    yt_dlp_path,
+                    '--rm-cache-dir',
+                    '--restrict-filenames',
+                    '-f', 'bestvideo+bestaudio/bestvideo*+bestaudio/best',
+                    '-o', output_template,
+                    '--merge-output-format', 'webm',
+                    youtube_link
+                ]
+                subprocess.run(download_command_webm, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+                # Get the downloaded webm filename
+                get_filename_command_webm = [
+                    yt_dlp_path,
+                    '--restrict-filenames',
+                    '--get-filename',
+                    '-o', output_template,
+                    youtube_link
+                ]
+                result_filename_webm = subprocess.run(get_filename_command_webm, check=True, capture_output=True, text=True)
+                downloaded_filepath_webm = result_filename_webm.stdout.strip()
+
+                # Convert webm to mp4 using ffmpeg
+                output_mp4_path = os.path.splitext(downloaded_filepath_webm)[0] + '.mp4'
+                ffmpeg_command = [
+                    ffmpeg_path,
+                    '-i', downloaded_filepath_webm,
+                    '-vn',  # No video
+                    '-acodec', 'libmp3lame',  # Use libmp3lame for mp3 encoding (you might want aac for better quality in mp4)
+                    output_mp4_path
+                ]
+                subprocess.run(ffmpeg_command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+                os.remove(downloaded_filepath_webm)  # Remove the original webm file
+                downloaded_filepath = output_mp4_path
+
+            except subprocess.CalledProcessError as e_webm:
+                video_id = youtube_link.split('=')[-1]
+                send_debug_to_laogege(f"download_youtube_audio() >> error when download youtube video (webm fallback failed): {video_id}\n\nError: {e_webm}")
+                return None
+            except FileNotFoundError:
+                video_id = youtube_link.split('=')[-1]
+                send_debug_to_laogege(f"download_youtube_audio() >> ffmpeg not found. Cannot convert webm to mp4: {video_id}")
+                return None
+        except FileNotFoundError:
+            video_id = youtube_link.split('=')[-1]
+            send_debug_to_laogege(f"download_youtube_audio() >> yt-dlp not found: {video_id}")
+            return None
+        except subprocess.CalledProcessError as e_mp4:
+            # This catch is for the initial mp4 download failure
+            pass # We already tried webm as a fallback
+
+        if downloaded_filepath:
+            print("Downloaded video file:", downloaded_filepath)
+
+            extract_mp3_or_not = input("Extract audio to MP3? (y/n) ")
+            if extract_mp3_or_not.lower() == 'y':
+
+                # Define the output template for MP3
+                output_template_mp3 = os.path.join(output_dir, '%(title)s.mp3')
+                print("Extracting audio to mp3")
+
+                # Extract the audio to MP3 from the downloaded (now mp4) file
+                extract_audio_command = [
+                    yt_dlp_path,
+                    '--rm-cache-dir',
+                    '--restrict-filenames',
+                    '--extract-audio',
+                    '--audio-format', 'mp3',
+                    '--audio-quality', '0',  # Best quality
+                    '--output', output_template_mp3,
+                    downloaded_filepath
+                ]
+                subprocess.run(extract_audio_command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+                file_basename_mp3 = os.path.splitext(downloaded_filepath)[0]
+                return f"{file_basename_mp3}.mp3"
+            else:
+                print("End of program. Exiting.")
+                return downloaded_filepath
+
+    return None
+
 if __name__ == '__main__':
     print("Helping page constants")
-    query = "搜索今天越疆科技港股上市的新闻"
-    chat_id = OWNER_CHAT_ID
-    token = TELEGRAM_BOT_TOKEN
-    user_parameters = user_parameters_realtime(chat_id, engine)
-    r = formatted_response = google_search(query, chat_id, engine, token, user_parameters)
-    print(r)
+    # query = "搜索今天越疆科技港股上市的新闻"
+    # chat_id = OWNER_CHAT_ID
+    # token = TELEGRAM_BOT_TOKEN
+    # user_parameters = user_parameters_realtime(chat_id, engine)
+    # r = formatted_response = google_search(query, chat_id, engine, token, user_parameters)
+    # print(r)
+
+    youtube_link = input("Enter a YouTube link: (Enter 'q' to quit) ")
+    if not youtube_link or youtube_link.lower() == 'q':
+        # exit system
+        sys.exit(0)
+    else:
+        video_temp_dir = """Temp"""
+
+        output_audio_file = download_youtube_audio_on_mac_mp4(youtube_link)
+        print(output_audio_file)
