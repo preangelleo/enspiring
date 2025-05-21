@@ -513,8 +513,8 @@ if __name__ == "__main__":
     except Exception as e: send_debug_to_laogege(f"ERROR when get latest videos and inserted into Youtube Task table, code:\n\n{e}")
 
     if which_ubuntu == 'TB': 
-        try: check_gmail(imap_username = GMAIL_ADDRESS, imap_password = GMAIL_PASSWORD, engine = engine)
-        except Exception as e: send_debug_to_laogege(f"{GMAIL_ADDRESS} ERROR when checking, code:\n\n{e}")
+        # try: check_gmail(imap_username = GMAIL_ADDRESS, imap_password = GMAIL_PASSWORD, engine = engine)
+        # except Exception as e: send_debug_to_laogege(f"{GMAIL_ADDRESS} ERROR when checking, code:\n\n{e}")
 
         try: update_feeds_and_handle_new_posts(chat_id = LAOGEGE_CHAT_ID, model = ASSISTANT_MAIN_MODEL_BEST, user_parameters = {}, token = token)
         except Exception as e: send_debug_to_laogege(f"ERROR when updating feeds and handling new posts, code:\n\n{e}")

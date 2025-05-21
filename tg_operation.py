@@ -662,7 +662,7 @@ def handle_message(update, token, engine = engine):
         if 'document' in update_message['reply_to_message']: doc_file_id = update_message['reply_to_message']['document'].get('file_id')
         if 'video' in update_message['reply_to_message']: video_file_id = update_message['reply_to_message']['video'].get('file_id')       
         if 'voice' in update_message['reply_to_message']: voice_file_id = update_message['reply_to_message']['voice'].get('file_id')
-        if 'audio' in update_message['reply_to_message']: audio_file_id = update_message['reply_to_message']['audio'].get('file_id')       
+        if 'audio' in update_message['reply_to_message']: audio_file_id = update_message['reply_to_message']['audio'].get('file_id')
         if quoted_msg: msg_text = f"{msg_text}\n\n----------------\n\nQuoted previous message:\n\n{quoted_msg}"
 
     if msg_text:

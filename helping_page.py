@@ -1,6 +1,7 @@
 # Create variables for helps information of each function
 import json, requests, os, time, hashlib, shutil, random, subprocess, re, sys, pysubs2, ffmpeg, platform, http.client, urllib.parse, sqlalchemy, jwt, mimetypes, base64, logging, isodate, codecs
 import threading, queue, asyncio, smtplib, imaplib, email, io, docx, textwrap, uuid, bcrypt, string, html, tweepy, secrets, validators, anthropic, feedparser, replicate
+from typing import Optional
 from openai import OpenAI
 import pandas as pd
 import mysql.connector
@@ -121,6 +122,8 @@ if 'Making variables':
 
     BLUESKY_IDENTIFIER_CODEXODYSSEY=os.getenv("BLUESKY_IDENTIFIER_CODEXODYSSEY")
     BLUESKY_API_KEY_CODEXODYSSEY=os.getenv("BLUESKY_API_KEY_CODEXODYSSEY")
+
+    RAPID_YOUTUBE_DOWNLOAD_API=os.getenv("RAPID_YOUTUBE_DOWNLOAD_API")
 
     ENSPIRING_BOT_HANDLE = os.getenv('ENSPIRING_BOT_HANDLE')
     ENSPIRING_ACTIVATE_PAGE = f'{BLOG_BASE_URL}/activate'
@@ -708,6 +711,7 @@ Only when you reply directly to the user, you are allowed to use markdown format
 
     OWNER_CHAT_ID = os.getenv("OWNER_CHAT_ID")
     OWNER_HANDLE = os.getenv("OWNER_HANDLE")
+    NEXTBIGWORLD_CHAT_ID = os.getenv("NEXTBIGWORLD_CHAT_ID")
 
     settings_shortcuts = {
         "set_creator_configurations": "Click to set the configurations for the creator mode.",
@@ -8026,7 +8030,102 @@ def download_youtube_video(youtube_link, video_temp_dir=video_dir, chat_id = OWN
     return reply_dict
 
 
-def download_youtube_audio(youtube_link, output_dir, yt_dlp_path="/root/anaconda3/envs/youtube/bin/yt-dlp"):
+
+def download_video_api(video_id: str, output_dir: str, quality: str = "high") -> Optional[str]:
+    """
+    使用RapidAPI的YouTube MP3下载API下载视频音频
+    
+    Args:
+        video_id: YouTube 视频 ID
+        quality: 音频质量，可选值为low, medium, high
+        
+    Returns:
+        str: 下载的音频文件路径，如果失败则返回 None
+    """
+    try:
+        # 定义输出路径
+        output_path = os.path.join(output_dir, f"{video_id}.mp3")
+        
+        # 如果文件已存在，直接返回路径
+        if os.path.exists(output_path):
+            print(f"Video {video_id} already downloaded")
+            return output_path
+        
+        # 创建输出目录
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # RapidAPI的YouTube MP3下载API
+        rapidapi_key = RAPID_YOUTUBE_DOWNLOAD_API
+        rapidapi_host = "youtube-mp3-audio-video-downloader.p.rapidapi.com"
+        
+        print(f"正在通过RapidAPI下载 YouTube 视频: {video_id}, 质量: {quality}")
+        
+        conn = http.client.HTTPSConnection(rapidapi_host)
+        
+        headers = {
+            'x-rapidapi-key': rapidapi_key,
+            'x-rapidapi-host': rapidapi_host
+        }
+        
+        # 请求下载链接
+        endpoint = f"/download-mp3/{video_id}?quality={quality}"
+        print(f"请求端点: {endpoint}")
+        
+        conn.request("GET", endpoint, headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+        
+        print(f"响应状态码: {res.status}")
+        content_type = res.getheader('Content-Type', '')
+        print(f"响应内容类型: {content_type}")
+        
+        # 如果状态码正常
+        if res.status == 200:
+            # 检查是否是直接返回二进制数据
+            if 'audio' in content_type or 'application/octet-stream' in content_type:
+                # 保存音频文件
+                with open(output_path, 'wb') as f:
+                    f.write(data)
+                print(f"成功下载视频 {video_id} 的音频文件")
+                return output_path
+            
+            # 如果不是音频数据，可能返回的是 JSON 或其他格式
+            try:
+                decoded_data = data.decode("utf-8")
+                # 检查是否是直接返回的URL
+                if decoded_data.startswith("http"):
+                    print(f"获取到直接下载链接，将下载文件")
+                    # 下载文件
+                    response = requests.get(decoded_data, stream=True)
+                    if response.status_code == 200:
+                        with open(output_path, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=1024):
+                                if chunk:
+                                    f.write(chunk)
+                        print(f"从URL成功下载了视频 {video_id}")
+                        return output_path
+                    else:
+                        print(f"下载连接请求失败，状态码: {response.status_code}")
+            except UnicodeDecodeError:
+                # 如果无法解码，可能是二进制数据，尝试直接保存
+                with open(output_path, 'wb') as f:
+                    f.write(data)
+                print(f"已保存未知格式的音频数据到 {output_path}")
+                return output_path
+        else:
+            print(f"API请求失败: {data.decode('utf-8', errors='ignore')}")
+            # 如果API失败，尝试使用原始下载方法
+            print("尝试使用原始下载方法...")
+            return 
+    
+    except Exception as e:
+        print(f"RapidAPI 下载出错: {str(e)}")
+        # 出错时回退到原始下载方法
+        print("尝试使用原始下载方法...")
+        return
+
+
+def download_youtube_audio(youtube_link, output_dir):
     archived_dir = os.path.join(output_dir, 'Archived')
     os.makedirs(archived_dir, exist_ok=True)
 
@@ -8038,48 +8137,8 @@ def download_youtube_audio(youtube_link, output_dir, yt_dlp_path="/root/anaconda
             if os.path.exists(destination_path): os.remove(destination_path)  # Remove the existing file
             shutil.move(item_path, archived_dir)  
 
-    if youtube_link.lower().startswith('http'):
-        # Define the output template
-        output_template = os.path.join(output_dir, '%(title)s.%(ext)s')
-
-        # Command to get the final filename
-        get_filename_command = [
-            yt_dlp_path,
-            '--restrict-filenames',
-            '--get-filename',
-            '-o', output_template,
-            youtube_link
-        ]
-
-        try:
-            # Run the command to get the filename
-            result = subprocess.run(get_filename_command, check=True, capture_output=True, text=True)
-            output_filename = result.stdout.strip()
-
-            # Download the audio
-            download_command = [
-                yt_dlp_path,
-                '--rm-cache-dir',
-                '--restrict-filenames',
-                '-f', 'bestaudio',
-                '--extract-audio',
-                '--audio-format', 'mp3',
-                '--postprocessor-args', '-loglevel quiet',
-                '-o', output_template,
-                youtube_link
-            ]
-            subprocess.run(download_command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            # get file base name and make a mp3 name
-            file_basename = os.path.splitext(output_filename)[0]
-            return f"{file_basename}.mp3"
-
-        except subprocess.CalledProcessError as e:
-            video_id = youtube_link.split('=')[-1]
-            send_debug_to_laogege(f"download_youtube_audio() >> error when download youtube video: {video_id}\n\nError: {e}")
-            return None
-
-    return None
-
+    video_id = get_video_id(youtube_link)
+    return download_video_api(video_id, output_dir)
 
 
 def concatenate_mp3_files(mp3_file1, mp3_file2):
