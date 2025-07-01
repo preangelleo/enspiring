@@ -207,7 +207,7 @@ def generating_new_post_from_url(youtube_url: str, video_temp_dir = video_dir, c
     json_file_path = reply_dict['assembly_json_file_path'] if reply_dict.get('assembly_json_file_path') else caption_json_file_path
 
     try:
-        posts_generator_reply_dict = posts_generator(json_file_path, chat_id, model="gpt-4o-2024-08-06", engine=engine)
+        posts_generator_reply_dict = posts_generator(json_file_path, chat_id, model="gpt-4.1", engine=engine)
         if not posts_generator_reply_dict.get('Status'): return posts_generator_reply_dict.get('Reason')
     except Exception as e: return send_message(chat_id, f"posts_generator() >> error code: {e}", token)
 
