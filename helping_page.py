@@ -5640,7 +5640,6 @@ def get_final_paragraphs_from_table(video_id, chat_id, file_url, wait_seconds=12
             paragraphed_transcript = "\n\n".join(paragraphs_list)
 
             with engine.begin() as conn: conn.execute(text("UPDATE enspiring_video_and_post_id SET paragraphed_transcript = :paragraphed_transcript WHERE transcript_id = :transcript_id"), {"paragraphed_transcript": paragraphed_transcript, "transcript_id": transcript_id})
-            send_debug_to_laogege(f"INFO: download_transcription() >> Transcript downloaded successfully, transcript_id:\n\n{transcript_id}")
 
             response_dict['paragraphed_transcript'] = paragraphed_transcript
             return response_dict
@@ -5664,7 +5663,6 @@ def download_transcription(transcript_id, engine = engine, api_key=ASSEMBLYAI_AP
             paragraphed_transcript = "\n\n".join(paragraphs_list)
 
             with engine.begin() as conn: conn.execute(text("UPDATE enspiring_video_and_post_id SET paragraphed_transcript = :paragraphed_transcript WHERE transcript_id = :transcript_id"), {"paragraphed_transcript": paragraphed_transcript, "transcript_id": transcript_id})
-            send_debug_to_laogege(f"INFO: download_transcription() >> Transcript downloaded successfully, transcript_id:\n\n{transcript_id}")
             return paragraphed_transcript
         
         else: return send_debug_to_laogege(f"ERROR: download_transcription() >> {transcript.status}")
