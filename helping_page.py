@@ -4195,7 +4195,8 @@ def chinese_audio_generation(input_text, model_id=FISH_AUDIO_ID_LEOWANG_CHINESE,
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "model": "s1"
     }
     try:
         response = requests.request("POST", url, json=payload, headers=headers)
