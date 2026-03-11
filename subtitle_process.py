@@ -1114,9 +1114,9 @@ def dealing_tg_command(msg: str, chat_id: str, user_parameters, token=TELEGRAM_B
             result_string = get_handle_and_tile(engine)
             return send_message(chat_id, result_string, token)
 
-        elif msg_lower.startswith('clone_leo'): 
-            input_text = msg.split('clone_leo')[1].strip()
-            if not input_text: return send_message(chat_id, "Please provide text after /clone_leo command.", token)
+        elif msg_lower.startswith('clone_leo') or msg_lower.startswith('clone ') or msg_lower.startswith('clone\n'): 
+            input_text = msg.split('clone_leo')[1].strip() if 'clone_leo' in msg_lower else msg.split('clone', 1)[1].strip()
+            if not input_text: return send_message(chat_id, "Please provide text after /clone command.", token)
             else: 
                 audio_generated_dir_user = os.path.join(audio_generated_dir, chat_id)
                 output_file = chinese_audio_generation(input_text, model_id=FISH_AUDIO_ID_LEOWANG_CHINESE, api_key=FISH_AUDIO_API_KEY, output_dir=audio_generated_dir_user)
